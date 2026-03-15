@@ -9,6 +9,11 @@ import {
   Briefcase,
   FileText,
   Search,
+  Receipt,
+  FilePlus,
+  Settings2,
+  Building2,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
