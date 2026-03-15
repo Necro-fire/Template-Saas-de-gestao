@@ -46,6 +46,14 @@ const managementNav = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
+const fiscalNav = [
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt },
+  { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus },
+  { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2 },
+  { title: "Empresas", url: "/empresas", icon: Building2 },
+  { title: "Certificado", url: "/certificado-digital", icon: ShieldCheck },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
