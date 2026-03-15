@@ -39,6 +39,11 @@ const App = () => (
             <Route path="/caixa" element={<Caixa />} />
             <Route path="/malas" element={<Malas />} />
             <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/notas-fiscais" element={<NotasFiscais />} />
+            <Route path="/emitir-nf" element={<EmitirNF />} />
+            <Route path="/configuracao-fiscal" element={<ConfiguracaoFiscal />} />
+            <Route path="/empresas" element={<Empresas />} />
+            <Route path="/certificado-digital" element={<CertificadoDigital />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
