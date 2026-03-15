@@ -13,6 +13,11 @@ import Estoque from "./pages/Estoque";
 import Caixa from "./pages/Caixa";
 import Malas from "./pages/Malas";
 import Relatorios from "./pages/Relatorios";
+import NotasFiscais from "./pages/NotasFiscais";
+import EmitirNF from "./pages/EmitirNF";
+import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
+import Empresas from "./pages/Empresas";
+import CertificadoDigital from "./pages/CertificadoDigital";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
