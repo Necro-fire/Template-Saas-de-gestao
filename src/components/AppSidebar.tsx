@@ -9,6 +9,11 @@ import {
   Briefcase,
   FileText,
   Search,
+  Receipt,
+  FilePlus,
+  Settings2,
+  Building2,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -39,6 +44,14 @@ const managementNav = [
   { title: "Caixa", url: "/caixa", icon: Wallet },
   { title: "Malas", url: "/malas", icon: Briefcase },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+];
+
+const fiscalNav = [
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt },
+  { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus },
+  { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2 },
+  { title: "Empresas", url: "/empresas", icon: Building2 },
+  { title: "Certificado", url: "/certificado-digital", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {
@@ -91,6 +104,24 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {managementNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                    <NavLink to={item.url} end>
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Fiscal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {fiscalNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink to={item.url} end>

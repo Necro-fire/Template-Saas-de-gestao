@@ -136,6 +136,40 @@ export const mockClients: Client[] = [
   },
 ];
 
+export interface Empresa {
+  id: string;
+  razaoSocial: string;
+  nomeFantasia: string;
+  cnpj: string;
+  inscricaoEstadual: string;
+  regimeTributario: string;
+  cnae: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  telefone: string;
+  email: string;
+  serieNF: string;
+  ambiente: "producao" | "homologacao";
+  codigoMunicipio: string;
+  codigoIBGE: string;
+}
+
+export interface NotaFiscal {
+  id: string;
+  numero: number;
+  chave: string;
+  saleId: string;
+  clientName: string;
+  clientCnpj: string;
+  dataEmissao: string;
+  valorTotal: number;
+  status: "autorizada" | "cancelada" | "pendente" | "rejeitada";
+  xmlUrl?: string;
+  danfeUrl?: string;
+}
+
 export const mockSales: Sale[] = [
   {
     id: "1", number: 1001, clientId: "1", clientName: "Ótica Visual Center",
@@ -153,5 +187,38 @@ export const mockSales: Sale[] = [
       { productId: "4", productCode: "VF-004", productModel: "Horizon", quantity: 6, unitPrice: 38, total: 228 },
     ],
     total: 228, discount: 0, paymentMethod: "Cartão", date: "2026-03-15", origin: "bag",
+  },
+];
+
+export const mockEmpresa: Empresa = {
+  id: "1",
+  razaoSocial: "VisionFlow Óptica LTDA",
+  nomeFantasia: "VisionFlow",
+  cnpj: "12.345.678/0001-90",
+  inscricaoEstadual: "123.456.789.000",
+  regimeTributario: "Simples Nacional",
+  cnae: "4774-1/00",
+  endereco: "Rua das Lentes, 123",
+  cidade: "São Paulo",
+  estado: "SP",
+  cep: "01234-567",
+  telefone: "(11) 3456-7890",
+  email: "fiscal@visionflow.com.br",
+  serieNF: "1",
+  ambiente: "homologacao",
+  codigoMunicipio: "3550308",
+  codigoIBGE: "3550308",
+};
+
+export const mockNotasFiscais: NotaFiscal[] = [
+  {
+    id: "1", numero: 1, chave: "35260312345678000190550010000000011234567890",
+    saleId: "1", clientName: "Ótica Visual Center", clientCnpj: "12.345.678/0001-90",
+    dataEmissao: "2026-03-15", valorTotal: 190, status: "autorizada",
+  },
+  {
+    id: "2", numero: 2, chave: "35260398765432000110550010000000021234567891",
+    saleId: "2", clientName: "Ótica Olhar Digital", clientCnpj: "98.765.432/0001-10",
+    dataEmissao: "2026-03-15", valorTotal: 228, status: "pendente",
   },
 ];

@@ -13,6 +13,11 @@ import Estoque from "./pages/Estoque";
 import Caixa from "./pages/Caixa";
 import Malas from "./pages/Malas";
 import Relatorios from "./pages/Relatorios";
+import NotasFiscais from "./pages/NotasFiscais";
+import EmitirNF from "./pages/EmitirNF";
+import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
+import Empresas from "./pages/Empresas";
+import CertificadoDigital from "./pages/CertificadoDigital";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +39,11 @@ const App = () => (
             <Route path="/caixa" element={<Caixa />} />
             <Route path="/malas" element={<Malas />} />
             <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/notas-fiscais" element={<NotasFiscais />} />
+            <Route path="/emitir-nf" element={<EmitirNF />} />
+            <Route path="/configuracao-fiscal" element={<ConfiguracaoFiscal />} />
+            <Route path="/empresas" element={<Empresas />} />
+            <Route path="/certificado-digital" element={<CertificadoDigital />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
