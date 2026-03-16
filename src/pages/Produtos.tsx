@@ -8,7 +8,7 @@ import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
 import { ProductTypesDialog } from "@/components/ProductTypesDialog";
-import { ProductFilters, useProductFilters, applyProductFilters } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
