@@ -4,10 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
+import { FilialProvider } from "@/contexts/FilialContext";
 import Dashboard from "./pages/Dashboard";
 import PDV from "./pages/PDV";
 import Produtos from "./pages/Produtos";
 import Clientes from "./pages/Clientes";
+import Funcionarios from "./pages/Funcionarios";
 import Vendas from "./pages/Vendas";
 import Estoque from "./pages/Estoque";
 import Caixa from "./pages/Caixa";
@@ -28,25 +30,28 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/pdv" element={<PDV />} />
-            <Route path="/produtos" element={<Produtos />} />
-            <Route path="/clientes" element={<Clientes />} />
-            <Route path="/vendas" element={<Vendas />} />
-            <Route path="/estoque" element={<Estoque />} />
-            <Route path="/caixa" element={<Caixa />} />
-            <Route path="/malas" element={<Malas />} />
-            <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/notas-fiscais" element={<NotasFiscais />} />
-            <Route path="/emitir-nf" element={<EmitirNF />} />
-            <Route path="/configuracao-fiscal" element={<ConfiguracaoFiscal />} />
-            <Route path="/empresas" element={<Empresas />} />
-            <Route path="/certificado-digital" element={<CertificadoDigital />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AppLayout>
+        <FilialProvider>
+          <AppLayout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/pdv" element={<PDV />} />
+              <Route path="/produtos" element={<Produtos />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/funcionarios" element={<Funcionarios />} />
+              <Route path="/vendas" element={<Vendas />} />
+              <Route path="/estoque" element={<Estoque />} />
+              <Route path="/caixa" element={<Caixa />} />
+              <Route path="/malas" element={<Malas />} />
+              <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/notas-fiscais" element={<NotasFiscais />} />
+              <Route path="/emitir-nf" element={<EmitirNF />} />
+              <Route path="/configuracao-fiscal" element={<ConfiguracaoFiscal />} />
+              <Route path="/empresas" element={<Empresas />} />
+              <Route path="/certificado-digital" element={<CertificadoDigital />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppLayout>
+        </FilialProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
