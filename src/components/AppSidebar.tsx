@@ -75,7 +75,7 @@ export function AppSidebar() {
             </div>
           </div>
         ) : (
-          <img src={jotsLogo} alt="Jots" className="h-8 w-8 object-contain mx-auto" />
+          <img src={jotsLogo} alt="Jots" className="h-8 w-8 rounded-md object-contain mx-auto" />
         )}
       </SidebarHeader>
 
