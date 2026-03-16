@@ -64,6 +64,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setDetail("");
     setFilial("");
     setStock("");
+    setTipoProdutoId("");
     setWholesaleEnabled(false);
     setWholesalePrice("");
     setWholesaleMinQty("");
