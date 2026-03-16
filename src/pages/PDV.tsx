@@ -38,8 +38,9 @@ export default function PDV() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
   const [submitting, setSubmitting] = useState(false);
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, setSelectedFilial } = useFilial();
   const searchRef = useRef<HTMLInputElement>(null);
+  const [pendingFilial, setPendingFilial] = useState<string | null>(null);
 
   const { data: products } = useProducts();
   const { data: clients } = useClients();
@@ -201,7 +202,13 @@ export default function PDV() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-48px)]">
-      <FilialSelector />
+      <FilialSelector onBeforeChange={(newFilial) => {
+        if (cart.length > 0) {
+          setPendingFilial(newFilial);
+          return false;
+        }
+        return true;
+      }} />
       <div className="flex flex-1 overflow-hidden">
         {/* Left - Product Grid */}
         <div className="flex-[3] flex flex-col border-r overflow-hidden">
@@ -387,6 +394,33 @@ export default function PDV() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Sair mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Filial change blocker alert */}
+      <AlertDialog open={pendingFilial !== null}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sacola com produtos</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao trocar de filial, os produtos da sacola serão removidos. Deseja trocar mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingFilial(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setCart([]);
+                if (pendingFilial) setSelectedFilial(pendingFilial as any);
+                setPendingFilial(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Trocar mesmo assim
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
