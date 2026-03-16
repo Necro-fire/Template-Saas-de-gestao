@@ -26,6 +26,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [stock, setStock] = useState("");
+  const [tipoProdutoId, setTipoProdutoId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [wholesaleEnabled, setWholesaleEnabled] = useState(false);
@@ -33,6 +34,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [wholesaleMinQty, setWholesaleMinQty] = useState("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: tipos } = useProductTypes();
 
   const isEditing = !!product;
 
