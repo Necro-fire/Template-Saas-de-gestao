@@ -37,9 +37,10 @@ export default function Dashboard() {
   const { data: sales } = useVendas();
   const { data: clients } = useClients();
 
-  const lowStockProducts = products.filter(p => p.stock <= p.min_stock && p.stock > 0);
-  const outOfStockProducts = products.filter(p => p.stock === 0);
+  const lowStockProducts = products.filter(p => getStockStatus(p.stock) === "low_stock");
+  const outOfStockProducts = products.filter(p => getStockStatus(p.stock) === "out_of_stock");
   const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
+  const hasAlerts = lowStockProducts.length > 0 || outOfStockProducts.length > 0;
 
   const today = new Date().toISOString().slice(0, 10);
   const todaySales = sales.filter(s => s.created_at.slice(0, 10) === today);
