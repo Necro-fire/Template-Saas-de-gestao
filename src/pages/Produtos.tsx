@@ -119,10 +119,11 @@ export default function Produtos() {
                       <span>{product.temple_size}mm</span>
                     </div>
                     <Badge
-                      variant={product.stock === 0 ? "destructive" : product.stock <= product.min_stock ? "outline" : "secondary"}
+                      variant={getStockStatus(product.stock) === "out_of_stock" ? "destructive" : getStockStatus(product.stock) === "low_stock" ? "outline" : "secondary"}
                       className="text-caption tabular-nums"
                     >
                       {product.stock} un.
+                      {getStockStatus(product.stock) === "low_stock" && " ⚠"}
                     </Badge>
                   </div>
                 </div>

@@ -99,10 +99,11 @@ export default function Estoque() {
                           <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                         )}
                         <Badge
-                          variant={p.stock === 0 ? "destructive" : p.stock <= p.min_stock ? "outline" : "secondary"}
+                          variant={getStockStatus(p.stock) === "out_of_stock" ? "destructive" : getStockStatus(p.stock) === "low_stock" ? "outline" : "secondary"}
                           className="tabular-nums text-caption"
                         >
                           {p.stock} un.
+                          {getStockStatus(p.stock) === "low_stock" && " ⚠"}
                         </Badge>
                         <span className="text-caption text-muted-foreground tabular-nums">mín: {p.min_stock}</span>
                       </div>
