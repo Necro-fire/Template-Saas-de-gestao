@@ -398,6 +398,33 @@ export default function PDV() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Filial change blocker alert */}
+      <AlertDialog open={pendingFilial !== null}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sacola com produtos</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao trocar de filial, os produtos da sacola serão removidos. Deseja trocar mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingFilial(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setCart([]);
+                if (pendingFilial) setSelectedFilial(pendingFilial as any);
+                setPendingFilial(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Trocar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
