@@ -16,6 +16,7 @@ import {
   Building2,
   ShieldCheck,
 } from "lucide-react";
+import jotsLogo from "@/assets/jots-logo.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
