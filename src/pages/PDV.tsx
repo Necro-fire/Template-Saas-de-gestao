@@ -202,7 +202,13 @@ export default function PDV() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-48px)]">
-      <FilialSelector />
+      <FilialSelector onBeforeChange={(newFilial) => {
+        if (cart.length > 0) {
+          setPendingFilial(newFilial);
+          return false;
+        }
+        return true;
+      }} />
       <div className="flex flex-1 overflow-hidden">
         {/* Left - Product Grid */}
         <div className="flex-[3] flex flex-col border-r overflow-hidden">
