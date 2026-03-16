@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImagePlus, Loader2 } from "lucide-react";
+import { NumericStepper } from "@/components/ui/numeric-stepper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
@@ -173,8 +174,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               <Input id="product-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
-              <Label htmlFor="product-stock">Quantidade disponível</Label>
-              <Input id="product-stock" type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" className="mt-1.5" />
+              <Label>Quantidade disponível</Label>
+              <div className="mt-1.5">
+                <NumericStepper value={stock ? Number(stock) : 0} onChange={(v) => setStock(String(v))} min={0} />
+              </div>
             </div>
           </div>
 
