@@ -70,14 +70,14 @@ export default function PDV() {
         const updated = prev.map(i =>
           i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
         );
-        const newTotal = updated.reduce((acc, i) => acc + i.quantity, 0);
-        if (newTotal === 5) toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
+        // Check if this addition triggers wholesale for this product
+        const newQty = existing.quantity + 1;
+        if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
+          toast.success(`Atacado aplicado para ${product.model}!`, { duration: 3000 });
+        }
         return updated;
       }
-      const newCart = [...prev, { product, quantity: 1 }];
-      const newTotal = newCart.reduce((acc, i) => acc + i.quantity, 0);
-      if (newTotal === 5) toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
-      return newCart;
+      return [...prev, { product, quantity: 1 }];
     });
   }, []);
 
