@@ -259,7 +259,7 @@ export default function PDV() {
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-ui font-semibold">Sacola</h2>
-              {isWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
+              {hasAnyWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
             </div>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger className="h-9">
