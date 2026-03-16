@@ -286,7 +286,10 @@ export default function PDV() {
                     max={item.product.stock}
                     size="sm"
                   />
-                  <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product) * item.quantity).toFixed(0)}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product, item.quantity) * item.quantity).toFixed(0)}</span>
+                    {isItemWholesale(item) && <Badge variant="outline" className="text-[10px] px-1 py-0 text-success border-success">Atacado</Badge>}
+                  </div>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3 w-3" /></Button>
                 </motion.div>
               ))}
