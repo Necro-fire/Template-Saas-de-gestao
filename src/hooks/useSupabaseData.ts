@@ -71,7 +71,7 @@ function useRealtimeTable<T>(table: string, filterFilial: boolean = true) {
   const { selectedFilial } = useFilial();
 
   const fetchData = useCallback(async () => {
-    let query = supabase.from(table).select("*");
+    let query = (supabase as any).from(table).select("*");
     if (filterFilial && selectedFilial !== "all") {
       query = query.eq("filial_id", selectedFilial);
     }
