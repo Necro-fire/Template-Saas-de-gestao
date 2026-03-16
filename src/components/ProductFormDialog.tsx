@@ -60,6 +60,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setDetail("");
     setFilial("");
     setStock("");
+    setWholesaleEnabled(false);
+    setWholesalePrice("");
+    setWholesaleMinQty("");
     setImageFile(null);
     setImagePreview(null);
   };
