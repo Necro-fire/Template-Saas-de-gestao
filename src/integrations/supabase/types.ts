@@ -20,14 +20,18 @@ export type Database = {
           cnpj: string
           created_at: string
           credit_limit: number
+          data_nascimento: string | null
           email: string
+          endereco: string
           filial_id: string
           id: string
+          observacoes: string
           phone: string
           responsible_name: string
           state: string
           status: string
           store_name: string
+          tipo_cliente: string
           whatsapp: string
         }
         Insert: {
@@ -35,14 +39,18 @@ export type Database = {
           cnpj?: string
           created_at?: string
           credit_limit?: number
+          data_nascimento?: string | null
           email?: string
+          endereco?: string
           filial_id?: string
           id?: string
+          observacoes?: string
           phone?: string
           responsible_name: string
           state?: string
           status?: string
           store_name: string
+          tipo_cliente?: string
           whatsapp?: string
         }
         Update: {
@@ -50,14 +58,18 @@ export type Database = {
           cnpj?: string
           created_at?: string
           credit_limit?: number
+          data_nascimento?: string | null
           email?: string
+          endereco?: string
           filial_id?: string
           id?: string
+          observacoes?: string
           phone?: string
           responsible_name?: string
           state?: string
           status?: string
           store_name?: string
+          tipo_cliente?: string
           whatsapp?: string
         }
         Relationships: []
