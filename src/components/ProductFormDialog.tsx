@@ -187,6 +187,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           </div>
 
           <div>
+            <Label>Tipo de Produto</Label>
+            <Select value={tipoProdutoId} onValueChange={setTipoProdutoId}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem tipo</SelectItem>
+                {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label htmlFor="product-barcode">Código de barras</Label>
             <Input id="product-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Ex: 7891234567890" className="mt-1.5" />
           </div>
