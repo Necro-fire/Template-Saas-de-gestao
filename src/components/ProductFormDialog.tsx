@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { NumericStepper } from "@/components/ui/numeric-stepper";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
@@ -26,6 +27,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [stock, setStock] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [wholesaleEnabled, setWholesaleEnabled] = useState(false);
+  const [wholesalePrice, setWholesalePrice] = useState("");
+  const [wholesaleMinQty, setWholesaleMinQty] = useState("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +43,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setDetail(product.description || "");
       setFilial(product.filial_id);
       setStock(String(product.stock));
+      setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
+      setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
+      setWholesaleMinQty(product.wholesale_min_qty > 0 ? String(product.wholesale_min_qty) : "");
       setImagePreview(product.image_url || null);
       setImageFile(null);
     } else {
@@ -53,6 +60,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setDetail("");
     setFilial("");
     setStock("");
+    setWholesaleEnabled(false);
+    setWholesalePrice("");
+    setWholesaleMinQty("");
     setImageFile(null);
     setImagePreview(null);
   };
@@ -92,6 +102,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         imageUrl = await uploadImage(imageFile);
       }
 
+      const wholesaleData = wholesaleEnabled
+        ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
+        : { wholesale_price: 0, wholesale_min_qty: 0 };
+
       if (isEditing) {
         const { error } = await (supabase as any).from("produtos").update({
           model: name.trim(),
@@ -101,6 +115,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           stock: stock ? Number(stock) : product!.stock,
           filial_id: filial,
+          ...wholesaleData,
         }).eq("id", product!.id);
         if (error) throw error;
         toast.success("Produto atualizado com sucesso!");
@@ -116,6 +131,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           filial_id: fId,
           stock: stock ? Number(stock) : 0,
+          ...wholesaleData,
         }));
         const { error } = await (supabase as any).from("produtos").insert(products);
         if (error) throw error;
@@ -184,6 +200,26 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <div>
             <Label htmlFor="product-detail">Detalhe (opcional)</Label>
             <Textarea id="product-detail" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Descrição ou observações" className="mt-1.5 min-h-[60px]" />
+          </div>
+
+          {/* Wholesale Section */}
+          <div className="rounded-lg border p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="wholesale-toggle" className="font-medium">Configuração de Atacado</Label>
+              <Switch id="wholesale-toggle" checked={wholesaleEnabled} onCheckedChange={setWholesaleEnabled} />
+            </div>
+            {wholesaleEnabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="wholesale-min">Qtd mínima *</Label>
+                  <Input id="wholesale-min" type="number" min="2" value={wholesaleMinQty} onChange={(e) => setWholesaleMinQty(e.target.value)} placeholder="Ex: 10" className="mt-1.5" />
+                </div>
+                <div>
+                  <Label htmlFor="wholesale-price">Preço atacado (R$) *</Label>
+                  <Input id="wholesale-price" type="number" min="0" step="0.01" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

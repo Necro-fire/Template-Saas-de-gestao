@@ -33,12 +33,20 @@ export default function PDV() {
   const { data: products } = useProducts();
   const { data: clients } = useClients();
 
-  const totalQty = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const isWholesale = totalQty >= 5;
+  const getPrice = (product: DbProduct, quantity: number) => {
+    const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
+    if (hasWholesale && quantity >= product.wholesale_min_qty) {
+      return Number(product.wholesale_price);
+    }
+    return Number(product.retail_price);
+  };
 
-  const getPrice = (product: DbProduct) => isWholesale ? Number(product.wholesale_price) : Number(product.retail_price);
+  const isItemWholesale = (item: CartItem) => {
+    return item.product.wholesale_price > 0 && item.product.wholesale_min_qty > 0 && item.quantity >= item.product.wholesale_min_qty;
+  };
 
-  const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product) * item.quantity, 0);
+  const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product, item.quantity) * item.quantity, 0);
+  const hasAnyWholesale = cart.some(isItemWholesale);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
@@ -62,14 +70,14 @@ export default function PDV() {
         const updated = prev.map(i =>
           i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
         );
-        const newTotal = updated.reduce((acc, i) => acc + i.quantity, 0);
-        if (newTotal === 5) toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
+        // Check if this addition triggers wholesale for this product
+        const newQty = existing.quantity + 1;
+        if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
+          toast.success(`Atacado aplicado para ${product.model}!`, { duration: 3000 });
+        }
         return updated;
       }
-      const newCart = [...prev, { product, quantity: 1 }];
-      const newTotal = newCart.reduce((acc, i) => acc + i.quantity, 0);
-      if (newTotal === 5) toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
-      return newCart;
+      return [...prev, { product, quantity: 1 }];
     });
   }, []);
 
@@ -120,7 +128,7 @@ export default function PDV() {
         product_code: i.product.code,
         product_model: i.product.model,
         quantity: i.quantity,
-        unit_price: getPrice(i.product),
+        unit_price: getPrice(i.product, i.quantity),
       }));
 
       await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId);
@@ -229,7 +237,7 @@ export default function PDV() {
                       <h3 className="text-ui font-medium truncate">{product.model}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
-                        <span className="text-ui font-medium tabular-nums text-primary">R$ {getPrice(product)}</span>
+                        <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
                       </div>
                     </div>
                   </button>
@@ -251,7 +259,7 @@ export default function PDV() {
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-ui font-semibold">Sacola</h2>
-              {isWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
+              {hasAnyWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
             </div>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger className="h-9">
@@ -278,7 +286,10 @@ export default function PDV() {
                     max={item.product.stock}
                     size="sm"
                   />
-                  <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product) * item.quantity).toFixed(0)}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product, item.quantity) * item.quantity).toFixed(0)}</span>
+                    {isItemWholesale(item) && <Badge variant="outline" className="text-[10px] px-1 py-0 text-success border-success">Atacado</Badge>}
+                  </div>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3 w-3" /></Button>
                 </motion.div>
               ))}
@@ -308,12 +319,12 @@ export default function PDV() {
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
-                <span>{totalQty} {totalQty === 1 ? "item" : "itens"}</span>
-                <span>{isWholesale ? "Preço atacado" : "Preço varejo"}</span>
+                <span>{cart.reduce((a, i) => a + i.quantity, 0)} {cart.reduce((a, i) => a + i.quantity, 0) === 1 ? "item" : "itens"}</span>
+                {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
               </div>
               <div className="flex justify-between text-subhead font-semibold">
                 <span>Total</span>
-                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${isWholesale ? "text-success" : "text-foreground"}`}>
+                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${hasAnyWholesale ? "text-success" : "text-foreground"}`}>
                   R$ {subtotal.toFixed(2)}
                 </motion.span>
               </div>
