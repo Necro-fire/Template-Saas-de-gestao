@@ -159,7 +159,7 @@ export async function createVenda(
     total: i.unit_price * i.quantity,
   }));
 
-  const { error: itemsError } = await supabase
+  const { error: itemsError } = await (supabase as any)
     .from("venda_items")
     .insert(vendaItems);
 
