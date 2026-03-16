@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { filiais } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
+import { toast } from "sonner";
+
+export const LOW_STOCK_THRESHOLD = 3;
 
 export interface ProductFilterValues {
   search: string;
@@ -37,6 +40,12 @@ export function useProductFilters() {
   return { filters, setFilters };
 }
 
+export function getStockStatus(stock: number): "in_stock" | "low_stock" | "out_of_stock" {
+  if (stock === 0) return "out_of_stock";
+  if (stock <= LOW_STOCK_THRESHOLD) return "low_stock";
+  return "in_stock";
+}
+
 export function applyProductFilters<T extends { model: string; code: string; color: string; stock: number; min_stock: number; retail_price: number; filial_id: string }>(
   products: T[],
   filters: ProductFilterValues
@@ -48,9 +57,12 @@ export function applyProductFilters<T extends { model: string; code: string; col
     }
     if (filters.tipo !== "all" && (p as any).tipo_produto_id !== filters.tipo) return false;
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
-    if (filters.stockStatus === "in_stock" && p.stock <= 0) return false;
-    if (filters.stockStatus === "low_stock" && !(p.stock > 0 && p.stock <= p.min_stock)) return false;
-    if (filters.stockStatus === "out_of_stock" && p.stock !== 0) return false;
+
+    const status = getStockStatus(p.stock);
+    if (filters.stockStatus === "in_stock" && status !== "in_stock") return false;
+    if (filters.stockStatus === "low_stock" && status !== "low_stock") return false;
+    if (filters.stockStatus === "out_of_stock" && status !== "out_of_stock") return false;
+
     if (filters.priceMin && Number(p.retail_price) < Number(filters.priceMin)) return false;
     if (filters.priceMax && Number(p.retail_price) > Number(filters.priceMax)) return false;
     return true;
@@ -61,6 +73,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const { data: tipos } = useProductTypes();
   const [draft, setDraft] = useState<ProductFilterValues>({ ...filters });
   const [open, setOpen] = useState(false);
+  const [priceError, setPriceError] = useState("");
 
   const activeCount = [
     filters.tipo !== "all",
@@ -70,7 +83,17 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
     !!filters.priceMax,
   ].filter(Boolean).length;
 
+  const validatePrice = (d: ProductFilterValues): boolean => {
+    if (d.priceMin && d.priceMax && Number(d.priceMin) > Number(d.priceMax)) {
+      setPriceError("O preço mínimo não pode ser maior que o preço máximo.");
+      return false;
+    }
+    setPriceError("");
+    return true;
+  };
+
   const handleApply = () => {
+    if (!validatePrice(draft)) return;
     onChange({ ...draft, search: filters.search });
     setOpen(false);
   };
@@ -78,6 +101,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const handleClear = () => {
     const cleared = { ...emptyFilters, search: filters.search };
     setDraft(cleared);
+    setPriceError("");
     onChange(cleared);
     setOpen(false);
   };
@@ -94,7 +118,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
         />
       </div>
 
-      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setDraft({ ...filters }); }}>
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) { setDraft({ ...filters }); setPriceError(""); } }}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 gap-1.5">
             <Filter className="h-3.5 w-3.5" />
@@ -153,8 +177,8 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="in_stock">Em estoque</SelectItem>
-                <SelectItem value="low_stock">Estoque baixo</SelectItem>
+                <SelectItem value="in_stock">Em estoque (&gt; 3 un.)</SelectItem>
+                <SelectItem value="low_stock">Estoque baixo (≤ 3 un.)</SelectItem>
                 <SelectItem value="out_of_stock">Sem estoque</SelectItem>
               </SelectContent>
             </Select>
@@ -168,7 +192,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                 min="0"
                 placeholder="Mín"
                 value={draft.priceMin}
-                onChange={(e) => setDraft({ ...draft, priceMin: e.target.value })}
+                onChange={(e) => { setDraft({ ...draft, priceMin: e.target.value }); setPriceError(""); }}
                 className="h-8 text-sm"
               />
               <Input
@@ -176,10 +200,13 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                 min="0"
                 placeholder="Máx"
                 value={draft.priceMax}
-                onChange={(e) => setDraft({ ...draft, priceMax: e.target.value })}
+                onChange={(e) => { setDraft({ ...draft, priceMax: e.target.value }); setPriceError(""); }}
                 className="h-8 text-sm"
               />
             </div>
+            {priceError && (
+              <p className="text-[11px] text-destructive">{priceError}</p>
+            )}
           </div>
 
           <div className="flex gap-2 pt-1">
