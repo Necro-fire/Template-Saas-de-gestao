@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
+import { useProductTypes } from "@/hooks/useProductTypes";
 
 interface ProductFormDialogProps {
   open: boolean;
