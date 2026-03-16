@@ -7,7 +7,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
 import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes } from "@/hooks/useProductTypes";
-import { ProductFilters, useProductFilters, applyProductFilters } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
 
 export default function Estoque() {
   const { selectedFilial } = useFilial();
@@ -18,8 +18,8 @@ export default function Estoque() {
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
   const totalStock = filtered.reduce((acc, p) => acc + p.stock, 0);
-  const lowStock = filtered.filter(p => p.stock <= p.min_stock && p.stock > 0).length;
-  const outOfStock = filtered.filter(p => p.stock === 0).length;
+  const lowStock = filtered.filter(p => getStockStatus(p.stock) === "low_stock").length;
+  const outOfStock = filtered.filter(p => getStockStatus(p.stock) === "out_of_stock").length;
 
   const getTypeName = (id: string | null) => {
     if (!id) return null;
@@ -99,10 +99,11 @@ export default function Estoque() {
                           <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                         )}
                         <Badge
-                          variant={p.stock === 0 ? "destructive" : p.stock <= p.min_stock ? "outline" : "secondary"}
+                          variant={getStockStatus(p.stock) === "out_of_stock" ? "destructive" : getStockStatus(p.stock) === "low_stock" ? "outline" : "secondary"}
                           className="tabular-nums text-caption"
                         >
                           {p.stock} un.
+                          {getStockStatus(p.stock) === "low_stock" && " ⚠"}
                         </Badge>
                         <span className="text-caption text-muted-foreground tabular-nums">mín: {p.min_stock}</span>
                       </div>
