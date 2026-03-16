@@ -38,8 +38,9 @@ export default function PDV() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
   const [submitting, setSubmitting] = useState(false);
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, setSelectedFilial } = useFilial();
   const searchRef = useRef<HTMLInputElement>(null);
+  const [pendingFilial, setPendingFilial] = useState<string | null>(null);
 
   const { data: products } = useProducts();
   const { data: clients } = useClients();
