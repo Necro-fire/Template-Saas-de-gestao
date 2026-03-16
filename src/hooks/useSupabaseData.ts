@@ -132,7 +132,7 @@ export async function createVenda(
     }
   }
 
-  const { data: venda, error: vendaError } = await supabase
+  const { data: venda, error: vendaError } = await (supabase as any)
     .from("vendas")
     .insert({
       client_id: clientId,
