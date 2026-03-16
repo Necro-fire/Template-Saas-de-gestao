@@ -38,16 +38,24 @@ export default function EmitirNF() {
         <p className="text-ui text-muted-foreground">Selecione uma venda para gerar a nota fiscal</p>
       </div>
 
-      <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
-        <SelectTrigger className="h-9">
-          <SelectValue placeholder="Selecionar venda..." />
-        </SelectTrigger>
-        <SelectContent>
-          {mockSales.map(s => (
-            <SelectItem key={s.id} value={s.id}>Venda #{s.number} — {s.clientName} — R$ {s.total.toFixed(2)}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {mockSales.length > 0 ? (
+        <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Selecionar venda..." />
+          </SelectTrigger>
+          <SelectContent>
+            {mockSales.map(s => (
+              <SelectItem key={s.id} value={s.id}>Venda #{s.number} — {s.clientName} — R$ {s.total.toFixed(2)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <FileText className="h-12 w-12 mb-3 opacity-30" />
+          <p className="text-ui font-medium">Nenhuma venda disponível</p>
+          <p className="text-caption mt-1">Registre vendas para poder emitir notas fiscais</p>
+        </div>
+      )}
 
       {sale && (
         <>

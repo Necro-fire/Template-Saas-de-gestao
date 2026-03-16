@@ -5,12 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { mockEmpresa } from "@/data/mockData";
 import { toast } from "sonner";
 
 export default function Empresas() {
-  const [empresa] = useState(mockEmpresa);
-
   return (
     <div className="p-4 space-y-4 max-w-2xl">
       <div>
@@ -26,24 +23,24 @@ export default function Empresas() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1 col-span-2">
               <Label className="text-caption">Razão Social</Label>
-              <Input defaultValue={empresa.razaoSocial} className="h-9" />
+              <Input placeholder="Razão social da empresa" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Nome Fantasia</Label>
-              <Input defaultValue={empresa.nomeFantasia} className="h-9" />
+              <Input placeholder="Nome fantasia" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">CNPJ</Label>
-              <Input defaultValue={empresa.cnpj} className="h-9" />
+              <Input placeholder="00.000.000/0000-00" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Inscrição Estadual</Label>
-              <Input defaultValue={empresa.inscricaoEstadual} className="h-9" />
+              <Input placeholder="Inscrição estadual" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Regime Tributário</Label>
-              <Select defaultValue={empresa.regimeTributario}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <Select>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                   <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
@@ -53,7 +50,7 @@ export default function Empresas() {
             </div>
             <div className="space-y-1">
               <Label className="text-caption">CNAE</Label>
-              <Input defaultValue={empresa.cnae} className="h-9" />
+              <Input placeholder="CNAE" className="h-9" />
             </div>
           </div>
 
@@ -62,27 +59,27 @@ export default function Empresas() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1 col-span-2">
               <Label className="text-caption">Endereço</Label>
-              <Input defaultValue={empresa.endereco} className="h-9" />
+              <Input placeholder="Endereço completo" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Cidade</Label>
-              <Input defaultValue={empresa.cidade} className="h-9" />
+              <Input placeholder="Cidade" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Estado</Label>
-              <Input defaultValue={empresa.estado} className="h-9" />
+              <Input placeholder="UF" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">CEP</Label>
-              <Input defaultValue={empresa.cep} className="h-9" />
+              <Input placeholder="00000-000" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Telefone</Label>
-              <Input defaultValue={empresa.telefone} className="h-9" />
+              <Input placeholder="(00) 0000-0000" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Email</Label>
-              <Input defaultValue={empresa.email} className="h-9" />
+              <Input placeholder="email@empresa.com" className="h-9" />
             </div>
           </div>
 
@@ -91,12 +88,12 @@ export default function Empresas() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label className="text-caption">Série da NF</Label>
-              <Input defaultValue={empresa.serieNF} className="h-9" />
+              <Input placeholder="1" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Ambiente</Label>
-              <Select defaultValue={empresa.ambiente}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <Select>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="homologacao">Homologação</SelectItem>
                   <SelectItem value="producao">Produção</SelectItem>
@@ -105,11 +102,11 @@ export default function Empresas() {
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Código Município</Label>
-              <Input defaultValue={empresa.codigoMunicipio} className="h-9" />
+              <Input placeholder="Código do município" className="h-9" />
             </div>
             <div className="space-y-1">
               <Label className="text-caption">Código IBGE</Label>
-              <Input defaultValue={empresa.codigoIBGE} className="h-9" />
+              <Input placeholder="Código IBGE" className="h-9" />
             </div>
           </div>
 

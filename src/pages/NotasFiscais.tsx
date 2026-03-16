@@ -31,25 +31,27 @@ export default function NotasFiscais() {
         <p className="text-ui text-muted-foreground">Gestão de notas fiscais emitidas</p>
       </div>
 
-      <div className="flex gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por cliente ou número..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
+      {mockNotasFiscais.length > 0 && (
+        <div className="flex gap-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por cliente ou número..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40 h-9">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="autorizada">Autorizada</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="cancelada">Cancelada</SelectItem>
+              <SelectItem value="rejeitada">Rejeitada</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40 h-9">
-            <Filter className="h-3 w-3 mr-1" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="autorizada">Autorizada</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="cancelada">Cancelada</SelectItem>
-            <SelectItem value="rejeitada">Rejeitada</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      )}
 
       <div className="space-y-1">
         {filtered.map(nf => {
@@ -88,9 +90,10 @@ export default function NotasFiscais() {
           );
         })}
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p className="text-ui">Nenhuma nota encontrada</p>
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <FileText className="h-12 w-12 mb-3 opacity-30" />
+            <p className="text-ui font-medium">Nenhuma nota encontrada</p>
+            <p className="text-caption mt-1">As notas fiscais emitidas aparecerão aqui</p>
           </div>
         )}
       </div>

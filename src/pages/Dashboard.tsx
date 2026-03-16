@@ -52,10 +52,10 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard title="Vendas Hoje" value={`R$ ${todaySalesTotal.toFixed(2)}`} subtitle="+12% vs ontem" icon={ShoppingCart} trend="up" />
-          <MetricCard title="Vendas Mês" value="R$ 12.450,00" subtitle="+8% vs mês anterior" icon={TrendingUp} trend="up" />
+          <MetricCard title="Vendas Hoje" value={`R$ ${todaySalesTotal.toFixed(2)}`} subtitle={sales.length > 0 ? `${sales.length} vendas` : "Sem dados registrados ainda"} icon={ShoppingCart} />
+          <MetricCard title="Vendas Mês" value="R$ 0,00" subtitle="Sem dados registrados ainda" icon={TrendingUp} />
           <MetricCard title="Total em Estoque" value={String(totalStock)} subtitle={`${products.length} produtos`} icon={Package} />
-          <MetricCard title="Clientes Ativos" value={String(clients.length)} subtitle="ativos" icon={Users} trend="up" />
+          <MetricCard title="Clientes Ativos" value={String(clients.length)} subtitle={clients.length > 0 ? "ativos" : "Sem dados registrados ainda"} icon={Users} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -87,7 +87,7 @@ export default function Dashboard() {
                   </div>
                 ))}
                 {outOfStockProducts.length === 0 && lowStockProducts.length === 0 && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">Nenhum alerta</p>
+                  <p className="text-ui text-muted-foreground py-4 text-center">Sem dados registrados ainda.</p>
                 )}
               </div>
             </CardContent>
@@ -112,7 +112,7 @@ export default function Dashboard() {
                   </div>
                 ))}
                 {sales.length === 0 && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">Nenhuma venda</p>
+                  <p className="text-ui text-muted-foreground py-4 text-center">Sem dados registrados ainda.</p>
                 )}
               </div>
             </CardContent>
@@ -124,17 +124,21 @@ export default function Dashboard() {
             <CardTitle className="text-ui font-semibold">Produtos Mais Vendidos</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {products.slice(0, 4).map((p, i) => (
-                <div key={p.id} className="flex items-center gap-3 py-2 px-3 rounded-md bg-secondary/30">
-                  <span className="text-title font-bold text-muted-foreground/30 tabular-nums">{i + 1}</span>
-                  <div className="min-w-0">
-                    <p className="text-ui font-medium truncate">{p.model}</p>
-                    <p className="text-caption text-muted-foreground">{p.code} · {p.stock} un.</p>
+            {products.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {products.slice(0, 4).map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-3 py-2 px-3 rounded-md bg-secondary/30">
+                    <span className="text-title font-bold text-muted-foreground/30 tabular-nums">{i + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-ui font-medium truncate">{p.model}</p>
+                      <p className="text-caption text-muted-foreground">{p.code} · {p.stock} un.</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-ui text-muted-foreground py-4 text-center">Sem dados registrados ainda.</p>
+            )}
           </CardContent>
         </Card>
       </div>

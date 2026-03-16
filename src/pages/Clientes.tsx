@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,33 +36,43 @@ export default function Clientes() {
           </Button>
         </div>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por nome, ótica ou CNPJ..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
-        </div>
+        {clients.length > 0 && (
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por nome, ótica ou CNPJ..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
+          </div>
+        )}
 
-        <div className="space-y-1">
-          {filtered.map(client => (
-            <div key={client.id} className="flex items-center justify-between py-3 px-4 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer">
-              <div>
-                <p className="text-ui font-medium">{client.storeName}</p>
-                <p className="text-caption text-muted-foreground">{client.responsibleName} · {client.cnpj}</p>
-                <p className="text-caption text-muted-foreground">{client.city}/{client.state} · {client.whatsapp}</p>
-              </div>
-              <div className="text-right flex items-center gap-2">
-                {selectedFilial === "all" && (
-                  <Badge variant="outline" className="text-caption">{getFilialName(client.filialId)}</Badge>
-                )}
+        {filtered.length > 0 ? (
+          <div className="space-y-1">
+            {filtered.map(client => (
+              <div key={client.id} className="flex items-center justify-between py-3 px-4 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer">
                 <div>
-                  <Badge variant={client.status === "active" ? "secondary" : "outline"} className="text-caption">
-                    {client.status === "active" ? "Ativo" : "Inativo"}
-                  </Badge>
-                  <p className="text-caption text-muted-foreground mt-1 tabular-nums">Limite: R$ {client.creditLimit.toLocaleString("pt-BR")}</p>
+                  <p className="text-ui font-medium">{client.storeName}</p>
+                  <p className="text-caption text-muted-foreground">{client.responsibleName} · {client.cnpj}</p>
+                  <p className="text-caption text-muted-foreground">{client.city}/{client.state} · {client.whatsapp}</p>
+                </div>
+                <div className="text-right flex items-center gap-2">
+                  {selectedFilial === "all" && (
+                    <Badge variant="outline" className="text-caption">{getFilialName(client.filialId)}</Badge>
+                  )}
+                  <div>
+                    <Badge variant={client.status === "active" ? "secondary" : "outline"} className="text-caption">
+                      {client.status === "active" ? "Ativo" : "Inativo"}
+                    </Badge>
+                    <p className="text-caption text-muted-foreground mt-1 tabular-nums">Limite: R$ {client.creditLimit.toLocaleString("pt-BR")}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <Users className="h-12 w-12 mb-3 opacity-30" />
+            <p className="text-ui font-medium">Nenhum cliente cadastrado</p>
+            <p className="text-caption mt-1">Cadastre seu primeiro cliente para começar</p>
+          </div>
+        )}
       </div>
     </div>
   );
