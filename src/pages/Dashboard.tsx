@@ -71,18 +71,32 @@ export default function Dashboard() {
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-ui font-semibold flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-warning" />
-                Alertas de Estoque
+                Alerta de Estoque
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-1">
+            <CardContent className="p-4 pt-0 space-y-3">
+              {hasAlerts && (
+                <div className="flex flex-wrap gap-2">
+                  {lowStockProducts.length > 0 && (
+                    <Badge variant="outline" className="text-caption border-warning text-warning gap-1">
+                      ⚠ {lowStockProducts.length} {lowStockProducts.length === 1 ? "produto" : "produtos"} com estoque baixo
+                    </Badge>
+                  )}
+                  {outOfStockProducts.length > 0 && (
+                    <Badge variant="outline" className="text-caption border-destructive text-destructive gap-1">
+                      🔴 {outOfStockProducts.length} {outOfStockProducts.length === 1 ? "produto" : "produtos"} sem estoque
+                    </Badge>
+                  )}
+                </div>
+              )}
+              <div className="space-y-1 max-h-[300px] overflow-y-auto">
                 {outOfStockProducts.map(p => (
                   <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-destructive/5">
                     <div>
                       <p className="text-ui font-medium">{p.model}</p>
                       <p className="text-caption text-muted-foreground">{p.code} · {p.color}</p>
                     </div>
-                    <span className="text-caption font-medium text-destructive">Sem estoque</span>
+                    <Badge variant="destructive" className="text-caption">Sem estoque</Badge>
                   </div>
                 ))}
                 {lowStockProducts.map(p => (
@@ -91,11 +105,11 @@ export default function Dashboard() {
                       <p className="text-ui font-medium">{p.model}</p>
                       <p className="text-caption text-muted-foreground">{p.code} · {p.color}</p>
                     </div>
-                    <span className="text-caption font-medium text-warning tabular-nums">{p.stock} un.</span>
+                    <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{p.stock} un. ⚠</Badge>
                   </div>
                 ))}
-                {outOfStockProducts.length === 0 && lowStockProducts.length === 0 && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">Sem dados registrados ainda.</p>
+                {!hasAlerts && (
+                  <p className="text-ui text-muted-foreground py-4 text-center">Todos os produtos com estoque adequado ✓</p>
                 )}
               </div>
             </CardContent>
