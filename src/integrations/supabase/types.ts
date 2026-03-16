@@ -94,6 +94,7 @@ export type Database = {
           status: string
           stock: number
           temple_size: number
+          tipo_produto_id: string | null
           wholesale_min_qty: number
           wholesale_price: number
         }
@@ -116,6 +117,7 @@ export type Database = {
           status?: string
           stock?: number
           temple_size?: number
+          tipo_produto_id?: string | null
           wholesale_min_qty?: number
           wholesale_price?: number
         }
@@ -138,8 +140,35 @@ export type Database = {
           status?: string
           stock?: number
           temple_size?: number
+          tipo_produto_id?: string | null
           wholesale_min_qty?: number
           wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_tipo_produto_id_fkey"
+            columns: ["tipo_produto_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_produto"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tipos_produto: {
+        Row: {
+          created_at: string
+          id: string
+          nome_tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_tipo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_tipo?: string
         }
         Relationships: []
       }
