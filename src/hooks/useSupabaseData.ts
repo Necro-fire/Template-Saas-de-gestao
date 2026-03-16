@@ -20,6 +20,7 @@ export interface DbProduct {
   min_stock: number;
   status: string;
   image_url: string;
+  barcode: string;
   filial_id: string;
   created_at: string;
 }
