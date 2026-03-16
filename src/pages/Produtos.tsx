@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { useFilial, filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
+import { ProductFormDialog } from "@/components/ProductFormDialog";
 
 export default function Produtos() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showForm, setShowForm] = useState(false);
   const { selectedFilial } = useFilial();
 
   const { data: products } = useProducts();
@@ -39,7 +41,7 @@ export default function Produtos() {
             <h1 className="text-title font-semibold tracking-tighter">Produtos</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
-          <Button size="sm" className="gap-1.5">
+          <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
             <Plus className="h-4 w-4" />
             Novo Produto
           </Button>
@@ -78,7 +80,11 @@ export default function Produtos() {
             {filtered.map(product => (
               <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow">
                 <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
-                  <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
+                  )}
                 </div>
                 <div className="mt-3 flex justify-between items-start gap-2">
                   <div className="min-w-0">
@@ -118,6 +124,8 @@ export default function Produtos() {
             <p className="text-caption mt-1">Cadastre seu primeiro produto para começar</p>
           </div>
         )}
+
+        <ProductFormDialog open={showForm} onOpenChange={setShowForm} />
       </div>
     </div>
   );
