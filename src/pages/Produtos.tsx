@@ -120,6 +120,8 @@ export default function Produtos() {
             <p className="text-caption mt-1">Cadastre seu primeiro produto para começar</p>
           </div>
         )}
+
+        <ProductFormDialog open={showForm} onOpenChange={setShowForm} />
       </div>
     </div>
   );
