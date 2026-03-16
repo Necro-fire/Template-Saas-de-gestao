@@ -11,15 +11,14 @@ export function FilialSelector() {
   ];
 
   return (
-    <div className="flex items-center gap-1 px-4 pt-4 pb-0">
-      <Building2 className="h-3.5 w-3.5 text-muted-foreground mr-1.5 shrink-0" />
-      <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
+    <div className="px-4 pt-4 pb-0">
+      <div className="grid grid-cols-4 bg-secondary/50 rounded-lg p-0.5 w-full">
         {options.map(opt => (
           <button
             key={opt.id}
             onClick={() => setSelectedFilial(opt.id)}
             className={cn(
-              "px-3 py-1.5 rounded-md text-caption font-medium transition-all",
+              "py-2 rounded-md text-caption font-medium transition-all text-center",
               selectedFilial === opt.id
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary"
