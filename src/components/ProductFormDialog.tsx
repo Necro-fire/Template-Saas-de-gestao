@@ -120,7 +120,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           stock: stock ? Number(stock) : product!.stock,
           filial_id: filial,
-          tipo_produto_id: tipoProdutoId || null,
+          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
           ...wholesaleData,
         }).eq("id", product!.id);
         if (error) throw error;
