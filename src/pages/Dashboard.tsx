@@ -1,8 +1,8 @@
 import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockProducts, mockSales, mockClients } from "@/data/mockData";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
 
 function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
   title: string; value: string; subtitle: string;
@@ -31,16 +31,21 @@ function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
 }
 
 export default function Dashboard() {
-  const { filterByFilial } = useFilial();
+  const { data: products } = useProducts();
+  const { data: sales } = useVendas();
+  const { data: clients } = useClients();
 
-  const products = filterByFilial(mockProducts);
-  const sales = filterByFilial(mockSales);
-  const clients = filterByFilial(mockClients);
-
-  const lowStockProducts = products.filter(p => p.stock <= p.minStock && p.stock > 0);
+  const lowStockProducts = products.filter(p => p.stock <= p.min_stock && p.stock > 0);
   const outOfStockProducts = products.filter(p => p.stock === 0);
   const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
-  const todaySalesTotal = sales.reduce((acc, s) => acc + s.total, 0);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todaySales = sales.filter(s => s.created_at.slice(0, 10) === today);
+  const todaySalesTotal = todaySales.reduce((acc, s) => acc + Number(s.total), 0);
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthSales = sales.filter(s => s.created_at.slice(0, 7) === currentMonth);
+  const monthSalesTotal = monthSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   return (
     <div>
@@ -52,10 +57,10 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard title="Vendas Hoje" value={`R$ ${todaySalesTotal.toFixed(2)}`} subtitle={sales.length > 0 ? `${sales.length} vendas` : "Sem dados registrados ainda"} icon={ShoppingCart} />
-          <MetricCard title="Vendas Mês" value="R$ 0,00" subtitle="Sem dados registrados ainda" icon={TrendingUp} />
+          <MetricCard title="Vendas Hoje" value={`R$ ${todaySalesTotal.toFixed(2)}`} subtitle={todaySales.length > 0 ? `${todaySales.length} vendas` : "Sem dados registrados ainda"} icon={ShoppingCart} />
+          <MetricCard title="Vendas Mês" value={`R$ ${monthSalesTotal.toFixed(2)}`} subtitle={monthSales.length > 0 ? `${monthSales.length} vendas` : "Sem dados registrados ainda"} icon={TrendingUp} />
           <MetricCard title="Total em Estoque" value={String(totalStock)} subtitle={`${products.length} produtos`} icon={Package} />
-          <MetricCard title="Clientes Ativos" value={String(clients.length)} subtitle={clients.length > 0 ? "ativos" : "Sem dados registrados ainda"} icon={Users} />
+          <MetricCard title="Clientes Ativos" value={String(clients.filter(c => c.status === "active").length)} subtitle={clients.length > 0 ? "ativos" : "Sem dados registrados ainda"} icon={Users} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -99,15 +104,15 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="p-4 pt-0">
               <div className="space-y-1">
-                {sales.map(sale => (
+                {sales.slice(0, 10).map(sale => (
                   <div key={sale.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
                     <div>
                       <p className="text-ui font-medium">#{sale.number}</p>
-                      <p className="text-caption text-muted-foreground">{sale.clientName}</p>
+                      <p className="text-caption text-muted-foreground">{sale.client_name}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-ui font-medium tabular-nums text-primary">R$ {sale.total.toFixed(2)}</p>
-                      <p className="text-caption text-muted-foreground">{sale.paymentMethod}</p>
+                      <p className="text-ui font-medium tabular-nums text-primary">R$ {Number(sale.total).toFixed(2)}</p>
+                      <p className="text-caption text-muted-foreground">{sale.payment_method}</p>
                     </div>
                   </div>
                 ))}
@@ -118,29 +123,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-
-        <Card className="shadow-card">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-ui font-semibold">Produtos Mais Vendidos</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            {products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {products.slice(0, 4).map((p, i) => (
-                  <div key={p.id} className="flex items-center gap-3 py-2 px-3 rounded-md bg-secondary/30">
-                    <span className="text-title font-bold text-muted-foreground/30 tabular-nums">{i + 1}</span>
-                    <div className="min-w-0">
-                      <p className="text-ui font-medium truncate">{p.model}</p>
-                      <p className="text-caption text-muted-foreground">{p.code} · {p.stock} un.</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-ui text-muted-foreground py-4 text-center">Sem dados registrados ainda.</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

@@ -1,12 +1,11 @@
 import { FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { mockSales } from "@/data/mockData";
-import { useFilial, filiais } from "@/contexts/FilialContext";
+import { filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { useVendas } from "@/hooks/useSupabaseData";
 
 export default function Vendas() {
-  const { filterByFilial, selectedFilial } = useFilial();
-  const sales = filterByFilial(mockSales);
+  const { data: sales } = useVendas();
 
   const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
 
@@ -29,17 +28,15 @@ export default function Vendas() {
                   </div>
                   <div>
                     <p className="text-ui font-medium">Venda #{sale.number}</p>
-                    <p className="text-caption text-muted-foreground">{sale.clientName} · {sale.sellerName}</p>
+                    <p className="text-caption text-muted-foreground">{sale.client_name}</p>
                   </div>
                 </div>
                 <div className="text-right flex items-center gap-3">
-                  {selectedFilial === "all" && (
-                    <Badge variant="outline" className="text-caption">{getFilialName(sale.filialId)}</Badge>
-                  )}
+                  <Badge variant="outline" className="text-caption">{getFilialName(sale.filial_id)}</Badge>
                   <Badge variant="secondary" className="text-caption">{sale.origin === "bag" ? "Mala" : "Estoque"}</Badge>
                   <div>
-                    <p className="text-ui font-medium tabular-nums text-primary">R$ {sale.total.toFixed(2)}</p>
-                    <p className="text-caption text-muted-foreground">{sale.paymentMethod} · {sale.date}</p>
+                    <p className="text-ui font-medium tabular-nums text-primary">R$ {Number(sale.total).toFixed(2)}</p>
+                    <p className="text-caption text-muted-foreground">{sale.payment_method} · {new Date(sale.created_at).toLocaleDateString("pt-BR")}</p>
                   </div>
                 </div>
               </div>

@@ -1,16 +1,17 @@
 import { Package, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockProducts } from "@/data/mockData";
-import { useFilial, filiais } from "@/contexts/FilialContext";
+import { filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { useProducts } from "@/hooks/useSupabaseData";
+import { useFilial } from "@/contexts/FilialContext";
 
 export default function Estoque() {
-  const { filterByFilial, selectedFilial } = useFilial();
-  const products = filterByFilial(mockProducts);
+  const { selectedFilial } = useFilial();
+  const { data: products } = useProducts();
 
   const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
-  const lowStock = products.filter(p => p.stock <= p.minStock && p.stock > 0).length;
+  const lowStock = products.filter(p => p.stock <= p.min_stock && p.stock > 0).length;
   const outOfStock = products.filter(p => p.stock === 0).length;
 
   return (
@@ -76,15 +77,15 @@ export default function Estoque() {
                     </div>
                     <div className="flex items-center gap-3">
                       {selectedFilial === "all" && (
-                        <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filialId)?.name}</Badge>
+                        <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                       )}
                       <Badge
-                        variant={p.stock === 0 ? "destructive" : p.stock <= p.minStock ? "outline" : "secondary"}
+                        variant={p.stock === 0 ? "destructive" : p.stock <= p.min_stock ? "outline" : "secondary"}
                         className="tabular-nums text-caption"
                       >
                         {p.stock} un.
                       </Badge>
-                      <span className="text-caption text-muted-foreground tabular-nums">mín: {p.minStock}</span>
+                      <span className="text-caption text-muted-foreground tabular-nums">mín: {p.min_stock}</span>
                     </div>
                   </div>
                 ))}

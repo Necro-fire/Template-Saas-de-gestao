@@ -4,19 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { mockProducts } from "@/data/mockData";
 import { useFilial, filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { useProducts } from "@/hooks/useSupabaseData";
 
 export default function Produtos() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const { filterByFilial, selectedFilial } = useFilial();
+  const { selectedFilial } = useFilial();
 
-  const products = filterByFilial(mockProducts);
-  const materials = useMemo(() => [...new Set(products.map(p => p.material))], [products]);
-  const categories = useMemo(() => [...new Set(products.map(p => p.category))], [products]);
+  const { data: products } = useProducts();
+  const materials = useMemo(() => [...new Set(products.map(p => p.material).filter(Boolean))], [products]);
+  const categories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
 
   const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
 
@@ -86,23 +86,23 @@ export default function Produtos() {
                     <h3 className="text-ui font-semibold truncate">{product.model}</h3>
                     <p className="text-caption text-muted-foreground">{product.color} · {product.material}</p>
                     {selectedFilial === "all" && (
-                      <p className="text-caption text-primary">{getFilialName(product.filialId)}</p>
+                      <p className="text-caption text-primary">{getFilialName(product.filial_id)}</p>
                     )}
                   </div>
                   <span className="text-ui font-medium tabular-nums text-primary whitespace-nowrap">
-                    R$ {product.retailPrice}
+                    R$ {Number(product.retail_price)}
                   </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex gap-2 text-caption font-mono text-muted-foreground">
-                    <span>{product.lensSize}mm</span>
+                    <span>{product.lens_size}mm</span>
                     <span>□</span>
-                    <span>{product.bridgeSize}mm</span>
+                    <span>{product.bridge_size}mm</span>
                     <span>—</span>
-                    <span>{product.templeSize}mm</span>
+                    <span>{product.temple_size}mm</span>
                   </div>
                   <Badge
-                    variant={product.stock === 0 ? "destructive" : product.stock <= product.minStock ? "outline" : "secondary"}
+                    variant={product.stock === 0 ? "destructive" : product.stock <= product.min_stock ? "outline" : "secondary"}
                     className="text-caption tabular-nums"
                   >
                     {product.stock} un.
