@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,27 +8,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImagePlus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { DbProduct } from "@/hooks/useSupabaseData";
 
 interface ProductFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  product?: DbProduct | null;
 }
 
-export function ProductFormDialog({ open, onOpenChange }: ProductFormDialogProps) {
+export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
+  const [stock, setStock] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isEditing = !!product;
+
+  useEffect(() => {
+    if (product) {
+      setName(product.model);
+      setPrice(String(product.retail_price));
+      setDetail(product.description || "");
+      setFilial(product.filial_id);
+      setStock(String(product.stock));
+      setImagePreview(product.image_url || null);
+      setImageFile(null);
+    } else {
+      resetForm();
+    }
+  }, [product, open]);
 
   const resetForm = () => {
     setName("");
     setPrice("");
     setDetail("");
     setFilial("");
+    setStock("");
     setImageFile(null);
     setImagePreview(null);
   };
@@ -43,9 +63,8 @@ export function ProductFormDialog({ open, onOpenChange }: ProductFormDialogProps
   };
 
   const generateCode = () => {
-    const prefix = "PROD";
     const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return `${prefix}-${rand}`;
+    return `PROD-${rand}`;
   };
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -58,51 +77,49 @@ export function ProductFormDialog({ open, onOpenChange }: ProductFormDialogProps
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      toast.error("Informe o nome do produto");
-      return;
-    }
-    if (!price || Number(price) <= 0) {
-      toast.error("Informe um preço válido");
-      return;
-    }
-    if (!filial) {
-      toast.error("Selecione uma filial");
-      return;
-    }
+    if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
+    if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
+    if (!filial) { toast.error("Selecione uma filial"); return; }
 
     setSaving(true);
     try {
-      let imageUrl = "";
+      let imageUrl = isEditing ? (product?.image_url || "") : "";
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
 
-      const filials = filial === "all" ? ["1", "2", "3"] : [filial];
-      const code = generateCode();
+      if (isEditing) {
+        const { error } = await (supabase as any).from("produtos").update({
+          model: name.trim(),
+          retail_price: Number(price),
+          description: detail.trim(),
+          image_url: imageUrl,
+          stock: stock ? Number(stock) : product!.stock,
+          filial_id: filial,
+        }).eq("id", product!.id);
+        if (error) throw error;
+        toast.success("Produto atualizado com sucesso!");
+      } else {
+        const filials = filial === "all" ? ["1", "2", "3"] : [filial];
+        const code = generateCode();
+        const products = filials.map((fId) => ({
+          code,
+          model: name.trim(),
+          retail_price: Number(price),
+          description: detail.trim(),
+          image_url: imageUrl,
+          filial_id: fId,
+          stock: stock ? Number(stock) : 0,
+        }));
+        const { error } = await (supabase as any).from("produtos").insert(products);
+        if (error) throw error;
+        toast.success(filials.length > 1 ? "Produto cadastrado em todas as filiais!" : "Produto cadastrado com sucesso!");
+      }
 
-      const products = filials.map((fId) => ({
-        code,
-        model: name.trim(),
-        retail_price: Number(price),
-        description: detail.trim(),
-        image_url: imageUrl,
-        filial_id: fId,
-        stock: 0,
-      }));
-
-      const { error } = await (supabase as any).from("produtos").insert(products);
-      if (error) throw error;
-
-      toast.success(
-        filials.length > 1
-          ? "Produto cadastrado em todas as filiais!"
-          : "Produto cadastrado com sucesso!"
-      );
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Erro ao cadastrar produto");
+      toast.error(err.message || "Erro ao salvar produto");
     } finally {
       setSaving(false);
     }
@@ -110,22 +127,16 @@ export function ProductFormDialog({ open, onOpenChange }: ProductFormDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Produto</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Produto" : "Novo Produto"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Image upload */}
           <div>
             <Label>Imagem do produto</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -142,46 +153,27 @@ export function ProductFormDialog({ open, onOpenChange }: ProductFormDialogProps
             </button>
           </div>
 
-          {/* Name */}
           <div>
             <Label htmlFor="product-name">Nome do produto *</Label>
-            <Input
-              id="product-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Armação Ray-Ban RB5154"
-              className="mt-1.5"
-            />
+            <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
           </div>
 
-          {/* Price */}
-          <div>
-            <Label htmlFor="product-price">Preço (R$) *</Label>
-            <Input
-              id="product-price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="0,00"
-              className="mt-1.5"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="product-price">Preço (R$) *</Label>
+              <Input id="product-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="product-stock">Quantidade disponível</Label>
+              <Input id="product-stock" type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" className="mt-1.5" />
+            </div>
           </div>
 
-          {/* Detail */}
           <div>
             <Label htmlFor="product-detail">Detalhe (opcional)</Label>
-            <Textarea
-              id="product-detail"
-              value={detail}
-              onChange={(e) => setDetail(e.target.value)}
-              placeholder="Descrição ou observações sobre o produto"
-              className="mt-1.5 min-h-[60px]"
-            />
+            <Textarea id="product-detail" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Descrição ou observações" className="mt-1.5 min-h-[60px]" />
           </div>
 
-          {/* Filial */}
           <div>
             <Label>Filial *</Label>
             <Select value={filial} onValueChange={setFilial}>
@@ -192,19 +184,17 @@ export function ProductFormDialog({ open, onOpenChange }: ProductFormDialogProps
                 <SelectItem value="1">Filial 1</SelectItem>
                 <SelectItem value="2">Filial 2</SelectItem>
                 <SelectItem value="3">Filial 3</SelectItem>
-                <SelectItem value="all">Todas as Filiais</SelectItem>
+                {!isEditing && <SelectItem value="all">Todas as Filiais</SelectItem>}
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-            Cadastrar
+            {isEditing ? "Salvar" : "Cadastrar"}
           </Button>
         </DialogFooter>
       </DialogContent>

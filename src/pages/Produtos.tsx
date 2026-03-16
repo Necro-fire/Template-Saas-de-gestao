@@ -1,19 +1,24 @@
 import { useState, useMemo } from "react";
-import { Search, Filter, Plus, Package } from "lucide-react";
+import { Search, Filter, Plus, Package, Pencil, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useFilial, filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProducts } from "@/hooks/useSupabaseData";
+import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Produtos() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
   const { selectedFilial } = useFilial();
 
   const { data: products } = useProducts();
@@ -32,6 +37,23 @@ export default function Produtos() {
     });
   }, [search, materialFilter, categoryFilter, products]);
 
+  const handleDelete = async () => {
+    if (!deletingProduct) return;
+    const { error } = await (supabase as any).from("produtos").delete().eq("id", deletingProduct.id);
+    if (error) { toast.error("Erro ao excluir produto"); } else { toast.success("Produto excluído"); }
+    setDeletingProduct(null);
+  };
+
+  const handleEdit = (product: DbProduct) => {
+    setEditingProduct(product);
+    setShowForm(true);
+  };
+
+  const handleFormClose = (open: boolean) => {
+    setShowForm(open);
+    if (!open) setEditingProduct(null);
+  };
+
   return (
     <div>
       <FilialSelector />
@@ -41,7 +63,7 @@ export default function Produtos() {
             <h1 className="text-title font-semibold tracking-tighter">Produtos</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={() => setShowForm(true)}>
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
             <Plus className="h-4 w-4" />
             Novo Produto
           </Button>
@@ -78,7 +100,17 @@ export default function Produtos() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filtered.map(product => (
-              <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow">
+              <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
+                {/* Edit/Delete buttons */}
+                <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => setDeletingProduct(product)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
                 <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
                   {product.image_url ? (
                     <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
@@ -125,7 +157,22 @@ export default function Produtos() {
           </div>
         )}
 
-        <ProductFormDialog open={showForm} onOpenChange={setShowForm} />
+        <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
+
+        <AlertDialog open={!!deletingProduct} onOpenChange={(o) => !o && setDeletingProduct(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O produto "{deletingProduct?.model}" será removido permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
