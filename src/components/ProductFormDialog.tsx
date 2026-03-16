@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImagePlus, Loader2 } from "lucide-react";
+import { NumericStepper } from "@/components/ui/numeric-stepper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";

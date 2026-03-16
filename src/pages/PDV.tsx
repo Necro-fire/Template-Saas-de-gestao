@@ -271,11 +271,13 @@ export default function PDV() {
                     <p className="text-ui font-medium truncate">{item.product.model}</p>
                     <p className="text-caption text-muted-foreground">{item.product.barcode || item.product.code} · {item.product.color}</p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, -1)}><Minus className="h-3 w-3" /></Button>
-                    <span className="text-ui font-medium tabular-nums w-6 text-center">{item.quantity}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, 1)}><Plus className="h-3 w-3" /></Button>
-                  </div>
+                  <NumericStepper
+                    value={item.quantity}
+                    onChange={(v) => updateQuantity(item.product.id, v - item.quantity)}
+                    min={1}
+                    max={item.product.stock}
+                    size="sm"
+                  />
                   <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product) * item.quantity).toFixed(0)}</span>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3 w-3" /></Button>
                 </motion.div>
