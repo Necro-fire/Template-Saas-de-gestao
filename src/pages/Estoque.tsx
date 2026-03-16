@@ -18,8 +18,8 @@ export default function Estoque() {
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
   const totalStock = filtered.reduce((acc, p) => acc + p.stock, 0);
-  const lowStock = filtered.filter(p => p.stock <= p.min_stock && p.stock > 0).length;
-  const outOfStock = filtered.filter(p => p.stock === 0).length;
+  const lowStock = filtered.filter(p => getStockStatus(p.stock) === "low_stock").length;
+  const outOfStock = filtered.filter(p => getStockStatus(p.stock) === "out_of_stock").length;
 
   const getTypeName = (id: string | null) => {
     if (!id) return null;
