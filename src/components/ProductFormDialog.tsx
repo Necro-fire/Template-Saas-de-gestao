@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
+import { useProductTypes } from "@/hooks/useProductTypes";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [stock, setStock] = useState("");
+  const [tipoProdutoId, setTipoProdutoId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [wholesaleEnabled, setWholesaleEnabled] = useState(false);
@@ -32,6 +34,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [wholesaleMinQty, setWholesaleMinQty] = useState("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: tipos } = useProductTypes();
 
   const isEditing = !!product;
 
@@ -43,6 +46,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setDetail(product.description || "");
       setFilial(product.filial_id);
       setStock(String(product.stock));
+      setTipoProdutoId((product as any).tipo_produto_id || "");
       setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
       setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
       setWholesaleMinQty(product.wholesale_min_qty > 0 ? String(product.wholesale_min_qty) : "");
@@ -60,6 +64,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setDetail("");
     setFilial("");
     setStock("");
+    setTipoProdutoId("");
     setWholesaleEnabled(false);
     setWholesalePrice("");
     setWholesaleMinQty("");
@@ -115,6 +120,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           stock: stock ? Number(stock) : product!.stock,
           filial_id: filial,
+          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
           ...wholesaleData,
         }).eq("id", product!.id);
         if (error) throw error;
@@ -131,6 +137,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           filial_id: fId,
           stock: stock ? Number(stock) : 0,
+          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
           ...wholesaleData,
         }));
         const { error } = await (supabase as any).from("produtos").insert(products);
@@ -177,6 +184,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <div>
             <Label htmlFor="product-name">Nome do produto *</Label>
             <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
+          </div>
+
+          <div>
+            <Label>Tipo de Produto</Label>
+            <Select value={tipoProdutoId} onValueChange={setTipoProdutoId}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem tipo</SelectItem>
+                {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

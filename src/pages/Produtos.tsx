@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Filter, Plus, Package, Pencil, Trash2 } from "lucide-react";
+import { Search, Filter, Plus, Package, Pencil, Trash2, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { useFilial, filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
+import { useProductTypes } from "@/hooks/useProductTypes";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
+import { ProductTypesDialog } from "@/components/ProductTypesDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,16 +18,23 @@ export default function Produtos() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [showTypes, setShowTypes] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
   const { selectedFilial } = useFilial();
 
   const { data: products } = useProducts();
+  const { data: tipos } = useProductTypes();
   const materials = useMemo(() => [...new Set(products.map(p => p.material).filter(Boolean))], [products]);
   const categories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
 
   const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
+  const getTypeName = (tipoProdutoId: string | null) => {
+    if (!tipoProdutoId) return null;
+    return tipos.find(t => t.id === tipoProdutoId)?.nome_tipo || null;
+  };
 
   const filtered = useMemo(() => {
     return products.filter(p => {
@@ -33,9 +42,10 @@ export default function Produtos() {
         p.code.toLowerCase().includes(search.toLowerCase()) || p.color.toLowerCase().includes(search.toLowerCase());
       const matchMaterial = materialFilter === "all" || p.material === materialFilter;
       const matchCategory = categoryFilter === "all" || p.category === categoryFilter;
-      return matchSearch && matchMaterial && matchCategory;
+      const matchType = typeFilter === "all" || (p as any).tipo_produto_id === typeFilter;
+      return matchSearch && matchMaterial && matchCategory && matchType;
     });
-  }, [search, materialFilter, categoryFilter, products]);
+  }, [search, materialFilter, categoryFilter, typeFilter, products]);
 
   const handleDelete = async () => {
     if (!deletingProduct) return;
@@ -63,10 +73,16 @@ export default function Produtos() {
             <h1 className="text-title font-semibold tracking-tighter">Produtos</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
-            <Plus className="h-4 w-4" />
-            Novo Produto
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
+              <Tag className="h-4 w-4" />
+              Tipos
+            </Button>
+            <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+              <Plus className="h-4 w-4" />
+              Novo Produto
+            </Button>
+          </div>
         </div>
 
         {products.length > 0 && (
@@ -94,60 +110,77 @@ export default function Produtos() {
                 {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
+            {tipos.length > 0 && (
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[140px] h-9">
+                  <Tag className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         )}
 
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {filtered.map(product => (
-              <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
-                {/* Edit/Delete buttons */}
-                <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => setDeletingProduct(product)}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+            {filtered.map(product => {
+              const typeName = getTypeName((product as any).tipo_produto_id);
+              return (
+                <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
+                  <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => setDeletingProduct(product)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
 
-                <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
-                  )}
-                </div>
-                <div className="mt-3 flex justify-between items-start gap-2">
-                  <div className="min-w-0">
-                    <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.code}</p>
-                    <h3 className="text-ui font-semibold truncate">{product.model}</h3>
-                    <p className="text-caption text-muted-foreground">{product.color} · {product.material}</p>
-                    {selectedFilial === "all" && (
-                      <p className="text-caption text-primary">{getFilialName(product.filial_id)}</p>
+                  <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
                     )}
                   </div>
-                  <span className="text-ui font-medium tabular-nums text-primary whitespace-nowrap">
-                    R$ {Number(product.retail_price)}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex gap-2 text-caption font-mono text-muted-foreground">
-                    <span>{product.lens_size}mm</span>
-                    <span>□</span>
-                    <span>{product.bridge_size}mm</span>
-                    <span>—</span>
-                    <span>{product.temple_size}mm</span>
+                  <div className="mt-3 flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.code}</p>
+                      <h3 className="text-ui font-semibold truncate">{product.model}</h3>
+                      <p className="text-caption text-muted-foreground">{product.color} · {product.material}</p>
+                      {typeName && (
+                        <Badge variant="outline" className="text-caption mt-1">{typeName}</Badge>
+                      )}
+                      {selectedFilial === "all" && (
+                        <p className="text-caption text-primary">{getFilialName(product.filial_id)}</p>
+                      )}
+                    </div>
+                    <span className="text-ui font-medium tabular-nums text-primary whitespace-nowrap">
+                      R$ {Number(product.retail_price)}
+                    </span>
                   </div>
-                  <Badge
-                    variant={product.stock === 0 ? "destructive" : product.stock <= product.min_stock ? "outline" : "secondary"}
-                    className="text-caption tabular-nums"
-                  >
-                    {product.stock} un.
-                  </Badge>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="flex gap-2 text-caption font-mono text-muted-foreground">
+                      <span>{product.lens_size}mm</span>
+                      <span>□</span>
+                      <span>{product.bridge_size}mm</span>
+                      <span>—</span>
+                      <span>{product.temple_size}mm</span>
+                    </div>
+                    <Badge
+                      variant={product.stock === 0 ? "destructive" : product.stock <= product.min_stock ? "outline" : "secondary"}
+                      className="text-caption tabular-nums"
+                    >
+                      {product.stock} un.
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -158,6 +191,7 @@ export default function Produtos() {
         )}
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
+        <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
 
         <AlertDialog open={!!deletingProduct} onOpenChange={(o) => !o && setDeletingProduct(null)}>
           <AlertDialogContent>
