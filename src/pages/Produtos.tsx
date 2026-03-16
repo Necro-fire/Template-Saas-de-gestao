@@ -80,7 +80,11 @@ export default function Produtos() {
             {filtered.map(product => (
               <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow">
                 <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
-                  <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
+                  )}
                 </div>
                 <div className="mt-3 flex justify-between items-start gap-2">
                   <div className="min-w-0">
