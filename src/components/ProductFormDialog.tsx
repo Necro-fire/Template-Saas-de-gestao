@@ -43,6 +43,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setDetail(product.description || "");
       setFilial(product.filial_id);
       setStock(String(product.stock));
+      setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
+      setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
+      setWholesaleMinQty(product.wholesale_min_qty > 0 ? String(product.wholesale_min_qty) : "");
       setImagePreview(product.image_url || null);
       setImageFile(null);
     } else {
