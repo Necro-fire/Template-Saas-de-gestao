@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Search, Trash2, Plus, Minus, ShoppingCart, Barcode, Keyboard } from "lucide-react";
+import { Search, Trash2, ShoppingCart, Barcode, Keyboard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
