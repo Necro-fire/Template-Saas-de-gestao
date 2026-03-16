@@ -319,12 +319,12 @@ export default function PDV() {
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
-                <span>{totalQty} {totalQty === 1 ? "item" : "itens"}</span>
-                <span>{isWholesale ? "Preço atacado" : "Preço varejo"}</span>
+                <span>{cart.reduce((a, i) => a + i.quantity, 0)} {cart.reduce((a, i) => a + i.quantity, 0) === 1 ? "item" : "itens"}</span>
+                {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
               </div>
               <div className="flex justify-between text-subhead font-semibold">
                 <span>Total</span>
-                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${isWholesale ? "text-success" : "text-foreground"}`}>
+                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${hasAnyWholesale ? "text-success" : "text-foreground"}`}>
                   R$ {subtotal.toFixed(2)}
                 </motion.span>
               </div>
