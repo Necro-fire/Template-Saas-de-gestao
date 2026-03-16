@@ -128,7 +128,7 @@ export default function PDV() {
         product_code: i.product.code,
         product_model: i.product.model,
         quantity: i.quantity,
-        unit_price: getPrice(i.product),
+        unit_price: getPrice(i.product, i.quantity),
       }));
 
       await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId);
