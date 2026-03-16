@@ -26,6 +26,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [stock, setStock] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [wholesaleEnabled, setWholesaleEnabled] = useState(false);
+  const [wholesalePrice, setWholesalePrice] = useState("");
+  const [wholesaleMinQty, setWholesaleMinQty] = useState("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
