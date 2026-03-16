@@ -102,6 +102,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         imageUrl = await uploadImage(imageFile);
       }
 
+      const wholesaleData = wholesaleEnabled
+        ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
+        : { wholesale_price: 0, wholesale_min_qty: 0 };
+
       if (isEditing) {
         const { error } = await (supabase as any).from("produtos").update({
           model: name.trim(),
@@ -111,6 +115,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           stock: stock ? Number(stock) : product!.stock,
           filial_id: filial,
+          ...wholesaleData,
         }).eq("id", product!.id);
         if (error) throw error;
         toast.success("Produto atualizado com sucesso!");
