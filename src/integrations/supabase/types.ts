@@ -74,6 +74,38 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque: {
+        Row: {
+          created_at: string
+          filial_id: string
+          id: string
+          produto_id: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          filial_id?: string
+          id?: string
+          produto_id: string
+          quantidade?: number
+        }
+        Update: {
+          created_at?: string
+          filial_id?: string
+          id?: string
+          produto_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos: {
         Row: {
           altura_lente: number
@@ -89,6 +121,7 @@ export type Database = {
           estilo: string
           filial_id: string
           genero: string
+          hash_produto: string
           id: string
           image_url: string
           is_acessorio: boolean
@@ -123,6 +156,7 @@ export type Database = {
           estilo?: string
           filial_id?: string
           genero?: string
+          hash_produto?: string
           id?: string
           image_url?: string
           is_acessorio?: boolean
@@ -157,6 +191,7 @@ export type Database = {
           estilo?: string
           filial_id?: string
           genero?: string
+          hash_produto?: string
           id?: string
           image_url?: string
           is_acessorio?: boolean
@@ -308,7 +343,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_product_codes: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never

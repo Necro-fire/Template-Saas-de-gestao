@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { NumericStepper } from "@/components/ui/numeric-stepper";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
+import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";
+import { generateProductHash } from "@/lib/productHash";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS, TIPOS_LENTE, SUBCATEGORIAS_ACESSORIOS,
@@ -29,10 +31,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [barcode, setBarcode] = useState("");
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
-  const [stock, setStock] = useState("");
+  const [quantidade, setQuantidade] = useState("1");
   const [tipoProdutoId, setTipoProdutoId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -40,6 +41,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [wholesalePrice, setWholesalePrice] = useState("");
   const [wholesaleMinQty, setWholesaleMinQty] = useState("");
   const [saving, setSaving] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: tipos } = useProductTypes();
 
@@ -67,10 +69,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setReferencia(product.referencia || product.code || "");
       setName(product.model);
       setPrice(String(product.retail_price));
-      setBarcode(product.barcode || "");
       setDetail(product.description || "");
       setFilial(product.filial_id);
-      setStock(String(product.stock));
+      setQuantidade(String(product.stock));
       setTipoProdutoId(product.tipo_produto_id || "");
       setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
       setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
@@ -89,6 +90,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setTempleSize(product.temple_size ? String(product.temple_size) : "");
       setTipoLente(product.tipo_lente || "");
       setSubcategoriaAcessorio(product.subcategoria_acessorio || "");
+      setDuplicateInfo(null);
     } else {
       resetForm();
     }
@@ -99,10 +101,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setReferencia("");
     setName("");
     setPrice("");
-    setBarcode("");
     setDetail("");
     setFilial("");
-    setStock("");
+    setQuantidade("1");
     setTipoProdutoId("");
     setWholesaleEnabled(false);
     setWholesalePrice("");
@@ -121,7 +122,47 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setTempleSize("");
     setTipoLente("");
     setSubcategoriaAcessorio("");
+    setDuplicateInfo(null);
   };
+
+  // Check for duplicates when key fields change (only for new products)
+  useEffect(() => {
+    if (isEditing || !referencia.trim() || !filial) {
+      setDuplicateInfo(null);
+      return;
+    }
+    const hash = generateProductHash({
+      referencia: referencia.trim(),
+      categoriaIdade,
+      genero,
+      estilo,
+      corArmacao,
+      materialAro,
+      materialHaste,
+      lensSize: Number(lensSize) || 0,
+      alturaLente: Number(alturaLente) || 0,
+      bridgeSize: Number(bridgeSize) || 0,
+      templeSize: Number(templeSize) || 0,
+      tipoLente,
+      isAcessorio,
+      subcategoriaAcessorio,
+    });
+
+    const checkDuplicate = async () => {
+      const filials = filial === "all" ? ["1", "2", "3"] : [filial];
+      for (const fId of filials) {
+        const existing = await findProductByHash(hash, fId);
+        if (existing) {
+          setDuplicateInfo(`Produto "${existing.model}" já existe na filial ${fId}. A quantidade será adicionada ao estoque existente.`);
+          return;
+        }
+      }
+      setDuplicateInfo(null);
+    };
+
+    const timeout = setTimeout(checkDuplicate, 500);
+    return () => clearTimeout(timeout);
+  }, [referencia, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, subcategoriaAcessorio, filial, isEditing]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,51 +199,135 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
         : { wholesale_price: 0, wholesale_min_qty: 0 };
 
-      const baseData = {
-        code: referencia.trim(),
+      const hash = generateProductHash({
         referencia: referencia.trim(),
-        model: name.trim(),
-        retail_price: Number(price),
-        barcode: barcode.trim(),
-        description: detail.trim(),
-        image_url: imageUrl,
-        stock: stock ? Number(stock) : (isEditing ? product!.stock : 0),
-        filial_id: isEditing ? filial : undefined,
-        tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
-        is_acessorio: isAcessorio,
-        categoria_idade: isAcessorio ? "" : categoriaIdade,
-        genero: isAcessorio ? "" : genero,
-        estilo: isAcessorio ? "" : estilo,
-        cor_armacao: isAcessorio ? "" : corArmacao,
-        color: isAcessorio ? "" : corArmacao,
-        material_aro: isAcessorio ? "" : materialAro,
-        material_haste: isAcessorio ? "" : materialHaste,
-        material: isAcessorio ? "" : materialAro,
-        lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
-        altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
-        bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
-        temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
-        tipo_lente: isAcessorio ? "" : tipoLente,
-        subcategoria_acessorio: isAcessorio ? subcategoriaAcessorio : "",
-        ...wholesaleData,
-      };
+        categoriaIdade,
+        genero,
+        estilo,
+        corArmacao,
+        materialAro,
+        materialHaste,
+        lensSize: Number(lensSize) || 0,
+        alturaLente: Number(alturaLente) || 0,
+        bridgeSize: Number(bridgeSize) || 0,
+        templeSize: Number(templeSize) || 0,
+        tipoLente,
+        isAcessorio,
+        subcategoriaAcessorio,
+      });
+
+      const qty = Number(quantidade) || 1;
 
       if (isEditing) {
-        const { error } = await (supabase as any).from("produtos").update({
-          ...baseData,
+        // Update existing product
+        const baseData = {
+          referencia: referencia.trim(),
+          model: name.trim(),
+          retail_price: Number(price),
+          description: detail.trim(),
+          image_url: imageUrl,
           filial_id: filial,
-        }).eq("id", product!.id);
+          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
+          is_acessorio: isAcessorio,
+          categoria_idade: isAcessorio ? "" : categoriaIdade,
+          genero: isAcessorio ? "" : genero,
+          estilo: isAcessorio ? "" : estilo,
+          cor_armacao: isAcessorio ? "" : corArmacao,
+          color: isAcessorio ? "" : corArmacao,
+          material_aro: isAcessorio ? "" : materialAro,
+          material_haste: isAcessorio ? "" : materialHaste,
+          material: isAcessorio ? "" : materialAro,
+          lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
+          altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
+          bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
+          temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
+          tipo_lente: isAcessorio ? "" : tipoLente,
+          subcategoria_acessorio: isAcessorio ? subcategoriaAcessorio : "",
+          hash_produto: hash,
+          stock: qty,
+          ...wholesaleData,
+        };
+
+        const { error } = await (supabase as any).from("produtos").update(baseData).eq("id", product!.id);
         if (error) throw error;
+
+        // Sync estoque (set absolute value)
+        const { data: existingEstoque } = await (supabase as any)
+          .from("estoque")
+          .select("id")
+          .eq("produto_id", product!.id)
+          .eq("filial_id", filial)
+          .maybeSingle();
+
+        if (existingEstoque) {
+          await (supabase as any).from("estoque").update({ quantidade: qty }).eq("id", existingEstoque.id);
+        } else {
+          await (supabase as any).from("estoque").insert({ produto_id: product!.id, filial_id: filial, quantidade: qty });
+        }
+
         toast.success("Produto atualizado com sucesso!");
       } else {
+        // New product - check for duplicates
         const filials = filial === "all" ? ["1", "2", "3"] : [filial];
-        const products = filials.map((fId) => ({
-          ...baseData,
-          filial_id: fId,
-        }));
-        const { error } = await (supabase as any).from("produtos").insert(products);
-        if (error) throw error;
-        toast.success(filials.length > 1 ? "Produto cadastrado em todas as filiais!" : "Produto cadastrado com sucesso!");
+
+        for (const fId of filials) {
+          const existing = await findProductByHash(hash, fId);
+
+          if (existing) {
+            // Product exists - just add stock
+            await upsertEstoque(existing.id, fId, qty);
+            toast.success(`Produto "${existing.model}" já existe na filial ${fId}. +${qty} unidades adicionadas ao estoque!`);
+          } else {
+            // Generate auto code and barcode
+            const codes = await generateProductCodes();
+
+            const baseData = {
+              code: codes.code,
+              barcode: codes.barcode,
+              referencia: referencia.trim(),
+              model: name.trim(),
+              retail_price: Number(price),
+              description: detail.trim(),
+              image_url: imageUrl,
+              filial_id: fId,
+              stock: qty,
+              tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
+              is_acessorio: isAcessorio,
+              categoria_idade: isAcessorio ? "" : categoriaIdade,
+              genero: isAcessorio ? "" : genero,
+              estilo: isAcessorio ? "" : estilo,
+              cor_armacao: isAcessorio ? "" : corArmacao,
+              color: isAcessorio ? "" : corArmacao,
+              material_aro: isAcessorio ? "" : materialAro,
+              material_haste: isAcessorio ? "" : materialHaste,
+              material: isAcessorio ? "" : materialAro,
+              lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
+              altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
+              bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
+              temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
+              tipo_lente: isAcessorio ? "" : tipoLente,
+              subcategoria_acessorio: isAcessorio ? subcategoriaAcessorio : "",
+              hash_produto: hash,
+              ...wholesaleData,
+            };
+
+            const { data: newProduct, error } = await (supabase as any).from("produtos").insert(baseData).select().single();
+            if (error) throw error;
+
+            // Create estoque entry
+            await (supabase as any).from("estoque").insert({
+              produto_id: newProduct.id,
+              filial_id: fId,
+              quantidade: qty,
+            });
+
+            toast.success(
+              filials.length > 1
+                ? `Produto cadastrado na filial ${fId}! Código: ${codes.code}`
+                : `Produto cadastrado! Código: ${codes.code} | Código de barras: ${codes.barcode}`
+            );
+          }
+        }
       }
 
       resetForm();
@@ -222,6 +347,14 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Duplicate Detection Banner */}
+          {duplicateInfo && (
+            <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+              <p className="text-caption text-warning">{duplicateInfo}</p>
+            </div>
+          )}
+
           {/* Product Type Toggle */}
           <div className="rounded-lg border p-3 flex items-center justify-between">
             <Label htmlFor="acessorio-toggle" className="font-medium">É um Acessório?</Label>
@@ -259,10 +392,24 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               <Label htmlFor="product-name">Nome do produto *</Label>
               <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
             </div>
-            <div>
-              <Label htmlFor="product-barcode">Código de barras</Label>
-              <Input id="product-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Ex: 7891234567890" className="mt-1.5" />
-            </div>
+            {isEditing && product && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-muted-foreground">Código interno</Label>
+                  <Input value={product.code} disabled className="mt-1.5 bg-muted" />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Código de barras</Label>
+                  <Input value={product.barcode} disabled className="mt-1.5 bg-muted" />
+                </div>
+              </div>
+            )}
+            {!isEditing && (
+              <div className="flex items-center gap-2 text-caption text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>Código interno e código de barras serão gerados automaticamente</span>
+              </div>
+            )}
           </fieldset>
 
           {/* Tipo de Produto */}
@@ -411,16 +558,16 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </fieldset>
           )}
 
-          {/* Preço e Estoque */}
+          {/* Preço e Quantidade */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="product-price">Preço (R$) *</Label>
               <Input id="product-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
-              <Label>Quantidade disponível</Label>
+              <Label>{isEditing ? "Quantidade em estoque" : "Quantidade a adicionar"}</Label>
               <div className="mt-1.5">
-                <NumericStepper value={stock ? Number(stock) : 0} onChange={(v) => setStock(String(v))} min={0} />
+                <NumericStepper value={quantidade ? Number(quantidade) : 1} onChange={(v) => setQuantidade(String(v))} min={isEditing ? 0 : 1} />
               </div>
             </div>
           </div>
@@ -472,7 +619,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-            {isEditing ? "Salvar" : "Cadastrar"}
+            {isEditing ? "Salvar" : duplicateInfo ? "Adicionar ao Estoque" : "Cadastrar"}
           </Button>
         </DialogFooter>
       </DialogContent>

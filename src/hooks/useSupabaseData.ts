@@ -35,6 +35,7 @@ export interface DbProduct {
   subcategoria_acessorio: string;
   is_acessorio: boolean;
   tipo_produto_id: string | null;
+  hash_produto: string;
 }
 
 export interface DbClient {
@@ -82,6 +83,14 @@ export interface DbVendaItem {
   total: number;
 }
 
+export interface DbEstoque {
+  id: string;
+  produto_id: string;
+  filial_id: string;
+  quantidade: number;
+  created_at: string;
+}
+
 function useRealtimeTable<T>(table: string, filterFilial: boolean = true) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,6 +134,67 @@ export function useVendas() {
   return useRealtimeTable<DbVenda>("vendas");
 }
 
+export function useEstoque() {
+  return useRealtimeTable<DbEstoque>("estoque");
+}
+
+export async function generateProductCodes(): Promise<{ code: string; barcode: string }> {
+  const { data, error } = await (supabase as any).rpc("generate_product_codes");
+  if (error) throw new Error(error.message);
+  return data as { code: string; barcode: string };
+}
+
+export async function findProductByHash(hash: string, filialId: string): Promise<DbProduct | null> {
+  const { data, error } = await (supabase as any)
+    .from("produtos")
+    .select("*")
+    .eq("hash_produto", hash)
+    .eq("filial_id", filialId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function upsertEstoque(produtoId: string, filialId: string, quantidade: number) {
+  // Try to find existing
+  const { data: existing } = await (supabase as any)
+    .from("estoque")
+    .select("id, quantidade")
+    .eq("produto_id", produtoId)
+    .eq("filial_id", filialId)
+    .maybeSingle();
+
+  if (existing) {
+    const newQty = existing.quantidade + quantidade;
+    const { error } = await (supabase as any)
+      .from("estoque")
+      .update({ quantidade: newQty })
+      .eq("id", existing.id);
+    if (error) throw new Error(error.message);
+
+    // Sync stock column on produtos
+    await (supabase as any)
+      .from("produtos")
+      .update({ stock: newQty })
+      .eq("id", produtoId);
+
+    return newQty;
+  } else {
+    const { error } = await (supabase as any)
+      .from("estoque")
+      .insert({ produto_id: produtoId, filial_id: filialId, quantidade });
+    if (error) throw new Error(error.message);
+
+    // Sync stock column on produtos
+    await (supabase as any)
+      .from("produtos")
+      .update({ stock: quantidade })
+      .eq("id", produtoId);
+
+    return quantidade;
+  }
+}
+
 export async function createVenda(
   items: { produto_id: string; product_code: string; product_model: string; quantity: number; unit_price: number }[],
   clientId: string | null,
@@ -136,16 +206,18 @@ export async function createVenda(
 ) {
   const total = items.reduce((acc, i) => acc + i.unit_price * i.quantity, 0) - discount;
 
-  // Check stock availability
+  // Check stock availability from estoque
   for (const item of items) {
-    const { data: product } = await (supabase as any)
-      .from("produtos")
-      .select("stock, model")
-      .eq("id", item.produto_id)
-      .single();
-    
-    if (!product || product.stock < item.quantity) {
-      throw new Error(`Estoque insuficiente para ${product?.model || item.product_model}. Disponível: ${product?.stock ?? 0}`);
+    const { data: estoque } = await (supabase as any)
+      .from("estoque")
+      .select("quantidade")
+      .eq("produto_id", item.produto_id)
+      .eq("filial_id", filialId)
+      .maybeSingle();
+
+    const available = estoque?.quantidade ?? 0;
+    if (available < item.quantity) {
+      throw new Error(`Estoque insuficiente para ${item.product_model}. Disponível: ${available}`);
     }
   }
 
