@@ -33,12 +33,20 @@ export default function PDV() {
   const { data: products } = useProducts();
   const { data: clients } = useClients();
 
-  const totalQty = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const isWholesale = totalQty >= 5;
+  const getPrice = (product: DbProduct, quantity: number) => {
+    const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
+    if (hasWholesale && quantity >= product.wholesale_min_qty) {
+      return Number(product.wholesale_price);
+    }
+    return Number(product.retail_price);
+  };
 
-  const getPrice = (product: DbProduct) => isWholesale ? Number(product.wholesale_price) : Number(product.retail_price);
+  const isItemWholesale = (item: CartItem) => {
+    return item.product.wholesale_price > 0 && item.product.wholesale_min_qty > 0 && item.quantity >= item.product.wholesale_min_qty;
+  };
 
-  const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product) * item.quantity, 0);
+  const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product, item.quantity) * item.quantity, 0);
+  const hasAnyWholesale = cart.some(isItemWholesale);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
