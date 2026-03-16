@@ -121,7 +121,7 @@ export async function createVenda(
 
   // Check stock availability
   for (const item of items) {
-    const { data: product } = await supabase
+    const { data: product } = await (supabase as any)
       .from("produtos")
       .select("stock, model")
       .eq("id", item.produto_id)
