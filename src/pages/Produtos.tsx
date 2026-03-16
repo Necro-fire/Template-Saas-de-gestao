@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { useFilial, filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
+import { ProductFormDialog } from "@/components/ProductFormDialog";
 
 export default function Produtos() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [showForm, setShowForm] = useState(false);
   const { selectedFilial } = useFilial();
 
   const { data: products } = useProducts();
