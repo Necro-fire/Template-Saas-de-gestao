@@ -76,70 +76,103 @@ export type Database = {
       }
       produtos: {
         Row: {
+          altura_lente: number
           barcode: string
           bridge_size: number
+          categoria_idade: string
           category: string
           code: string
           color: string
+          cor_armacao: string
           created_at: string
           description: string
+          estilo: string
           filial_id: string
+          genero: string
           id: string
           image_url: string
+          is_acessorio: boolean
           lens_size: number
           material: string
+          material_aro: string
+          material_haste: string
           min_stock: number
           model: string
+          referencia: string
           retail_price: number
           status: string
           stock: number
+          subcategoria_acessorio: string
           temple_size: number
+          tipo_lente: string
           tipo_produto_id: string | null
           wholesale_min_qty: number
           wholesale_price: number
         }
         Insert: {
+          altura_lente?: number
           barcode?: string
           bridge_size?: number
+          categoria_idade?: string
           category?: string
           code: string
           color?: string
+          cor_armacao?: string
           created_at?: string
           description?: string
+          estilo?: string
           filial_id?: string
+          genero?: string
           id?: string
           image_url?: string
+          is_acessorio?: boolean
           lens_size?: number
           material?: string
+          material_aro?: string
+          material_haste?: string
           min_stock?: number
           model: string
+          referencia?: string
           retail_price?: number
           status?: string
           stock?: number
+          subcategoria_acessorio?: string
           temple_size?: number
+          tipo_lente?: string
           tipo_produto_id?: string | null
           wholesale_min_qty?: number
           wholesale_price?: number
         }
         Update: {
+          altura_lente?: number
           barcode?: string
           bridge_size?: number
+          categoria_idade?: string
           category?: string
           code?: string
           color?: string
+          cor_armacao?: string
           created_at?: string
           description?: string
+          estilo?: string
           filial_id?: string
+          genero?: string
           id?: string
           image_url?: string
+          is_acessorio?: boolean
           lens_size?: number
           material?: string
+          material_aro?: string
+          material_haste?: string
           min_stock?: number
           model?: string
+          referencia?: string
           retail_price?: number
           status?: string
           stock?: number
+          subcategoria_acessorio?: string
           temple_size?: number
+          tipo_lente?: string
           tipo_produto_id?: string | null
           wholesale_min_qty?: number
           wholesale_price?: number
