@@ -3,6 +3,7 @@ import {
   Package,
   ShoppingCart,
   Users,
+  UserCog,
   BarChart3,
   Warehouse,
   Wallet,
@@ -36,6 +37,7 @@ const mainNav = [
   { title: "PDV", url: "/pdv", icon: ShoppingCart },
   { title: "Produtos", url: "/produtos", icon: Package },
   { title: "Clientes", url: "/clientes", icon: Users },
+  { title: "Funcionários", url: "/funcionarios", icon: UserCog },
 ];
 
 const managementNav = [

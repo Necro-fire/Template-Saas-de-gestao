@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -11,6 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { mockProducts, mockClients, type Product } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFilial } from "@/contexts/FilialContext";
+import { FilialSelector } from "@/components/FilialSelector";
 
 interface CartItem {
   product: Product;
@@ -23,6 +25,10 @@ export default function PDV() {
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
+  const { filterByFilial } = useFilial();
+
+  const products = filterByFilial(mockProducts);
+  const clients = filterByFilial(mockClients);
 
   const totalQty = cart.reduce((acc, item) => acc + item.quantity, 0);
   const isWholesale = totalQty >= 5;
@@ -32,13 +38,13 @@ export default function PDV() {
   const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product) * item.quantity, 0);
 
   const filteredProducts = useMemo(() => {
-    if (!search) return mockProducts.filter(p => p.status === "active" && p.stock > 0);
-    return mockProducts.filter(p =>
-      p.status === "active" && p.stock > 0 &&
-      (p.model.toLowerCase().includes(search.toLowerCase()) ||
-       p.code.toLowerCase().includes(search.toLowerCase()))
+    const active = products.filter(p => p.status === "active" && p.stock > 0);
+    if (!search) return active;
+    return active.filter(p =>
+      p.model.toLowerCase().includes(search.toLowerCase()) ||
+      p.code.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [search, products]);
 
   const addToCart = (product: Product) => {
     setCart(prev => {
@@ -48,31 +54,21 @@ export default function PDV() {
           i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
         );
         const newTotal = updated.reduce((acc, i) => acc + i.quantity, 0);
-        if (newTotal === 5) {
-          toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
-        }
+        if (newTotal === 5) toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
         return updated;
       }
       const newCart = [...prev, { product, quantity: 1 }];
       const newTotal = newCart.reduce((acc, i) => acc + i.quantity, 0);
-      if (newTotal === 5) {
-        toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
-      }
+      if (newTotal === 5) toast.success("Preço de atacado aplicado (5+ itens)", { duration: 3000 });
       return newCart;
     });
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setCart(prev => {
-      const updated = prev.map(i => {
-        if (i.product.id === productId) {
-          const newQty = Math.max(0, i.quantity + delta);
-          return { ...i, quantity: newQty };
-        }
-        return i;
-      }).filter(i => i.quantity > 0);
-      return updated;
-    });
+    setCart(prev => prev.map(i => {
+      if (i.product.id === productId) return { ...i, quantity: Math.max(0, i.quantity + delta) };
+      return i;
+    }).filter(i => i.quantity > 0));
   };
 
   const removeFromCart = (productId: string) => {
@@ -90,169 +86,122 @@ export default function PDV() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-48px)]">
-      {/* Left - Product Grid */}
-      <div className="flex-[3] flex flex-col border-r overflow-hidden">
-        <div className="p-4 pb-2 space-y-2 shrink-0">
-          <div className="flex items-center justify-between">
-            <h1 className="text-subhead font-semibold tracking-tighter">PDV</h1>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="origin-toggle" className="text-caption text-muted-foreground">
-                {origin === "stock" ? "Estoque" : "Mala"}
-              </Label>
-              <Switch
-                id="origin-toggle"
-                checked={origin === "bag"}
-                onCheckedChange={(checked) => setOrigin(checked ? "bag" : "stock")}
-              />
+    <div className="flex flex-col h-[calc(100vh-48px)]">
+      <FilialSelector />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left - Product Grid */}
+        <div className="flex-[3] flex flex-col border-r overflow-hidden">
+          <div className="p-4 pb-2 space-y-2 shrink-0">
+            <div className="flex items-center justify-between">
+              <h1 className="text-subhead font-semibold tracking-tighter">PDV</h1>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="origin-toggle" className="text-caption text-muted-foreground">
+                  {origin === "stock" ? "Estoque" : "Mala"}
+                </Label>
+                <Switch id="origin-toggle" checked={origin === "bag"} onCheckedChange={(checked) => setOrigin(checked ? "bag" : "stock")} />
+              </div>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar produto..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" autoFocus />
             </div>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar produto..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-              autoFocus
-            />
-          </div>
-        </div>
-        <div className="flex-1 overflow-auto p-4 pt-2">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-            {filteredProducts.map(product => (
-              <button
-                key={product.id}
-                onClick={() => addToCart(product)}
-                className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group"
-              >
-                <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center">
-                  <span className="text-muted-foreground/20 text-subhead font-bold">{product.code}</span>
-                </div>
-                <div className="mt-2">
-                  <p className="text-caption text-muted-foreground">{product.code}</p>
-                  <h3 className="text-ui font-medium truncate">{product.model}</h3>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-caption font-mono text-muted-foreground">
-                      {product.lensSize}□{product.bridgeSize}—{product.templeSize}
-                    </span>
-                    <span className="text-ui font-medium tabular-nums text-primary">
-                      R$ {getPrice(product)}
-                    </span>
+          <div className="flex-1 overflow-auto p-4 pt-2">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+              {filteredProducts.map(product => (
+                <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
+                  <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center">
+                    <span className="text-muted-foreground/20 text-subhead font-bold">{product.code}</span>
                   </div>
-                </div>
-              </button>
-            ))}
+                  <div className="mt-2">
+                    <p className="text-caption text-muted-foreground">{product.code}</p>
+                    <h3 className="text-ui font-medium truncate">{product.model}</h3>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-caption font-mono text-muted-foreground">{product.lensSize}□{product.bridgeSize}—{product.templeSize}</span>
+                      <span className="text-ui font-medium tabular-nums text-primary">R$ {getPrice(product)}</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right - Cart */}
-      <div className="flex-[2] flex flex-col max-w-md">
-        <div className="p-4 pb-2 space-y-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-ui font-semibold">Sacola</h2>
-            {isWholesale && (
-              <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>
+        {/* Right - Cart */}
+        <div className="flex-[2] flex flex-col max-w-md">
+          <div className="p-4 pb-2 space-y-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-ui font-semibold">Sacola</h2>
+              {isWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
+            </div>
+            <Select value={selectedClient} onValueChange={setSelectedClient}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecionar cliente..." />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.storeName}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 overflow-auto p-4 pt-2">
+            <AnimatePresence mode="popLayout">
+              {cart.map(item => (
+                <motion.div key={item.product.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-ui font-medium truncate">{item.product.model}</p>
+                    <p className="text-caption text-muted-foreground">{item.product.code} · {item.product.color}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, -1)}><Minus className="h-3 w-3" /></Button>
+                    <span className="text-ui font-medium tabular-nums w-6 text-center">{item.quantity}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, 1)}><Plus className="h-3 w-3" /></Button>
+                  </div>
+                  <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product) * item.quantity).toFixed(0)}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3 w-3" /></Button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {cart.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <ShoppingCart className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-ui">Sacola vazia</p>
+                <p className="text-caption">Clique nos produtos para adicionar</p>
+              </div>
             )}
           </div>
-          <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Selecionar cliente..." />
-            </SelectTrigger>
-            <SelectContent>
-              {mockClients.map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.storeName}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
-        <div className="flex-1 overflow-auto p-4 pt-2">
-          <AnimatePresence mode="popLayout">
-            {cart.map(item => (
-              <motion.div
-                key={item.product.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: 30 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-ui font-medium truncate">{item.product.model}</p>
-                  <p className="text-caption text-muted-foreground">{item.product.code} · {item.product.color}</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, -1)}>
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="text-ui font-medium tabular-nums w-6 text-center">{item.quantity}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, 1)}>
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-                <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">
-                  R$ {(getPrice(item.product) * item.quantity).toFixed(0)}
-                </span>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.product.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {cart.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <ShoppingCart className="h-8 w-8 mb-2 opacity-30" />
-              <p className="text-ui">Sacola vazia</p>
-              <p className="text-caption">Clique nos produtos para adicionar</p>
+          <div className="p-4 border-t space-y-3 shrink-0">
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Forma de pagamento..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pix">Pix</SelectItem>
+                <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                <SelectItem value="cartao">Cartão</SelectItem>
+                <SelectItem value="boleto">Boleto</SelectItem>
+                <SelectItem value="prazo">Prazo</SelectItem>
+              </SelectContent>
+            </Select>
+            <Separator />
+            <div className="space-y-1">
+              <div className="flex justify-between text-caption text-muted-foreground">
+                <span>{totalQty} {totalQty === 1 ? "item" : "itens"}</span>
+                <span>{isWholesale ? "Preço atacado" : "Preço varejo"}</span>
+              </div>
+              <div className="flex justify-between text-subhead font-semibold">
+                <span>Total</span>
+                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${isWholesale ? "text-success" : "text-foreground"}`}>
+                  R$ {subtotal.toFixed(2)}
+                </motion.span>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div className="p-4 border-t space-y-3 shrink-0">
-          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Forma de pagamento..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pix">Pix</SelectItem>
-              <SelectItem value="dinheiro">Dinheiro</SelectItem>
-              <SelectItem value="cartao">Cartão</SelectItem>
-              <SelectItem value="boleto">Boleto</SelectItem>
-              <SelectItem value="prazo">Prazo</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Separator />
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-caption text-muted-foreground">
-              <span>{totalQty} {totalQty === 1 ? "item" : "itens"}</span>
-              <span>{isWholesale ? "Preço atacado" : "Preço varejo"}</span>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1 h-10" onClick={() => setCart([])}>Cancelar</Button>
+              <Button className="flex-1 h-10" onClick={finalizeSale}>Finalizar Venda</Button>
             </div>
-            <div className="flex justify-between text-subhead font-semibold">
-              <span>Total</span>
-              <motion.span
-                key={subtotal}
-                initial={{ scale: 1.05 }}
-                animate={{ scale: 1 }}
-                className={`tabular-nums ${isWholesale ? "text-success" : "text-foreground"}`}
-              >
-                R$ {subtotal.toFixed(2)}
-              </motion.span>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 h-10" onClick={() => { setCart([]); }}>
-              Cancelar
-            </Button>
-            <Button className="flex-1 h-10" onClick={finalizeSale}>
-              Finalizar Venda
-            </Button>
           </div>
         </div>
       </div>
