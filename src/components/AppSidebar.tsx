@@ -68,14 +68,14 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         {!collapsed ? (
           <div className="flex items-center gap-2">
-            <img src={jotsLogo} alt="Jots" className="h-8 w-8 object-contain" />
+            <img src={jotsLogo} alt="Jots" className="h-8 w-8 rounded-md object-contain" />
             <div>
               <h1 className="font-semibold text-ui tracking-tight text-sidebar-foreground">Jots</h1>
               <p className="text-caption text-muted-foreground">Distribuidora</p>
             </div>
           </div>
         ) : (
-          <img src={jotsLogo} alt="Jots" className="h-8 w-8 object-contain mx-auto" />
+          <img src={jotsLogo} alt="Jots" className="h-8 w-8 rounded-md object-contain mx-auto" />
         )}
       </SidebarHeader>
 
