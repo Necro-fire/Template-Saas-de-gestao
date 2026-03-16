@@ -1,4 +1,6 @@
-import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight, CircleAlert } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
