@@ -7,7 +7,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
 import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes } from "@/hooks/useProductTypes";
-import { ProductFilters, useProductFilters, applyProductFilters } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
 
 export default function Estoque() {
   const { selectedFilial } = useFilial();
