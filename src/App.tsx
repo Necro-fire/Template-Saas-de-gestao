@@ -28,9 +28,7 @@ const router = createBrowserRouter([
   {
     element: (
       <FilialProvider>
-        <AppLayout>
-          <></>
-        </AppLayout>
+        <AppLayout />
       </FilialProvider>
     ),
     children: [
