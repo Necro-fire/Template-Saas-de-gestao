@@ -2,20 +2,19 @@ import { useState, useMemo } from "react";
 import { Search, Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { mockProducts, mockClients, type Product } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { useProducts, useClients, createVenda, type DbProduct } from "@/hooks/useSupabaseData";
 
 interface CartItem {
-  product: Product;
+  product: DbProduct;
   quantity: number;
 }
 
@@ -25,15 +24,16 @@ export default function PDV() {
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
-  const { filterByFilial } = useFilial();
+  const [submitting, setSubmitting] = useState(false);
+  const { selectedFilial } = useFilial();
 
-  const products = filterByFilial(mockProducts);
-  const clients = filterByFilial(mockClients);
+  const { data: products } = useProducts();
+  const { data: clients } = useClients();
 
   const totalQty = cart.reduce((acc, item) => acc + item.quantity, 0);
   const isWholesale = totalQty >= 5;
 
-  const getPrice = (product: Product) => isWholesale ? product.wholesalePrice : product.retailPrice;
+  const getPrice = (product: DbProduct) => isWholesale ? Number(product.wholesale_price) : Number(product.retail_price);
 
   const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product) * item.quantity, 0);
 
@@ -46,10 +46,14 @@ export default function PDV() {
     );
   }, [search, products]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: DbProduct) => {
     setCart(prev => {
       const existing = prev.find(i => i.product.id === product.id);
       if (existing) {
+        if (existing.quantity >= product.stock) {
+          toast.error(`Estoque insuficiente. Disponível: ${product.stock}`);
+          return prev;
+        }
         const updated = prev.map(i =>
           i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
         );
@@ -66,7 +70,14 @@ export default function PDV() {
 
   const updateQuantity = (productId: string, delta: number) => {
     setCart(prev => prev.map(i => {
-      if (i.product.id === productId) return { ...i, quantity: Math.max(0, i.quantity + delta) };
+      if (i.product.id === productId) {
+        const newQty = i.quantity + delta;
+        if (newQty > i.product.stock) {
+          toast.error(`Estoque insuficiente. Disponível: ${i.product.stock}`);
+          return i;
+        }
+        return { ...i, quantity: Math.max(0, newQty) };
+      }
       return i;
     }).filter(i => i.quantity > 0));
   };
@@ -75,14 +86,42 @@ export default function PDV() {
     setCart(prev => prev.filter(i => i.product.id !== productId));
   };
 
-  const finalizeSale = () => {
+  const finalizeSale = async () => {
     if (!selectedClient) { toast.error("Selecione um cliente"); return; }
     if (cart.length === 0) { toast.error("Adicione produtos"); return; }
     if (!paymentMethod) { toast.error("Selecione forma de pagamento"); return; }
-    toast.success(`Venda finalizada. Total: R$ ${subtotal.toFixed(2)}`);
-    setCart([]);
-    setSelectedClient("");
-    setPaymentMethod("");
+
+    const client = clients.find(c => c.id === selectedClient);
+    const filialId = selectedFilial === "all" ? "1" : selectedFilial;
+
+    setSubmitting(true);
+    try {
+      const items = cart.map(i => ({
+        produto_id: i.product.id,
+        product_code: i.product.code,
+        product_model: i.product.model,
+        quantity: i.quantity,
+        unit_price: getPrice(i.product),
+      }));
+
+      await createVenda(
+        items,
+        selectedClient,
+        client?.store_name || "",
+        paymentMethod,
+        origin,
+        filialId
+      );
+
+      toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
+      setCart([]);
+      setSelectedClient("");
+      setPaymentMethod("");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao finalizar venda");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -118,7 +157,7 @@ export default function PDV() {
                       <p className="text-caption text-muted-foreground">{product.code}</p>
                       <h3 className="text-ui font-medium truncate">{product.model}</h3>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-caption font-mono text-muted-foreground">{product.lensSize}□{product.bridgeSize}—{product.templeSize}</span>
+                        <span className="text-caption font-mono text-muted-foreground">{product.lens_size}□{product.bridge_size}—{product.temple_size}</span>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {getPrice(product)}</span>
                       </div>
                     </div>
@@ -148,7 +187,7 @@ export default function PDV() {
                 <SelectValue placeholder="Selecionar cliente..." />
               </SelectTrigger>
               <SelectContent>
-                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.storeName}</SelectItem>)}
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.store_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -208,7 +247,9 @@ export default function PDV() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1 h-10" onClick={() => setCart([])}>Cancelar</Button>
-              <Button className="flex-1 h-10" onClick={finalizeSale}>Finalizar Venda</Button>
+              <Button className="flex-1 h-10" onClick={finalizeSale} disabled={submitting}>
+                {submitting ? "Processando..." : "Finalizar Venda"}
+              </Button>
             </div>
           </div>
         </div>

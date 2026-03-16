@@ -3,19 +3,20 @@ import { Search, Plus, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mockClients } from "@/data/mockData";
-import { useFilial, filiais } from "@/contexts/FilialContext";
+import { filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { useClients } from "@/hooks/useSupabaseData";
+import { useFilial } from "@/contexts/FilialContext";
 
 export default function Clientes() {
   const [search, setSearch] = useState("");
-  const { filterByFilial, selectedFilial } = useFilial();
+  const { selectedFilial } = useFilial();
+  const { data: clients } = useClients();
 
-  const clients = filterByFilial(mockClients);
   const filtered = clients.filter(c =>
     !search ||
-    c.storeName.toLowerCase().includes(search.toLowerCase()) ||
-    c.responsibleName.toLowerCase().includes(search.toLowerCase()) ||
+    c.store_name.toLowerCase().includes(search.toLowerCase()) ||
+    c.responsible_name.toLowerCase().includes(search.toLowerCase()) ||
     c.cnpj.includes(search)
   );
 
@@ -48,19 +49,19 @@ export default function Clientes() {
             {filtered.map(client => (
               <div key={client.id} className="flex items-center justify-between py-3 px-4 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer">
                 <div>
-                  <p className="text-ui font-medium">{client.storeName}</p>
-                  <p className="text-caption text-muted-foreground">{client.responsibleName} · {client.cnpj}</p>
+                  <p className="text-ui font-medium">{client.store_name}</p>
+                  <p className="text-caption text-muted-foreground">{client.responsible_name} · {client.cnpj}</p>
                   <p className="text-caption text-muted-foreground">{client.city}/{client.state} · {client.whatsapp}</p>
                 </div>
                 <div className="text-right flex items-center gap-2">
                   {selectedFilial === "all" && (
-                    <Badge variant="outline" className="text-caption">{getFilialName(client.filialId)}</Badge>
+                    <Badge variant="outline" className="text-caption">{getFilialName(client.filial_id)}</Badge>
                   )}
                   <div>
                     <Badge variant={client.status === "active" ? "secondary" : "outline"} className="text-caption">
                       {client.status === "active" ? "Ativo" : "Inativo"}
                     </Badge>
-                    <p className="text-caption text-muted-foreground mt-1 tabular-nums">Limite: R$ {client.creditLimit.toLocaleString("pt-BR")}</p>
+                    <p className="text-caption text-muted-foreground mt-1 tabular-nums">Limite: R$ {Number(client.credit_limit).toLocaleString("pt-BR")}</p>
                   </div>
                 </div>
               </div>
