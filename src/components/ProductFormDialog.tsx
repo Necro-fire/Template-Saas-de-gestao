@@ -19,6 +19,7 @@ interface ProductFormDialogProps {
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [barcode, setBarcode] = useState("");
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [stock, setStock] = useState("");
@@ -33,6 +34,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (product) {
       setName(product.model);
       setPrice(String(product.retail_price));
+      setBarcode(product.barcode || "");
       setDetail(product.description || "");
       setFilial(product.filial_id);
       setStock(String(product.stock));
@@ -46,6 +48,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const resetForm = () => {
     setName("");
     setPrice("");
+    setBarcode("");
     setDetail("");
     setFilial("");
     setStock("");
@@ -92,6 +95,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         const { error } = await (supabase as any).from("produtos").update({
           model: name.trim(),
           retail_price: Number(price),
+          barcode: barcode.trim(),
           description: detail.trim(),
           image_url: imageUrl,
           stock: stock ? Number(stock) : product!.stock,
@@ -106,6 +110,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           code,
           model: name.trim(),
           retail_price: Number(price),
+          barcode: barcode.trim(),
           description: detail.trim(),
           image_url: imageUrl,
           filial_id: fId,
@@ -133,7 +138,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Image upload */}
           <div>
             <Label>Imagem do produto</Label>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
@@ -156,6 +160,11 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <div>
             <Label htmlFor="product-name">Nome do produto *</Label>
             <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
+          </div>
+
+          <div>
+            <Label htmlFor="product-barcode">Código de barras</Label>
+            <Input id="product-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Ex: 7891234567890" className="mt-1.5" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

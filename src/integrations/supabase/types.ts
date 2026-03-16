@@ -76,6 +76,7 @@ export type Database = {
       }
       produtos: {
         Row: {
+          barcode: string
           bridge_size: number
           category: string
           code: string
@@ -97,6 +98,7 @@ export type Database = {
           wholesale_price: number
         }
         Insert: {
+          barcode?: string
           bridge_size?: number
           category?: string
           code: string
@@ -118,6 +120,7 @@ export type Database = {
           wholesale_price?: number
         }
         Update: {
+          barcode?: string
           bridge_size?: number
           category?: string
           code?: string
