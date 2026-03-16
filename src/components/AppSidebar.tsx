@@ -16,6 +16,7 @@ import {
   Building2,
   ShieldCheck,
 } from "lucide-react";
+import jotsLogo from "@/assets/jots-logo.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -67,18 +68,14 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         {!collapsed ? (
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-ui">V</span>
-            </div>
+            <img src={jotsLogo} alt="Jots" className="h-8 w-8 object-contain" />
             <div>
-              <h1 className="font-semibold text-ui tracking-tight text-sidebar-foreground">VisionFlow</h1>
-              <p className="text-caption text-muted-foreground">ERP Óptico</p>
+              <h1 className="font-semibold text-ui tracking-tight text-sidebar-foreground">Jots</h1>
+              <p className="text-caption text-muted-foreground">Distribuidora</p>
             </div>
           </div>
         ) : (
-          <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-ui">V</span>
-          </div>
+          <img src={jotsLogo} alt="Jots" className="h-8 w-8 object-contain mx-auto" />
         )}
       </SidebarHeader>
 
