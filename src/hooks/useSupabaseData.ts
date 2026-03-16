@@ -38,6 +38,10 @@ export interface DbClient {
   status: string;
   filial_id: string;
   created_at: string;
+  tipo_cliente: string;
+  endereco: string;
+  data_nascimento: string | null;
+  observacoes: string;
 }
 
 export interface DbVenda {
