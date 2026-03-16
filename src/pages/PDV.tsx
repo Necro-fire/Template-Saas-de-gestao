@@ -107,23 +107,31 @@ export default function PDV() {
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4 pt-2">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-              {filteredProducts.map(product => (
-                <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
-                  <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center">
-                    <span className="text-muted-foreground/20 text-subhead font-bold">{product.code}</span>
-                  </div>
-                  <div className="mt-2">
-                    <p className="text-caption text-muted-foreground">{product.code}</p>
-                    <h3 className="text-ui font-medium truncate">{product.model}</h3>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-caption font-mono text-muted-foreground">{product.lensSize}□{product.bridgeSize}—{product.templeSize}</span>
-                      <span className="text-ui font-medium tabular-nums text-primary">R$ {getPrice(product)}</span>
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                {filteredProducts.map(product => (
+                  <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
+                    <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center">
+                      <span className="text-muted-foreground/20 text-subhead font-bold">{product.code}</span>
                     </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+                    <div className="mt-2">
+                      <p className="text-caption text-muted-foreground">{product.code}</p>
+                      <h3 className="text-ui font-medium truncate">{product.model}</h3>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-caption font-mono text-muted-foreground">{product.lensSize}□{product.bridgeSize}—{product.templeSize}</span>
+                        <span className="text-ui font-medium tabular-nums text-primary">R$ {getPrice(product)}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <ShoppingCart className="h-12 w-12 mb-3 opacity-30" />
+                <p className="text-ui font-medium">Nenhum produto disponível</p>
+                <p className="text-caption mt-1">Cadastre produtos para começar a vender</p>
+              </div>
+            )}
           </div>
         </div>
 

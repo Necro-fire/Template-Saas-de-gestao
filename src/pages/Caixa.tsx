@@ -23,7 +23,7 @@ export default function Caixa() {
           <Card className="shadow-card">
             <CardContent className="p-4">
               <p className="text-caption text-muted-foreground">Saldo Atual</p>
-              <p className="text-title font-semibold tabular-nums text-primary mt-1">R$ 2.450,00</p>
+              <p className="text-title font-semibold tabular-nums text-primary mt-1">R$ 0,00</p>
             </CardContent>
           </Card>
           <Card className="shadow-card">
@@ -32,7 +32,7 @@ export default function Caixa() {
                 <ArrowUpCircle className="h-4 w-4 text-success" />
                 <p className="text-caption text-muted-foreground">Entradas Hoje</p>
               </div>
-              <p className="text-title font-semibold tabular-nums text-success mt-1">R$ 3.200,00</p>
+              <p className="text-title font-semibold tabular-nums text-success mt-1">R$ 0,00</p>
             </CardContent>
           </Card>
           <Card className="shadow-card">
@@ -41,7 +41,7 @@ export default function Caixa() {
                 <ArrowDownCircle className="h-4 w-4 text-destructive" />
                 <p className="text-caption text-muted-foreground">Saídas Hoje</p>
               </div>
-              <p className="text-title font-semibold tabular-nums text-destructive mt-1">R$ 750,00</p>
+              <p className="text-title font-semibold tabular-nums text-destructive mt-1">R$ 0,00</p>
             </CardContent>
           </Card>
         </div>
@@ -51,30 +51,10 @@ export default function Caixa() {
             <CardTitle className="text-ui font-semibold">Movimentações</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="space-y-1">
-              {[
-                { desc: "Venda #1001", value: 190, type: "in" as const, time: "14:30" },
-                { desc: "Venda #1002", value: 228, type: "in" as const, time: "15:45" },
-                { desc: "Pagamento Fornecedor", value: -500, type: "out" as const, time: "16:00" },
-                { desc: "Sangria", value: -250, type: "out" as const, time: "17:00" },
-              ].map((mov, i) => (
-                <div key={i} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    {mov.type === "in" ? (
-                      <ArrowUpCircle className="h-4 w-4 text-success" />
-                    ) : (
-                      <ArrowDownCircle className="h-4 w-4 text-destructive" />
-                    )}
-                    <div>
-                      <p className="text-ui font-medium">{mov.desc}</p>
-                      <p className="text-caption text-muted-foreground">{mov.time}</p>
-                    </div>
-                  </div>
-                  <span className={`text-ui font-medium tabular-nums ${mov.type === "in" ? "text-success" : "text-destructive"}`}>
-                    {mov.type === "in" ? "+" : ""}R$ {Math.abs(mov.value).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Wallet className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-ui font-medium">Nenhuma movimentação no caixa</p>
+              <p className="text-caption mt-1">As movimentações aparecerão aqui</p>
             </div>
           </CardContent>
         </Card>
