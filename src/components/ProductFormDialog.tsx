@@ -131,6 +131,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           filial_id: fId,
           stock: stock ? Number(stock) : 0,
+          ...wholesaleData,
         }));
         const { error } = await (supabase as any).from("produtos").insert(products);
         if (error) throw error;
