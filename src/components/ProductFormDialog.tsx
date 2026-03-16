@@ -137,7 +137,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           image_url: imageUrl,
           filial_id: fId,
           stock: stock ? Number(stock) : 0,
-          tipo_produto_id: tipoProdutoId || null,
+          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
           ...wholesaleData,
         }));
         const { error } = await (supabase as any).from("produtos").insert(products);
