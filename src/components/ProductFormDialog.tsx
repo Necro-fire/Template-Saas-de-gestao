@@ -12,6 +12,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";
+import {
+  CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
+  MATERIAIS, TIPOS_LENTE, SUBCATEGORIAS_ACESSORIOS,
+  MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE,
+} from "@/data/productConstants";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -20,6 +25,8 @@ interface ProductFormDialogProps {
 }
 
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
+  const [isAcessorio, setIsAcessorio] = useState(false);
+  const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -36,28 +43,60 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: tipos } = useProductTypes();
 
+  // Frame-specific fields
+  const [categoriaIdade, setCategoriaIdade] = useState("");
+  const [genero, setGenero] = useState("");
+  const [estilo, setEstilo] = useState("");
+  const [corArmacao, setCorArmacao] = useState("");
+  const [materialAro, setMaterialAro] = useState("");
+  const [materialHaste, setMaterialHaste] = useState("");
+  const [lensSize, setLensSize] = useState("");
+  const [alturaLente, setAlturaLente] = useState("");
+  const [bridgeSize, setBridgeSize] = useState("");
+  const [templeSize, setTempleSize] = useState("");
+  const [tipoLente, setTipoLente] = useState("");
+
+  // Accessory field
+  const [subcategoriaAcessorio, setSubcategoriaAcessorio] = useState("");
+
   const isEditing = !!product;
 
   useEffect(() => {
     if (product) {
+      setIsAcessorio(product.is_acessorio || false);
+      setReferencia(product.referencia || product.code || "");
       setName(product.model);
       setPrice(String(product.retail_price));
       setBarcode(product.barcode || "");
       setDetail(product.description || "");
       setFilial(product.filial_id);
       setStock(String(product.stock));
-      setTipoProdutoId((product as any).tipo_produto_id || "");
+      setTipoProdutoId(product.tipo_produto_id || "");
       setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
       setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
       setWholesaleMinQty(product.wholesale_min_qty > 0 ? String(product.wholesale_min_qty) : "");
       setImagePreview(product.image_url || null);
       setImageFile(null);
+      setCategoriaIdade(product.categoria_idade || "");
+      setGenero(product.genero || "");
+      setEstilo(product.estilo || "");
+      setCorArmacao(product.cor_armacao || "");
+      setMaterialAro(product.material_aro || "");
+      setMaterialHaste(product.material_haste || "");
+      setLensSize(product.lens_size ? String(product.lens_size) : "");
+      setAlturaLente(product.altura_lente ? String(product.altura_lente) : "");
+      setBridgeSize(product.bridge_size ? String(product.bridge_size) : "");
+      setTempleSize(product.temple_size ? String(product.temple_size) : "");
+      setTipoLente(product.tipo_lente || "");
+      setSubcategoriaAcessorio(product.subcategoria_acessorio || "");
     } else {
       resetForm();
     }
   }, [product, open]);
 
   const resetForm = () => {
+    setIsAcessorio(false);
+    setReferencia("");
     setName("");
     setPrice("");
     setBarcode("");
@@ -70,6 +109,18 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setWholesaleMinQty("");
     setImageFile(null);
     setImagePreview(null);
+    setCategoriaIdade("");
+    setGenero("");
+    setEstilo("");
+    setCorArmacao("");
+    setMaterialAro("");
+    setMaterialHaste("");
+    setLensSize("");
+    setAlturaLente("");
+    setBridgeSize("");
+    setTempleSize("");
+    setTipoLente("");
+    setSubcategoriaAcessorio("");
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,11 +130,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
-  };
-
-  const generateCode = () => {
-    const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return `PROD-${rand}`;
   };
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -96,6 +142,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   };
 
   const handleSave = async () => {
+    if (!referencia.trim()) { toast.error("Informe a referência do produto"); return; }
     if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
     if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
@@ -111,34 +158,47 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
         : { wholesale_price: 0, wholesale_min_qty: 0 };
 
+      const baseData = {
+        code: referencia.trim(),
+        referencia: referencia.trim(),
+        model: name.trim(),
+        retail_price: Number(price),
+        barcode: barcode.trim(),
+        description: detail.trim(),
+        image_url: imageUrl,
+        stock: stock ? Number(stock) : (isEditing ? product!.stock : 0),
+        filial_id: isEditing ? filial : undefined,
+        tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
+        is_acessorio: isAcessorio,
+        categoria_idade: isAcessorio ? "" : categoriaIdade,
+        genero: isAcessorio ? "" : genero,
+        estilo: isAcessorio ? "" : estilo,
+        cor_armacao: isAcessorio ? "" : corArmacao,
+        color: isAcessorio ? "" : corArmacao,
+        material_aro: isAcessorio ? "" : materialAro,
+        material_haste: isAcessorio ? "" : materialHaste,
+        material: isAcessorio ? "" : materialAro,
+        lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
+        altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
+        bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
+        temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
+        tipo_lente: isAcessorio ? "" : tipoLente,
+        subcategoria_acessorio: isAcessorio ? subcategoriaAcessorio : "",
+        ...wholesaleData,
+      };
+
       if (isEditing) {
         const { error } = await (supabase as any).from("produtos").update({
-          model: name.trim(),
-          retail_price: Number(price),
-          barcode: barcode.trim(),
-          description: detail.trim(),
-          image_url: imageUrl,
-          stock: stock ? Number(stock) : product!.stock,
+          ...baseData,
           filial_id: filial,
-          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
-          ...wholesaleData,
         }).eq("id", product!.id);
         if (error) throw error;
         toast.success("Produto atualizado com sucesso!");
       } else {
         const filials = filial === "all" ? ["1", "2", "3"] : [filial];
-        const code = generateCode();
         const products = filials.map((fId) => ({
-          code,
-          model: name.trim(),
-          retail_price: Number(price),
-          barcode: barcode.trim(),
-          description: detail.trim(),
-          image_url: imageUrl,
+          ...baseData,
           filial_id: fId,
-          stock: stock ? Number(stock) : 0,
-          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
-          ...wholesaleData,
         }));
         const { error } = await (supabase as any).from("produtos").insert(products);
         if (error) throw error;
@@ -156,12 +216,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Produto" : "Novo Produto"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Product Type Toggle */}
+          <div className="rounded-lg border p-3 flex items-center justify-between">
+            <Label htmlFor="acessorio-toggle" className="font-medium">É um Acessório?</Label>
+            <Switch id="acessorio-toggle" checked={isAcessorio} onCheckedChange={setIsAcessorio} />
+          </div>
+
+          {/* Image */}
           <div>
             <Label>Imagem do produto</Label>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
@@ -181,29 +248,170 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </button>
           </div>
 
-          <div>
-            <Label htmlFor="product-name">Nome do produto *</Label>
-            <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
-          </div>
+          {/* 1. Identificação */}
+          <fieldset className="space-y-3 rounded-lg border p-3">
+            <legend className="text-sm font-semibold px-1">Identificação</legend>
+            <div>
+              <Label htmlFor="referencia">Referência (código da peça) *</Label>
+              <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="product-name">Nome do produto *</Label>
+              <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="product-barcode">Código de barras</Label>
+              <Input id="product-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Ex: 7891234567890" className="mt-1.5" />
+            </div>
+          </fieldset>
 
-          <div>
-            <Label>Tipo de Produto</Label>
-            <Select value={tipoProdutoId} onValueChange={setTipoProdutoId}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem tipo</SelectItem>
-                {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Tipo de Produto */}
+          {tipos.length > 0 && (
+            <div>
+              <Label>Tipo de Produto</Label>
+              <Select value={tipoProdutoId} onValueChange={setTipoProdutoId}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem tipo</SelectItem>
+                  {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          <div>
-            <Label htmlFor="product-barcode">Código de barras</Label>
-            <Input id="product-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Ex: 7891234567890" className="mt-1.5" />
-          </div>
+          {/* FRAME-SPECIFIC FIELDS */}
+          {!isAcessorio && (
+            <>
+              {/* 2. Classificação */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="text-sm font-semibold px-1">Classificação</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Categoria</Label>
+                    <Select value={categoriaIdade} onValueChange={setCategoriaIdade}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIAS_IDADE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Gênero</Label>
+                    <Select value={genero} onValueChange={setGenero}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {GENEROS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </fieldset>
 
+              {/* 3. Estilo */}
+              <div>
+                <Label>Estilo da Armação</Label>
+                <Select value={estilo} onValueChange={setEstilo}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o estilo" /></SelectTrigger>
+                  <SelectContent>
+                    {ESTILOS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 4. Cor */}
+              <div>
+                <Label>Cor da Armação</Label>
+                <Select value={corArmacao} onValueChange={setCorArmacao}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                  <SelectContent>
+                    {TODAS_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 5. Material */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="text-sm font-semibold px-1">Material</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Material do Aro</Label>
+                    <Select value={materialAro} onValueChange={setMaterialAro}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {MATERIAIS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Material da Haste</Label>
+                    <Select value={materialHaste} onValueChange={setMaterialHaste}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {MATERIAIS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* 6. Medidas */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="text-sm font-semibold px-1">Medidas (mm)</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Largura da Lente ({MEDIDAS_LENTE.min}-{MEDIDAS_LENTE.max})</Label>
+                    <Input type="number" min={MEDIDAS_LENTE.min} max={MEDIDAS_LENTE.max} value={lensSize} onChange={(e) => setLensSize(e.target.value)} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Altura da Lente ({MEDIDAS_ALTURA_LENTE.min}-{MEDIDAS_ALTURA_LENTE.max})</Label>
+                    <Input type="number" min={MEDIDAS_ALTURA_LENTE.min} max={MEDIDAS_ALTURA_LENTE.max} value={alturaLente} onChange={(e) => setAlturaLente(e.target.value)} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Largura da Ponte ({MEDIDAS_PONTE.min}-{MEDIDAS_PONTE.max})</Label>
+                    <Input type="number" min={MEDIDAS_PONTE.min} max={MEDIDAS_PONTE.max} value={bridgeSize} onChange={(e) => setBridgeSize(e.target.value)} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Comprimento da Haste ({MEDIDAS_HASTE.min}-{MEDIDAS_HASTE.max})</Label>
+                    <Input type="number" min={MEDIDAS_HASTE.min} max={MEDIDAS_HASTE.max} value={templeSize} onChange={(e) => setTempleSize(e.target.value)} className="mt-1.5" />
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* 7. Tipo de Lente */}
+              <div>
+                <Label>Tipo de Lente</Label>
+                <Select value={tipoLente} onValueChange={setTipoLente}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {TIPOS_LENTE.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          {/* ACCESSORY-SPECIFIC FIELDS */}
+          {isAcessorio && (
+            <fieldset className="space-y-3 rounded-lg border p-3">
+              <legend className="text-sm font-semibold px-1">Categoria do Acessório</legend>
+              <Select value={subcategoriaAcessorio} onValueChange={setSubcategoriaAcessorio}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o acessório" /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SUBCATEGORIAS_ACESSORIOS).map(([grupo, items]) => (
+                    <div key={grupo}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{grupo}</div>
+                      {items.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </fieldset>
+          )}
+
+          {/* Preço e Estoque */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="product-price">Preço (R$) *</Label>
@@ -217,6 +425,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </div>
           </div>
 
+          {/* Detalhe */}
           <div>
             <Label htmlFor="product-detail">Detalhe (opcional)</Label>
             <Textarea id="product-detail" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Descrição ou observações" className="mt-1.5 min-h-[60px]" />
@@ -242,6 +451,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             )}
           </div>
 
+          {/* Filial */}
           <div>
             <Label>Filial *</Label>
             <Select value={filial} onValueChange={setFilial}>

@@ -96,12 +96,24 @@ export default function Produtos() {
                   </div>
                   <div className="mt-3 flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.code}</p>
+                      <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.referencia || product.code}</p>
                       <h3 className="text-ui font-semibold truncate">{product.model}</h3>
-                      <p className="text-caption text-muted-foreground">{product.color} · {product.material}</p>
-                      {typeName && (
-                        <Badge variant="outline" className="text-caption mt-1">{typeName}</Badge>
+                      {!(product as any).is_acessorio && (product.cor_armacao || product.color) && (
+                        <p className="text-caption text-muted-foreground">
+                          {product.cor_armacao || product.color}
+                          {(product.material_aro || product.material) && ` · ${product.material_aro || product.material}`}
+                        </p>
                       )}
+                      {(product as any).is_acessorio && (product as any).subcategoria_acessorio && (
+                        <p className="text-caption text-muted-foreground">{(product as any).subcategoria_acessorio}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {(product as any).estilo && <Badge variant="outline" className="text-caption">{(product as any).estilo}</Badge>}
+                        {(product as any).categoria_idade && <Badge variant="outline" className="text-caption">{(product as any).categoria_idade}</Badge>}
+                        {(product as any).genero && <Badge variant="outline" className="text-caption">{(product as any).genero}</Badge>}
+                        {typeName && <Badge variant="outline" className="text-caption">{typeName}</Badge>}
+                        {(product as any).is_acessorio && <Badge variant="secondary" className="text-caption">Acessório</Badge>}
+                      </div>
                       {selectedFilial === "all" && (
                         <p className="text-caption text-primary">{getFilialName(product.filial_id)}</p>
                       )}
@@ -111,13 +123,17 @@ export default function Produtos() {
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <div className="flex gap-2 text-caption font-mono text-muted-foreground">
-                      <span>{product.lens_size}mm</span>
-                      <span>□</span>
-                      <span>{product.bridge_size}mm</span>
-                      <span>—</span>
-                      <span>{product.temple_size}mm</span>
-                    </div>
+                    {!(product as any).is_acessorio ? (
+                      <div className="flex gap-2 text-caption font-mono text-muted-foreground">
+                        <span>{product.lens_size}mm</span>
+                        <span>□</span>
+                        <span>{product.bridge_size}mm</span>
+                        <span>—</span>
+                        <span>{product.temple_size}mm</span>
+                      </div>
+                    ) : (
+                      <div />
+                    )}
                     <Badge
                       variant={getStockStatus(product.stock) === "out_of_stock" ? "destructive" : getStockStatus(product.stock) === "low_stock" ? "outline" : "secondary"}
                       className="text-caption tabular-nums"

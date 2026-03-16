@@ -23,6 +23,18 @@ export interface DbProduct {
   barcode: string;
   filial_id: string;
   created_at: string;
+  referencia: string;
+  categoria_idade: string;
+  genero: string;
+  estilo: string;
+  cor_armacao: string;
+  material_aro: string;
+  material_haste: string;
+  altura_lente: number;
+  tipo_lente: string;
+  subcategoria_acessorio: string;
+  is_acessorio: boolean;
+  tipo_produto_id: string | null;
 }
 
 export interface DbClient {
