@@ -14,7 +14,218 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          city: string
+          cnpj: string
+          created_at: string
+          credit_limit: number
+          email: string
+          filial_id: string
+          id: string
+          phone: string
+          responsible_name: string
+          state: string
+          status: string
+          store_name: string
+          whatsapp: string
+        }
+        Insert: {
+          city?: string
+          cnpj?: string
+          created_at?: string
+          credit_limit?: number
+          email?: string
+          filial_id?: string
+          id?: string
+          phone?: string
+          responsible_name: string
+          state?: string
+          status?: string
+          store_name: string
+          whatsapp?: string
+        }
+        Update: {
+          city?: string
+          cnpj?: string
+          created_at?: string
+          credit_limit?: number
+          email?: string
+          filial_id?: string
+          id?: string
+          phone?: string
+          responsible_name?: string
+          state?: string
+          status?: string
+          store_name?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          bridge_size: number
+          category: string
+          code: string
+          color: string
+          created_at: string
+          description: string
+          filial_id: string
+          id: string
+          image_url: string
+          lens_size: number
+          material: string
+          min_stock: number
+          model: string
+          retail_price: number
+          status: string
+          stock: number
+          temple_size: number
+          wholesale_min_qty: number
+          wholesale_price: number
+        }
+        Insert: {
+          bridge_size?: number
+          category?: string
+          code: string
+          color?: string
+          created_at?: string
+          description?: string
+          filial_id?: string
+          id?: string
+          image_url?: string
+          lens_size?: number
+          material?: string
+          min_stock?: number
+          model: string
+          retail_price?: number
+          status?: string
+          stock?: number
+          temple_size?: number
+          wholesale_min_qty?: number
+          wholesale_price?: number
+        }
+        Update: {
+          bridge_size?: number
+          category?: string
+          code?: string
+          color?: string
+          created_at?: string
+          description?: string
+          filial_id?: string
+          id?: string
+          image_url?: string
+          lens_size?: number
+          material?: string
+          min_stock?: number
+          model?: string
+          retail_price?: number
+          status?: string
+          stock?: number
+          temple_size?: number
+          wholesale_min_qty?: number
+          wholesale_price?: number
+        }
+        Relationships: []
+      }
+      venda_items: {
+        Row: {
+          id: string
+          product_code: string
+          product_model: string
+          produto_id: string
+          quantity: number
+          total: number
+          unit_price: number
+          venda_id: string
+        }
+        Insert: {
+          id?: string
+          product_code?: string
+          product_model?: string
+          produto_id: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+          venda_id: string
+        }
+        Update: {
+          id?: string
+          product_code?: string
+          product_model?: string
+          produto_id?: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venda_items_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venda_items_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendas: {
+        Row: {
+          client_id: string | null
+          client_name: string
+          created_at: string
+          discount: number
+          filial_id: string
+          id: string
+          number: number
+          origin: string
+          payment_method: string
+          seller_name: string
+          total: number
+        }
+        Insert: {
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          discount?: number
+          filial_id?: string
+          id?: string
+          number?: number
+          origin?: string
+          payment_method?: string
+          seller_name?: string
+          total?: number
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          discount?: number
+          filial_id?: string
+          id?: string
+          number?: number
+          origin?: string
+          payment_method?: string
+          seller_name?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
