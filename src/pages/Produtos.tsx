@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Package, Pencil, Trash2, Tag } from "lucide-react";
+import { Plus, Package, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFilial, filiais } from "@/contexts/FilialContext";
@@ -7,7 +7,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
-import { ProductTypesDialog } from "@/components/ProductTypesDialog";
+
 import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,6 @@ import { toast } from "sonner";
 
 export default function Produtos() {
   const [showForm, setShowForm] = useState(false);
-  const [showTypes, setShowTypes] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
   const { selectedFilial } = useFilial();
@@ -93,16 +92,10 @@ export default function Produtos() {
             <h1 className="text-title font-semibold tracking-tighter">Produtos</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
-              <Tag className="h-4 w-4" />
-              Tipos
-            </Button>
-            <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
-              <Plus className="h-4 w-4" />
-              Novo Produto
-            </Button>
-          </div>
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4" />
+            Novo Produto
+          </Button>
         </div>
 
         {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
@@ -191,7 +184,7 @@ export default function Produtos() {
         )}
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
-        <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
+        
 
         <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>
           <AlertDialogContent>
