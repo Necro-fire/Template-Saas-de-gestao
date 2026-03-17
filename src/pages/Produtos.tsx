@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Package, Pencil, Trash2, Tag } from "lucide-react";
+import { Plus, Package, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFilial, filiais } from "@/contexts/FilialContext";
