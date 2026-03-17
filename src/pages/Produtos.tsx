@@ -32,11 +32,46 @@ export default function Produtos() {
 
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
+  const [deleteCheck, setDeleteCheck] = useState<{ canDelete: boolean; reason?: string } | null>(null);
+
+  const checkAndDelete = async (product: DbProduct) => {
+    setDeletingProduct(product);
+    // Check sales
+    const { count: salesCount } = await (supabase as any)
+      .from("venda_items")
+      .select("id", { count: "exact", head: true })
+      .eq("produto_id", product.id);
+    if (salesCount && salesCount > 0) {
+      setDeleteCheck({ canDelete: false, reason: "Este produto já possui vendas registradas e não pode ser excluído." });
+      return;
+    }
+    // Check stock
+    const { data: estoque } = await (supabase as any)
+      .from("estoque")
+      .select("quantidade")
+      .eq("produto_id", product.id);
+    const totalStock = (estoque || []).reduce((sum: number, e: any) => sum + (e.quantidade || 0), 0);
+    if (totalStock > 0) {
+      setDeleteCheck({ canDelete: false, reason: "Não é possível excluir um produto com estoque disponível." });
+      return;
+    }
+    setDeleteCheck({ canDelete: true });
+  };
+
   const handleDelete = async () => {
     if (!deletingProduct) return;
     const { error } = await (supabase as any).from("produtos").delete().eq("id", deletingProduct.id);
     if (error) { toast.error("Erro ao excluir produto"); } else { toast.success("Produto excluído"); }
     setDeletingProduct(null);
+    setDeleteCheck(null);
+  };
+
+  const handleInactivate = async () => {
+    if (!deletingProduct) return;
+    const { error } = await (supabase as any).from("produtos").update({ status: "inativo" }).eq("id", deletingProduct.id);
+    if (error) { toast.error("Erro ao inativar produto"); } else { toast.success("Produto inativado com sucesso"); }
+    setDeletingProduct(null);
+    setDeleteCheck(null);
   };
 
   const handleEdit = (product: DbProduct) => {
