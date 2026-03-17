@@ -171,11 +171,11 @@ export default function Produtos() {
                       <div />
                     )}
                     <Badge
-                      variant={getStockStatus(product.stock) === "out_of_stock" ? "destructive" : getStockStatus(product.stock) === "low_stock" ? "outline" : "secondary"}
+                      variant={getStockStatus(product.stock, product.min_stock) === "out_of_stock" ? "destructive" : getStockStatus(product.stock, product.min_stock) === "low_stock" ? "outline" : "secondary"}
                       className="text-caption tabular-nums"
                     >
                       {product.stock} un.
-                      {getStockStatus(product.stock) === "low_stock" && " ⚠"}
+                      {getStockStatus(product.stock, product.min_stock) === "low_stock" && " ⚠"}
                     </Badge>
                   </div>
                 </div>

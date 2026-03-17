@@ -1,29 +1,63 @@
-import { useMemo } from "react";
-import { Package, ArrowDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Package, ArrowDown, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
 import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes } from "@/hooks/useProductTypes";
-import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus } from "@/components/ProductFilters";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Estoque() {
   const { selectedFilial } = useFilial();
-  const { data: products } = useProducts();
+  const { data: products, refetch } = useProducts();
   const { data: tipos } = useProductTypes();
   const { filters, setFilters } = useProductFilters();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
   const totalStock = filtered.reduce((acc, p) => acc + p.stock, 0);
-  const lowStock = filtered.filter(p => getStockStatus(p.stock) === "low_stock").length;
-  const outOfStock = filtered.filter(p => getStockStatus(p.stock) === "out_of_stock").length;
+  const lowStock = filtered.filter(p => getStockStatus(p.stock, p.min_stock) === "low_stock").length;
+  const outOfStock = filtered.filter(p => getStockStatus(p.stock, p.min_stock) === "out_of_stock").length;
 
   const getTypeName = (id: string | null) => {
     if (!id) return null;
     return tipos.find(t => t.id === id)?.nome_tipo || null;
+  };
+
+  const handleEditMinStock = (productId: string, currentMin: number) => {
+    setEditingId(productId);
+    setEditValue(String(currentMin));
+  };
+
+  const handleSaveMinStock = async (productId: string) => {
+    const newMin = parseInt(editValue, 10);
+    if (isNaN(newMin) || newMin < 0) {
+      toast.error("Valor inválido");
+      return;
+    }
+    const { error } = await (supabase as any)
+      .from("produtos")
+      .update({ min_stock: newMin })
+      .eq("id", productId);
+    if (error) {
+      toast.error("Erro ao salvar: " + error.message);
+    } else {
+      toast.success("Estoque mínimo atualizado");
+      refetch();
+    }
+    setEditingId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
   };
 
   return (
@@ -82,6 +116,8 @@ export default function Estoque() {
               <div className="space-y-1">
                 {filtered.map(p => {
                   const typeName = getTypeName((p as any).tipo_produto_id);
+                  const status = getStockStatus(p.stock, p.min_stock);
+                  const isEditing = editingId === p.id;
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -91,6 +127,7 @@ export default function Estoque() {
                           <div className="flex items-center gap-2">
                             <p className="text-caption text-muted-foreground">{p.color} · {p.material}</p>
                             {typeName && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{typeName}</Badge>}
+                            {p.is_acessorio && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-accent text-accent-foreground">Acessório</Badge>}
                           </div>
                         </div>
                       </div>
@@ -99,13 +136,43 @@ export default function Estoque() {
                           <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                         )}
                         <Badge
-                          variant={getStockStatus(p.stock) === "out_of_stock" ? "destructive" : getStockStatus(p.stock) === "low_stock" ? "outline" : "secondary"}
+                          variant={status === "out_of_stock" ? "destructive" : status === "low_stock" ? "outline" : "secondary"}
                           className="tabular-nums text-caption"
                         >
                           {p.stock} un.
-                          {getStockStatus(p.stock) === "low_stock" && " ⚠"}
+                          {status === "low_stock" && " ⚠"}
                         </Badge>
-                        <span className="text-caption text-muted-foreground tabular-nums">mín: {p.min_stock}</span>
+                        <div className="flex items-center gap-1 min-w-[100px] justify-end">
+                          {isEditing ? (
+                            <>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="h-7 w-16 text-sm text-center tabular-nums"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveMinStock(p.id);
+                                  if (e.key === "Escape") handleCancelEdit();
+                                }}
+                              />
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSaveMinStock(p.id)}>
+                                <Check className="h-3.5 w-3.5 text-success" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCancelEdit}>
+                                <X className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-caption text-muted-foreground tabular-nums">mín: {p.min_stock}</span>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditMinStock(p.id, p.min_stock)}>
+                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

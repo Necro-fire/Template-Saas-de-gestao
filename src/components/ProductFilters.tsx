@@ -10,7 +10,7 @@ import { filiais } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { toast } from "sonner";
 
-export const LOW_STOCK_THRESHOLD = 3;
+export const LOW_STOCK_THRESHOLD = 3; // fallback only
 
 export interface ProductFilterValues {
   search: string;
@@ -40,9 +40,10 @@ export function useProductFilters() {
   return { filters, setFilters };
 }
 
-export function getStockStatus(stock: number): "in_stock" | "low_stock" | "out_of_stock" {
+export function getStockStatus(stock: number, minStock?: number): "in_stock" | "low_stock" | "out_of_stock" {
+  const threshold = minStock != null && minStock > 0 ? minStock : LOW_STOCK_THRESHOLD;
   if (stock === 0) return "out_of_stock";
-  if (stock <= LOW_STOCK_THRESHOLD) return "low_stock";
+  if (stock <= threshold) return "low_stock";
   return "in_stock";
 }
 
@@ -61,7 +62,7 @@ export function applyProductFilters<T extends { model: string; code: string; col
     if (filters.tipo !== "all" && (p as any).tipo_produto_id !== filters.tipo) return false;
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
 
-    const status = getStockStatus(p.stock);
+    const status = getStockStatus(p.stock, p.min_stock);
     if (filters.stockStatus === "in_stock" && status !== "in_stock") return false;
     if (filters.stockStatus === "low_stock" && status !== "low_stock") return false;
     if (filters.stockStatus === "out_of_stock" && status !== "out_of_stock") return false;
