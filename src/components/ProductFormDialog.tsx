@@ -88,7 +88,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setName("");
     setPrice("");
     setDetail("");
-    setFilial("");
+    setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
     setTipoProdutoId("");
     setWholesaleEnabled(false);
