@@ -86,14 +86,14 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
   return alerts;
 }
 
-function alertBadge(level: StockLevel, stock: number) {
+function alertBadge(level: StockLevel, totalStock: number) {
   switch (level) {
     case "out_of_stock":
       return <Badge variant="destructive" className="text-caption">Esgotado</Badge>;
     case "critical":
-      return <Badge className="text-caption bg-orange-600 text-white hover:bg-orange-700">Crítico</Badge>;
+      return <Badge className="text-caption bg-orange-600 text-white hover:bg-orange-700">{totalStock} un.</Badge>;
     case "low":
-      return <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{stock} un. ⚠</Badge>;
+      return <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{totalStock} un. ⚠</Badge>;
     default:
       return null;
   }
