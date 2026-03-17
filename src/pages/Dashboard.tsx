@@ -40,6 +40,7 @@ interface StockAlert {
   stock: number;
   categoryMin: number;
   products: DbProduct[];
+  tipoId: string | null;
 }
 
 function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] {
