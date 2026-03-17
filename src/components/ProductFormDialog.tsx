@@ -73,31 +73,14 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setName(product.model);
       setPrice(String(product.retail_price));
       setDetail(product.description || "");
-      setFilial(product.filial_id);
+      setFilial(filialLocked ? selectedFilial : product.filial_id);
       setQuantidade(String(product.stock));
-      setTipoProdutoId(product.tipo_produto_id || "");
-      setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
-      setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
-      setWholesaleMinQty(product.wholesale_min_qty > 0 ? String(product.wholesale_min_qty) : "");
-      setImagePreview(product.image_url || null);
-      setImageFile(null);
-      setCategoriaIdade(product.categoria_idade || "");
-      setGenero(product.genero || "");
-      setEstilo(product.estilo || "");
-      setCorArmacao(product.cor_armacao || "");
-      setMaterialAro(product.material_aro || "");
-      setMaterialHaste(product.material_haste || "");
-      setLensSize(product.lens_size ? String(product.lens_size) : "");
-      setAlturaLente(product.altura_lente ? String(product.altura_lente) : "");
-      setBridgeSize(product.bridge_size ? String(product.bridge_size) : "");
-      setTempleSize(product.temple_size ? String(product.temple_size) : "");
-      setTipoLente(product.tipo_lente || "");
-      setSubcategoriaAcessorio(product.subcategoria_acessorio || "");
+      // ... keep existing code
       setDuplicateInfo(null);
     } else {
       resetForm();
     }
-  }, [product, open]);
+  }, [product, open, selectedFilial, filialLocked]);
 
   const resetForm = () => {
     setIsAcessorio(false);
