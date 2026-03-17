@@ -28,6 +28,8 @@ interface ProductFormDialogProps {
 }
 
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
+  const { selectedFilial } = useFilial();
+  const filialLocked = selectedFilial !== "all";
   const [isAcessorio, setIsAcessorio] = useState(false);
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
