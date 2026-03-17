@@ -382,8 +382,8 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
             <Button variant="outline" size="sm" className="flex-1 h-8" onClick={handleClear}>Limpar Filtros</Button>
             <Button size="sm" className="flex-1 h-8" onClick={handleApply}>Aplicar Filtros</Button>
           </div>
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
