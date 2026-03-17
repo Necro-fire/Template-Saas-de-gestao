@@ -88,7 +88,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
 
   // Normal products — grouped by tipo_produto (category)
   const normalAlerts = nonNormal.filter(p => !p.is_acessorio);
-  const grouped = new Map<string, { level: StockLevel; products: DbProduct[]; catMin: number }>();
+  const grouped = new Map<string, { level: StockLevel; products: DbProduct[]; catMin: number; tipoId: string | null }>();
   normalAlerts.forEach(p => {
     const catMin = getCategoryMin(p, tipos);
     const level = getStockLevel(p.stock, catMin);
