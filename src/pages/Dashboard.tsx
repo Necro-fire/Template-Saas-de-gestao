@@ -82,6 +82,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
       stock: p.stock,
       categoryMin: getCategoryMin(p, tipos),
       products: [p],
+      tipoId: p.tipo_produto_id,
     });
   });
 
