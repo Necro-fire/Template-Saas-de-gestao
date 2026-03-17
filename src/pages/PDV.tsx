@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Search, Trash2, ShoppingCart, Barcode, Keyboard } from "lucide-react";
+import { Trash2, ShoppingCart, Barcode, Keyboard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +13,6 @@ import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, createVenda, type DbProduct } from "@/hooks/useSupabaseData";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { NumericStepper } from "@/components/ui/numeric-stepper";
 import { useBlocker } from "react-router-dom";
 import {
   AlertDialog,
@@ -31,6 +30,11 @@ interface CartItem {
   product: DbProduct;
 }
 
+let cartIdCounter = 0;
+function nextCartId() {
+  return `cart-${++cartIdCounter}-${Date.now()}`;
+}
+
 export default function PDV() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -45,20 +49,52 @@ export default function PDV() {
   const { data: products } = useProducts();
   const { data: clients } = useClients();
 
-  const getPrice = (product: DbProduct, quantity: number) => {
+  const getPrice = (product: DbProduct) => {
+    // Count how many of this product are in cart
+    const qtyInCart = cart.filter(i => i.product.id === product.id).length;
     const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-    if (hasWholesale && quantity >= product.wholesale_min_qty) {
+    if (hasWholesale && qtyInCart >= product.wholesale_min_qty) {
       return Number(product.wholesale_price);
     }
     return Number(product.retail_price);
   };
 
-  const isItemWholesale = (item: CartItem) => {
-    return item.product.wholesale_price > 0 && item.product.wholesale_min_qty > 0 && item.quantity >= item.product.wholesale_min_qty;
-  };
+  const subtotal = useMemo(() => {
+    // Group by product to check wholesale thresholds
+    const grouped = new Map<string, { product: DbProduct; count: number }>();
+    for (const item of cart) {
+      const existing = grouped.get(item.product.id);
+      if (existing) {
+        existing.count++;
+      } else {
+        grouped.set(item.product.id, { product: item.product, count: 1 });
+      }
+    }
+    let total = 0;
+    for (const { product, count } of grouped.values()) {
+      const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
+      const price = hasWholesale && count >= product.wholesale_min_qty
+        ? Number(product.wholesale_price)
+        : Number(product.retail_price);
+      total += price * count;
+    }
+    return total;
+  }, [cart]);
 
-  const subtotal = cart.reduce((acc, item) => acc + getPrice(item.product, item.quantity) * item.quantity, 0);
-  const hasAnyWholesale = cart.some(isItemWholesale);
+  const hasAnyWholesale = useMemo(() => {
+    const grouped = new Map<string, { product: DbProduct; count: number }>();
+    for (const item of cart) {
+      const existing = grouped.get(item.product.id);
+      if (existing) existing.count++;
+      else grouped.set(item.product.id, { product: item.product, count: 1 });
+    }
+    for (const { product, count } of grouped.values()) {
+      if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && count >= product.wholesale_min_qty) {
+        return true;
+      }
+    }
+    return false;
+  }, [cart]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
@@ -73,23 +109,16 @@ export default function PDV() {
 
   const addToCart = useCallback((product: DbProduct) => {
     setCart(prev => {
-      const existing = prev.find(i => i.product.id === product.id);
-      if (existing) {
-        if (existing.quantity >= product.stock) {
-          toast.error(`Estoque insuficiente. Disponível: ${product.stock}`);
-          return prev;
-        }
-        const updated = prev.map(i =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-        // Check if this addition triggers wholesale for this product
-        const newQty = existing.quantity + 1;
-        if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
-          toast.success(`Atacado aplicado para ${product.model}!`, { duration: 3000 });
-        }
-        return updated;
+      const qtyInCart = prev.filter(i => i.product.id === product.id).length;
+      if (qtyInCart >= product.stock) {
+        toast.error(`Estoque insuficiente. Disponível: ${product.stock}`);
+        return prev;
       }
-      return [...prev, { product, quantity: 1 }];
+      const newQty = qtyInCart + 1;
+      if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
+        toast.success(`Atacado aplicado para ${product.model}!`, { duration: 3000 });
+      }
+      return [...prev, { cartId: nextCartId(), product }];
     });
   }, []);
 
@@ -107,22 +136,8 @@ export default function PDV() {
     }
   }, [products, addToCart]);
 
-  const updateQuantity = (productId: string, delta: number) => {
-    setCart(prev => prev.map(i => {
-      if (i.product.id === productId) {
-        const newQty = i.quantity + delta;
-        if (newQty > i.product.stock) {
-          toast.error(`Estoque insuficiente. Disponível: ${i.product.stock}`);
-          return i;
-        }
-        return { ...i, quantity: Math.max(0, newQty) };
-      }
-      return i;
-    }).filter(i => i.quantity > 0));
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(i => i.product.id !== productId));
+  const removeFromCart = (cartId: string) => {
+    setCart(prev => prev.filter(i => i.cartId !== cartId));
   };
 
   const finalizeSale = async () => {
@@ -135,13 +150,27 @@ export default function PDV() {
 
     setSubmitting(true);
     try {
-      const items = cart.map(i => ({
-        produto_id: i.product.id,
-        product_code: i.product.code,
-        product_model: i.product.model,
-        quantity: i.quantity,
-        unit_price: getPrice(i.product, i.quantity),
-      }));
+      // Group cart items by product for the sale
+      const grouped = new Map<string, { product: DbProduct; count: number }>();
+      for (const item of cart) {
+        const existing = grouped.get(item.product.id);
+        if (existing) existing.count++;
+        else grouped.set(item.product.id, { product: item.product, count: 1 });
+      }
+
+      const items = Array.from(grouped.values()).map(({ product, count }) => {
+        const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
+        const price = hasWholesale && count >= product.wholesale_min_qty
+          ? Number(product.wholesale_price)
+          : Number(product.retail_price);
+        return {
+          produto_id: product.id,
+          product_code: product.code,
+          product_model: product.model,
+          quantity: count,
+          unit_price: price,
+        };
+      });
 
       await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId);
 
@@ -173,7 +202,6 @@ export default function PDV() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if inside an input/textarea (except our search)
       const target = e.target as HTMLElement;
       const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT";
 
@@ -187,7 +215,7 @@ export default function PDV() {
         e.preventDefault();
         if (cart.length > 0) {
           const last = cart[cart.length - 1];
-          removeFromCart(last.product.id);
+          removeFromCart(last.cartId);
           toast.info(`${last.product.model} removido`);
         }
       } else if (e.key === "Escape") {
@@ -306,23 +334,13 @@ export default function PDV() {
           <div className="flex-1 overflow-auto p-4 pt-2">
             <AnimatePresence mode="popLayout">
               {cart.map(item => (
-                <motion.div key={item.product.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
+                <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
                     <p className="text-ui font-medium truncate">{item.product.model}</p>
                     <p className="text-caption text-muted-foreground">{item.product.barcode || item.product.code} · {item.product.color}</p>
                   </div>
-                  <NumericStepper
-                    value={item.quantity}
-                    onChange={(v) => updateQuantity(item.product.id, v - item.quantity)}
-                    min={1}
-                    max={item.product.stock}
-                    size="sm"
-                  />
-                  <div className="flex items-center gap-1">
-                    <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {(getPrice(item.product, item.quantity) * item.quantity).toFixed(0)}</span>
-                    {isItemWholesale(item) && <Badge variant="outline" className="text-[10px] px-1 py-0 text-success border-success">Atacado</Badge>}
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3 w-3" /></Button>
+                  <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {Number(item.product.retail_price).toFixed(0)}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-3 w-3" /></Button>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -351,7 +369,7 @@ export default function PDV() {
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
-                <span>{cart.reduce((a, i) => a + i.quantity, 0)} {cart.reduce((a, i) => a + i.quantity, 0) === 1 ? "item" : "itens"}</span>
+                <span>{cart.length} {cart.length === 1 ? "item" : "itens"}</span>
                 {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
               </div>
               <div className="flex justify-between text-subhead font-semibold">
