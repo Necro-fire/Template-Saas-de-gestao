@@ -96,7 +96,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
     const key = tipo?.nome_tipo || p.category || p.model;
     const existing = grouped.get(key);
     if (!existing) {
-      grouped.set(key, { level, products: [p], catMin });
+      grouped.set(key, { level, products: [p], catMin, tipoId: p.tipo_produto_id });
     } else {
       existing.products.push(p);
       // Use worst level
