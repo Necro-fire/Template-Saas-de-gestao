@@ -1,10 +1,10 @@
 import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
+import { getStockStatus } from "@/components/ProductFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
+import { useProducts, useClients, useVendas, type DbProduct } from "@/hooks/useSupabaseData";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 
 function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
@@ -33,6 +33,82 @@ function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
   );
 }
 
+function getAlertMessage(product: DbProduct): string {
+  if (product.is_acessorio) {
+    const name = product.subcategoria_acessorio || product.model;
+    const cor = product.color && product.color !== "" && product.color.toLowerCase() !== "nenhuma"
+      ? ` ${product.color}`
+      : "";
+    return `${name}${cor} está com estoque baixo`;
+  }
+  return `Poucos itens em estoque para: ${product.model}`;
+}
+
+interface StockAlert {
+  message: string;
+  level: "low_stock" | "out_of_stock";
+  stock: number;
+  minStock: number;
+  products: DbProduct[];
+}
+
+function buildAlerts(products: DbProduct[]): StockAlert[] {
+  const alerts: StockAlert[] = [];
+
+  // Out of stock — always individual
+  products
+    .filter(p => p.status !== "inativo" && getStockStatus(p.stock, p.min_stock) === "out_of_stock")
+    .forEach(p => {
+      alerts.push({
+        message: p.is_acessorio
+          ? `${p.subcategoria_acessorio || p.model}${p.color && p.color.toLowerCase() !== "nenhuma" ? ` ${p.color}` : ""} sem estoque`
+          : `${p.model} sem estoque`,
+        level: "out_of_stock",
+        stock: p.stock,
+        minStock: p.min_stock,
+        products: [p],
+      });
+    });
+
+  // Low stock
+  const lowStockProducts = products.filter(
+    p => p.status !== "inativo" && getStockStatus(p.stock, p.min_stock) === "low_stock"
+  );
+
+  // Accessories — individual alerts with color
+  lowStockProducts
+    .filter(p => p.is_acessorio)
+    .forEach(p => {
+      alerts.push({
+        message: getAlertMessage(p),
+        level: "low_stock",
+        stock: p.stock,
+        minStock: p.min_stock,
+        products: [p],
+      });
+    });
+
+  // Normal products — grouped by category/model
+  const normalLow = lowStockProducts.filter(p => !p.is_acessorio);
+  const grouped = new Map<string, DbProduct[]>();
+  normalLow.forEach(p => {
+    const key = p.category || p.model;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(p);
+  });
+  grouped.forEach((prods, key) => {
+    alerts.push({
+      message: `Poucos itens em estoque para: ${key}`,
+      level: "low_stock",
+      stock: Math.min(...prods.map(p => p.stock)),
+      minStock: Math.max(...prods.map(p => p.min_stock)),
+      products: prods,
+    });
+  });
+
+  return alerts;
+}
+
 export default function Dashboard() {
   const { data: products } = useProducts();
   const { data: sales } = useVendas();
@@ -44,10 +120,12 @@ export default function Dashboard() {
 
   const salesTotalValue = filteredSales.reduce((acc, s) => acc + Number(s.total), 0);
 
-  const lowStockProducts = products.filter(p => getStockStatus(p.stock) === "low_stock");
-  const outOfStockProducts = products.filter(p => getStockStatus(p.stock) === "out_of_stock");
-  const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
-  const hasAlerts = lowStockProducts.length > 0 || outOfStockProducts.length > 0;
+  const activeProducts = products.filter(p => p.status !== "inativo");
+  const alerts = buildAlerts(products);
+  const outAlerts = alerts.filter(a => a.level === "out_of_stock");
+  const lowAlerts = alerts.filter(a => a.level === "low_stock");
+  const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
+  const hasAlerts = alerts.length > 0;
 
   return (
     <div>
@@ -64,7 +142,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard title="Vendas no Período" value={`R$ ${salesTotalValue.toFixed(2)}`} subtitle={filteredSales.length > 0 ? `${filteredSales.length} vendas` : "Sem dados no período"} icon={ShoppingCart} />
           <MetricCard title="Ticket Médio" value={filteredSales.length > 0 ? `R$ ${(salesTotalValue / filteredSales.length).toFixed(2)}` : "R$ 0.00"} subtitle={filteredSales.length > 0 ? `${filteredSales.length} vendas` : "Sem dados no período"} icon={TrendingUp} />
-          <MetricCard title="Total em Estoque" value={String(totalStock)} subtitle={`${products.length} produtos`} icon={Package} />
+          <MetricCard title="Total em Estoque" value={String(totalStock)} subtitle={`${activeProducts.length} produtos`} icon={Package} />
           <MetricCard title="Clientes no Período" value={String(filteredClients.filter(c => c.status === "active").length)} subtitle={filteredClients.length > 0 ? "ativos" : "Sem dados no período"} icon={Users} />
         </div>
 
@@ -79,35 +157,41 @@ export default function Dashboard() {
             <CardContent className="p-4 pt-0 space-y-3">
               {hasAlerts && (
                 <div className="flex flex-wrap gap-2">
-                  {lowStockProducts.length > 0 && (
+                  {lowAlerts.length > 0 && (
                     <Badge variant="outline" className="text-caption border-warning text-warning gap-1">
-                      ⚠ {lowStockProducts.length} {lowStockProducts.length === 1 ? "produto" : "produtos"} com estoque baixo
+                      ⚠ {lowAlerts.length} {lowAlerts.length === 1 ? "alerta" : "alertas"} de estoque baixo
                     </Badge>
                   )}
-                  {outOfStockProducts.length > 0 && (
+                  {outAlerts.length > 0 && (
                     <Badge variant="outline" className="text-caption border-destructive text-destructive gap-1">
-                      🔴 {outOfStockProducts.length} {outOfStockProducts.length === 1 ? "produto" : "produtos"} sem estoque
+                      🔴 {outAlerts.length} {outAlerts.length === 1 ? "item" : "itens"} sem estoque
                     </Badge>
                   )}
                 </div>
               )}
               <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                {outOfStockProducts.map(p => (
-                  <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-destructive/5">
+                {outAlerts.map((alert, i) => (
+                  <div key={`out-${i}`} className="flex items-center justify-between py-2 px-3 rounded-md bg-destructive/5">
                     <div>
-                      <p className="text-ui font-medium">{p.model}</p>
-                      <p className="text-caption text-muted-foreground">{p.code} · {p.color}</p>
+                      <p className="text-ui font-medium">{alert.message}</p>
+                      <p className="text-caption text-muted-foreground">
+                        {alert.products.map(p => p.code).join(", ")}
+                      </p>
                     </div>
                     <Badge variant="destructive" className="text-caption">Sem estoque</Badge>
                   </div>
                 ))}
-                {lowStockProducts.map(p => (
-                  <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md bg-warning/5">
+                {lowAlerts.map((alert, i) => (
+                  <div key={`low-${i}`} className="flex items-center justify-between py-2 px-3 rounded-md bg-warning/5">
                     <div>
-                      <p className="text-ui font-medium">{p.model}</p>
-                      <p className="text-caption text-muted-foreground">{p.code} · {p.color}</p>
+                      <p className="text-ui font-medium">{alert.message}</p>
+                      <p className="text-caption text-muted-foreground">
+                        {alert.products.map(p => p.code).join(", ")} · mín: {alert.minStock}
+                      </p>
                     </div>
-                    <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{p.stock} un. ⚠</Badge>
+                    <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">
+                      {alert.stock} un. ⚠
+                    </Badge>
                   </div>
                 ))}
                 {!hasAlerts && (

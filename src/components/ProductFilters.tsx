@@ -40,9 +40,10 @@ export function useProductFilters() {
   return { filters, setFilters };
 }
 
-export function getStockStatus(stock: number): "in_stock" | "low_stock" | "out_of_stock" {
+export function getStockStatus(stock: number, minStock?: number): "in_stock" | "low_stock" | "out_of_stock" {
+  const threshold = minStock != null && minStock > 0 ? minStock : LOW_STOCK_THRESHOLD;
   if (stock === 0) return "out_of_stock";
-  if (stock <= LOW_STOCK_THRESHOLD) return "low_stock";
+  if (stock <= threshold) return "low_stock";
   return "in_stock";
 }
 
