@@ -1,10 +1,10 @@
 import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getStockStatus } from "@/components/ProductFilters";
+import { getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, useVendas, type DbProduct } from "@/hooks/useSupabaseData";
+import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 
 function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
@@ -33,84 +33,115 @@ function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
   );
 }
 
-function getAlertMessage(product: DbProduct): string {
-  if (product.is_acessorio) {
-    const name = product.subcategoria_acessorio || product.model;
-    const cor = product.color && product.color !== "" && product.color.toLowerCase() !== "nenhuma"
-      ? ` ${product.color}`
-      : "";
-    return `${name}${cor} está com estoque baixo`;
-  }
-  return `Poucos itens em estoque para: ${product.model}`;
-}
-
 interface StockAlert {
   message: string;
-  level: "low_stock" | "out_of_stock";
+  level: StockLevel;
   stock: number;
-  minStock: number;
+  categoryMin: number;
   products: DbProduct[];
 }
 
-function buildAlerts(products: DbProduct[]): StockAlert[] {
+function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] {
   const alerts: StockAlert[] = [];
+  const active = products.filter(p => p.status !== "inativo");
 
-  // Out of stock — always individual
-  products
-    .filter(p => p.status !== "inativo" && getStockStatus(p.stock, p.min_stock) === "out_of_stock")
+  // --- Out of stock (individual for all) ---
+  active
+    .filter(p => getStockLevel(p.stock, getCategoryMin(p, tipos)) === "out_of_stock")
     .forEach(p => {
+      const name = p.is_acessorio
+        ? `${p.subcategoria_acessorio || p.model}${p.color && p.color.toLowerCase() !== "nenhuma" ? ` ${p.color}` : ""}`
+        : p.model;
       alerts.push({
-        message: p.is_acessorio
-          ? `${p.subcategoria_acessorio || p.model}${p.color && p.color.toLowerCase() !== "nenhuma" ? ` ${p.color}` : ""} sem estoque`
-          : `${p.model} sem estoque`,
+        message: `${name} sem estoque`,
         level: "out_of_stock",
-        stock: p.stock,
-        minStock: p.min_stock,
+        stock: 0,
+        categoryMin: getCategoryMin(p, tipos),
         products: [p],
       });
     });
 
-  // Low stock
-  const lowStockProducts = products.filter(
-    p => p.status !== "inativo" && getStockStatus(p.stock, p.min_stock) === "low_stock"
-  );
-
-  // Accessories — individual alerts with color
-  lowStockProducts
-    .filter(p => p.is_acessorio)
-    .forEach(p => {
-      alerts.push({
-        message: getAlertMessage(p),
-        level: "low_stock",
-        stock: p.stock,
-        minStock: p.min_stock,
-        products: [p],
-      });
-    });
-
-  // Normal products — grouped by category/model
-  const normalLow = lowStockProducts.filter(p => !p.is_acessorio);
-  const grouped = new Map<string, DbProduct[]>();
-  normalLow.forEach(p => {
-    const key = p.category || p.model;
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(p);
+  // --- Critical & Low ---
+  const nonNormal = active.filter(p => {
+    const l = getStockLevel(p.stock, getCategoryMin(p, tipos));
+    return l === "critical" || l === "low";
   });
-  grouped.forEach((prods, key) => {
+
+  // Accessories — individual
+  nonNormal.filter(p => p.is_acessorio).forEach(p => {
+    const level = getStockLevel(p.stock, getCategoryMin(p, tipos));
+    const name = p.subcategoria_acessorio || p.model;
+    const cor = p.color && p.color.toLowerCase() !== "nenhuma" ? ` ${p.color}` : "";
+    const label = level === "critical" ? "em estado crítico" : "está com estoque baixo";
     alerts.push({
-      message: `Poucos itens em estoque para: ${key}`,
-      level: "low_stock",
-      stock: Math.min(...prods.map(p => p.stock)),
-      minStock: Math.max(...prods.map(p => p.min_stock)),
-      products: prods,
+      message: `${name}${cor} ${label}`,
+      level,
+      stock: p.stock,
+      categoryMin: getCategoryMin(p, tipos),
+      products: [p],
     });
   });
+
+  // Normal products — grouped by tipo_produto (category)
+  const normalAlerts = nonNormal.filter(p => !p.is_acessorio);
+  const grouped = new Map<string, { level: StockLevel; products: DbProduct[]; catMin: number }>();
+  normalAlerts.forEach(p => {
+    const catMin = getCategoryMin(p, tipos);
+    const level = getStockLevel(p.stock, catMin);
+    const tipo = tipos.find(t => t.id === p.tipo_produto_id);
+    const key = tipo?.nome_tipo || p.category || p.model;
+    const existing = grouped.get(key);
+    if (!existing) {
+      grouped.set(key, { level, products: [p], catMin });
+    } else {
+      existing.products.push(p);
+      // Use worst level
+      if (level === "critical" && existing.level === "low") existing.level = "critical";
+    }
+  });
+  grouped.forEach((data, key) => {
+    const label = data.level === "critical" ? `Estoque crítico em ${key}` : `Poucos itens em estoque para: ${key}`;
+    alerts.push({
+      message: label,
+      level: data.level,
+      stock: Math.min(...data.products.map(p => p.stock)),
+      categoryMin: data.catMin,
+      products: data.products,
+    });
+  });
+
+  // Sort: out_of_stock first, then critical, then low
+  const order: Record<StockLevel, number> = { out_of_stock: 0, critical: 1, low: 2, normal: 3 };
+  alerts.sort((a, b) => order[a.level] - order[b.level]);
 
   return alerts;
 }
 
+function alertBadge(level: StockLevel, stock: number) {
+  switch (level) {
+    case "out_of_stock":
+      return <Badge variant="destructive" className="text-caption">Esgotado</Badge>;
+    case "critical":
+      return <Badge className="text-caption bg-orange-600 text-white hover:bg-orange-700">Crítico</Badge>;
+    case "low":
+      return <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{stock} un. ⚠</Badge>;
+    default:
+      return null;
+  }
+}
+
+function alertBgClass(level: StockLevel) {
+  switch (level) {
+    case "out_of_stock": return "bg-destructive/5";
+    case "critical": return "bg-orange-500/5";
+    case "low": return "bg-warning/5";
+    default: return "";
+  }
+}
+
 export default function Dashboard() {
   const { data: products } = useProducts();
+  const { data: tipos } = useProductTypes();
   const { data: sales } = useVendas();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
@@ -121,9 +152,10 @@ export default function Dashboard() {
   const salesTotalValue = filteredSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   const activeProducts = products.filter(p => p.status !== "inativo");
-  const alerts = buildAlerts(products);
+  const alerts = buildAlerts(products, tipos);
   const outAlerts = alerts.filter(a => a.level === "out_of_stock");
-  const lowAlerts = alerts.filter(a => a.level === "low_stock");
+  const critAlerts = alerts.filter(a => a.level === "critical");
+  const lowAlerts = alerts.filter(a => a.level === "low");
   const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
   const hasAlerts = alerts.length > 0;
 
@@ -157,41 +189,36 @@ export default function Dashboard() {
             <CardContent className="p-4 pt-0 space-y-3">
               {hasAlerts && (
                 <div className="flex flex-wrap gap-2">
-                  {lowAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-warning text-warning gap-1">
-                      ⚠ {lowAlerts.length} {lowAlerts.length === 1 ? "alerta" : "alertas"} de estoque baixo
-                    </Badge>
-                  )}
                   {outAlerts.length > 0 && (
                     <Badge variant="outline" className="text-caption border-destructive text-destructive gap-1">
-                      🔴 {outAlerts.length} {outAlerts.length === 1 ? "item" : "itens"} sem estoque
+                      🔴 {outAlerts.length} esgotado{outAlerts.length > 1 ? "s" : ""}
+                    </Badge>
+                  )}
+                  {critAlerts.length > 0 && (
+                    <Badge variant="outline" className="text-caption border-orange-500 text-orange-600 gap-1">
+                      🟠 {critAlerts.length} crítico{critAlerts.length > 1 ? "s" : ""}
+                    </Badge>
+                  )}
+                  {lowAlerts.length > 0 && (
+                    <Badge variant="outline" className="text-caption border-warning text-warning gap-1">
+                      ⚠ {lowAlerts.length} baixo{lowAlerts.length > 1 ? "s" : ""}
                     </Badge>
                   )}
                 </div>
               )}
               <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                {outAlerts.map((alert, i) => (
-                  <div key={`out-${i}`} className="flex items-center justify-between py-2 px-3 rounded-md bg-destructive/5">
+                {alerts.map((alert, i) => (
+                  <div key={i} className={`flex items-center justify-between py-2 px-3 rounded-md ${alertBgClass(alert.level)}`}>
                     <div>
                       <p className="text-ui font-medium">{alert.message}</p>
                       <p className="text-caption text-muted-foreground">
-                        {alert.products.map(p => p.code).join(", ")}
+                        {alert.products.length <= 3
+                          ? alert.products.map(p => p.code).join(", ")
+                          : `${alert.products.slice(0, 3).map(p => p.code).join(", ")} +${alert.products.length - 3}`}
+                        {" · mín: "}{alert.categoryMin}
                       </p>
                     </div>
-                    <Badge variant="destructive" className="text-caption">Sem estoque</Badge>
-                  </div>
-                ))}
-                {lowAlerts.map((alert, i) => (
-                  <div key={`low-${i}`} className="flex items-center justify-between py-2 px-3 rounded-md bg-warning/5">
-                    <div>
-                      <p className="text-ui font-medium">{alert.message}</p>
-                      <p className="text-caption text-muted-foreground">
-                        {alert.products.map(p => p.code).join(", ")} · mín: {alert.minStock}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">
-                      {alert.stock} un. ⚠
-                    </Badge>
+                    {alertBadge(alert.level, alert.stock)}
                   </div>
                 ))}
                 {!hasAlerts && (

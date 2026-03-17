@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface TipoProduto {
   id: string;
   nome_tipo: string;
+  estoque_minimo_alerta: number;
   created_at: string;
 }
 
