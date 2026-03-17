@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { filiais, useFilial } from "@/contexts/FilialContext";
@@ -229,8 +229,8 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
         />
       </div>
 
-      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) { setDraft({ ...filters }); setPriceError(""); } }}>
-        <PopoverTrigger asChild>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) { setDraft({ ...filters }); setPriceError(""); } }}>
+        <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 gap-1.5">
             <Filter className="h-3.5 w-3.5" />
             Filtros
@@ -240,17 +240,19 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
               </Badge>
             )}
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-96 p-0" align="end">
-          <div className="flex items-center justify-between p-4 pb-2">
-            <h3 className="text-sm font-semibold">Filtros</h3>
-            {activeCount > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 text-caption text-muted-foreground gap-1" onClick={handleClear}>
-                <X className="h-3 w-3" />
-                Limpar
-              </Button>
-            )}
-          </div>
+        </DialogTrigger>
+        <DialogContent className="w-96 max-w-[95vw] p-0">
+          <DialogHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-sm font-semibold">Filtros</DialogTitle>
+              {activeCount > 0 && (
+                <Button variant="ghost" size="sm" className="h-7 text-caption text-muted-foreground gap-1" onClick={handleClear}>
+                  <X className="h-3 w-3" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
 
           <ScrollArea className="max-h-[460px]">
             <div className="p-4 pt-2 space-y-3">
@@ -380,8 +382,8 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
             <Button variant="outline" size="sm" className="flex-1 h-8" onClick={handleClear}>Limpar Filtros</Button>
             <Button size="sm" className="flex-1 h-8" onClick={handleApply}>Aplicar Filtros</Button>
           </div>
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
