@@ -111,6 +111,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
       stock: Math.min(...data.products.map(p => p.stock)),
       categoryMin: data.catMin,
       products: data.products,
+      tipoId: data.tipoId,
     });
   });
 
