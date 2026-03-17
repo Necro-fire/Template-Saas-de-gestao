@@ -181,21 +181,16 @@ export default function Dashboard() {
                   <div
                     key={i}
                     className={`flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all ${alertBgClass(alert.level)}`}
-                    onClick={() => {
-                      const params = alert.tipoId ? `?tipo=${alert.tipoId}` : "";
-                      navigate(`/estoque${params}`);
-                    }}
+                    onClick={() => navigate(`/estoque?tipo=${alert.tipoId}`)}
                   >
                     <div>
                       <p className="text-ui font-medium">{alert.message}</p>
                       <p className="text-caption text-muted-foreground">
-                        {alert.products.length <= 3
-                          ? alert.products.map(p => p.code).join(", ")
-                          : `${alert.products.slice(0, 3).map(p => p.code).join(", ")} +${alert.products.length - 3}`}
-                        {" · mín: "}{alert.categoryMin}
+                        {alert.productCount} produto{alert.productCount !== 1 ? "s" : ""} · mín: {alert.categoryMin}
                       </p>
                     </div>
-                    {alertBadge(alert.level, alert.stock)}
+                    {alertBadge(alert.level, alert.totalStock)}
+                  </div>
                   </div>
                 ))}
                 {!hasAlerts && (
