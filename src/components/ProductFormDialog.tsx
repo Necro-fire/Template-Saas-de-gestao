@@ -587,17 +587,24 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           {/* Filial */}
           <div>
             <Label>Filial *</Label>
-            <Select value={filial} onValueChange={setFilial}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Selecione a filial" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Filial 1</SelectItem>
-                <SelectItem value="2">Filial 2</SelectItem>
-                <SelectItem value="3">Filial 3</SelectItem>
-                {!isEditing && <SelectItem value="all">Todas as Filiais</SelectItem>}
-              </SelectContent>
-            </Select>
+            {filialLocked ? (
+              <div className="mt-1.5">
+                <Input value={`Filial ${selectedFilial}`} disabled className="bg-muted" />
+                <p className="text-[11px] text-muted-foreground mt-1">Filial definida pelo contexto atual. Selecione "Todas" para escolher outra.</p>
+              </div>
+            ) : (
+              <Select value={filial} onValueChange={setFilial}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Selecione a filial" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Filial 1</SelectItem>
+                  <SelectItem value="2">Filial 2</SelectItem>
+                  <SelectItem value="3">Filial 3</SelectItem>
+                  {!isEditing && <SelectItem value="all">Todas as Filiais</SelectItem>}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 

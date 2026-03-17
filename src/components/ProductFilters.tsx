@@ -328,14 +328,24 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
               <p className="text-caption text-muted-foreground font-medium">Estoque</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-caption">Filial</Label>
-                  <Select value={draft.filial} onValueChange={(v) => setDraft({ ...draft, filial: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-caption flex items-center gap-1">
+                    Filial
+                    {filialLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  </Label>
+                  {filialLocked ? (
+                    <div>
+                      <Input value={`Filial ${selectedFilial}`} disabled className="h-8 text-sm bg-muted" />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Use "Todas" para filtrar por filial</p>
+                    </div>
+                  ) : (
+                    <Select value={draft.filial} onValueChange={(v) => setDraft({ ...draft, filial: v })}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-caption">Status Estoque</Label>
