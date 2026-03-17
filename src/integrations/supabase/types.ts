@@ -225,16 +225,19 @@ export type Database = {
       tipos_produto: {
         Row: {
           created_at: string
+          estoque_minimo_alerta: number
           id: string
           nome_tipo: string
         }
         Insert: {
           created_at?: string
+          estoque_minimo_alerta?: number
           id?: string
           nome_tipo: string
         }
         Update: {
           created_at?: string
+          estoque_minimo_alerta?: number
           id?: string
           nome_tipo?: string
         }
