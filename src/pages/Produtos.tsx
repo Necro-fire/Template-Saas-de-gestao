@@ -16,7 +16,6 @@ import { toast } from "sonner";
 export default function Produtos() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
-  const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
   const { selectedFilial } = useFilial();
   const { filters, setFilters } = useProductFilters();
