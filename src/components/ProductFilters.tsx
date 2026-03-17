@@ -10,7 +10,7 @@ import { filiais } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { toast } from "sonner";
 
-export const LOW_STOCK_THRESHOLD = 3;
+export const LOW_STOCK_THRESHOLD = 3; // fallback only
 
 export interface ProductFilterValues {
   search: string;
