@@ -162,13 +162,20 @@ export default function Produtos() {
                     ) : (
                       <div />
                     )}
-                    <Badge
-                      variant={getStockStatus(product.stock, product.min_stock) === "out_of_stock" ? "destructive" : getStockStatus(product.stock, product.min_stock) === "low_stock" ? "outline" : "secondary"}
-                      className="text-caption tabular-nums"
-                    >
-                      {product.stock} un.
-                      {getStockStatus(product.stock, product.min_stock) === "low_stock" && " ⚠"}
-                    </Badge>
+                    {(() => {
+                      const catMin = getCategoryMin(product, tipos);
+                      const level = getStockLevel(product.stock, catMin);
+                      return (
+                        <Badge
+                          variant={level === "out_of_stock" ? "destructive" : level === "critical" || level === "low" ? "outline" : "secondary"}
+                          className={`text-caption tabular-nums ${level === "critical" ? "border-orange-500 text-orange-600" : level === "low" ? "border-warning text-warning" : ""}`}
+                        >
+                          {product.stock} un.
+                          {level === "low" && " ⚠"}
+                          {level === "critical" && " 🟠"}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                 </div>
               );
