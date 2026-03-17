@@ -117,7 +117,7 @@ export default function Produtos() {
                     <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => setDeletingProduct(product)}>
+                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => checkAndDelete(product)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
