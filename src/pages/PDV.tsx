@@ -27,8 +27,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface CartItem {
+  cartId: string;
   product: DbProduct;
-  quantity: number;
 }
 
 export default function PDV() {
