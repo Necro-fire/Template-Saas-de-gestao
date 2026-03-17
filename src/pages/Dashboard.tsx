@@ -145,6 +145,7 @@ function alertBgClass(level: StockLevel) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { data: products } = useProducts();
   const { data: tipos } = useProductTypes();
   const { data: sales } = useVendas();
