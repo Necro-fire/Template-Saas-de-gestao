@@ -62,7 +62,7 @@ export function applyProductFilters<T extends { model: string; code: string; col
     if (filters.tipo !== "all" && (p as any).tipo_produto_id !== filters.tipo) return false;
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
 
-    const status = getStockStatus(p.stock);
+    const status = getStockStatus(p.stock, p.min_stock);
     if (filters.stockStatus === "in_stock" && status !== "in_stock") return false;
     if (filters.stockStatus === "low_stock" && status !== "low_stock") return false;
     if (filters.stockStatus === "out_of_stock" && status !== "out_of_stock") return false;
