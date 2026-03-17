@@ -193,17 +193,31 @@ export default function Produtos() {
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
         <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
 
-        <AlertDialog open={!!deletingProduct} onOpenChange={(o) => !o && setDeletingProduct(null)}>
+        <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {deleteCheck?.canDelete === false ? "Não é possível excluir" : "Excluir produto?"}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                O produto "{deletingProduct?.model}" será removido permanentemente.
+                {deleteCheck === null
+                  ? "Verificando dependências..."
+                  : deleteCheck.canDelete
+                    ? `O produto "${deletingProduct?.model}" (${deletingProduct?.code}) será removido permanentemente.`
+                    : deleteCheck.reason}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+              {deleteCheck?.canDelete === false ? (
+                <AlertDialogAction onClick={handleInactivate} className="bg-amber-600 text-white hover:bg-amber-700">
+                  Inativar Produto
+                </AlertDialogAction>
+              ) : deleteCheck?.canDelete ? (
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              ) : null}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
