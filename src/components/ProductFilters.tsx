@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, Search } from "lucide-react";
+import { Filter, X, Search, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { filiais } from "@/contexts/FilialContext";
+import { filiais, useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
@@ -172,6 +172,8 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
 
 export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const { data: tipos } = useProductTypes();
+  const { selectedFilial } = useFilial();
+  const filialLocked = selectedFilial !== "all";
   const [draft, setDraft] = useState<ProductFilterValues>({ ...filters });
   const [open, setOpen] = useState(false);
   const [priceError, setPriceError] = useState("");
@@ -326,14 +328,24 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
               <p className="text-caption text-muted-foreground font-medium">Estoque</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-caption">Filial</Label>
-                  <Select value={draft.filial} onValueChange={(v) => setDraft({ ...draft, filial: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-caption flex items-center gap-1">
+                    Filial
+                    {filialLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  </Label>
+                  {filialLocked ? (
+                    <div>
+                      <Input value={`Filial ${selectedFilial}`} disabled className="h-8 text-sm bg-muted" />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Use "Todas" para filtrar por filial</p>
+                    </div>
+                  ) : (
+                    <Select value={draft.filial} onValueChange={(v) => setDraft({ ...draft, filial: v })}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-caption">Status Estoque</Label>

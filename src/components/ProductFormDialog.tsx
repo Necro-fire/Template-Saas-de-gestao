@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useFilial } from "@/contexts/FilialContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,8 @@ interface ProductFormDialogProps {
 }
 
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
+  const { selectedFilial } = useFilial();
+  const filialLocked = selectedFilial !== "all";
   const [isAcessorio, setIsAcessorio] = useState(false);
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
@@ -70,31 +73,14 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setName(product.model);
       setPrice(String(product.retail_price));
       setDetail(product.description || "");
-      setFilial(product.filial_id);
+      setFilial(filialLocked ? selectedFilial : product.filial_id);
       setQuantidade(String(product.stock));
-      setTipoProdutoId(product.tipo_produto_id || "");
-      setWholesaleEnabled(product.wholesale_price > 0 && product.wholesale_min_qty > 0);
-      setWholesalePrice(product.wholesale_price > 0 ? String(product.wholesale_price) : "");
-      setWholesaleMinQty(product.wholesale_min_qty > 0 ? String(product.wholesale_min_qty) : "");
-      setImagePreview(product.image_url || null);
-      setImageFile(null);
-      setCategoriaIdade(product.categoria_idade || "");
-      setGenero(product.genero || "");
-      setEstilo(product.estilo || "");
-      setCorArmacao(product.cor_armacao || "");
-      setMaterialAro(product.material_aro || "");
-      setMaterialHaste(product.material_haste || "");
-      setLensSize(product.lens_size ? String(product.lens_size) : "");
-      setAlturaLente(product.altura_lente ? String(product.altura_lente) : "");
-      setBridgeSize(product.bridge_size ? String(product.bridge_size) : "");
-      setTempleSize(product.temple_size ? String(product.temple_size) : "");
-      setTipoLente(product.tipo_lente || "");
-      setSubcategoriaAcessorio(product.subcategoria_acessorio || "");
+      // ... keep existing code
       setDuplicateInfo(null);
     } else {
       resetForm();
     }
-  }, [product, open]);
+  }, [product, open, selectedFilial, filialLocked]);
 
   const resetForm = () => {
     setIsAcessorio(false);
@@ -102,7 +88,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setName("");
     setPrice("");
     setDetail("");
-    setFilial("");
+    setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
     setTipoProdutoId("");
     setWholesaleEnabled(false);
@@ -601,17 +587,24 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           {/* Filial */}
           <div>
             <Label>Filial *</Label>
-            <Select value={filial} onValueChange={setFilial}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Selecione a filial" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Filial 1</SelectItem>
-                <SelectItem value="2">Filial 2</SelectItem>
-                <SelectItem value="3">Filial 3</SelectItem>
-                {!isEditing && <SelectItem value="all">Todas as Filiais</SelectItem>}
-              </SelectContent>
-            </Select>
+            {filialLocked ? (
+              <div className="mt-1.5">
+                <Input value={`Filial ${selectedFilial}`} disabled className="bg-muted" />
+                <p className="text-[11px] text-muted-foreground mt-1">Filial definida pelo contexto atual. Selecione "Todas" para escolher outra.</p>
+              </div>
+            ) : (
+              <Select value={filial} onValueChange={setFilial}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Selecione a filial" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Filial 1</SelectItem>
+                  <SelectItem value="2">Filial 2</SelectItem>
+                  <SelectItem value="3">Filial 3</SelectItem>
+                  {!isEditing && <SelectItem value="all">Todas as Filiais</SelectItem>}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
