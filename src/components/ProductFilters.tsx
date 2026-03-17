@@ -6,28 +6,58 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { filiais } from "@/contexts/FilialContext";
-import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
-import { toast } from "sonner";
+import { useProductTypes } from "@/hooks/useProductTypes";
+import {
+  CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
+  MATERIAIS, TIPOS_LENTE,
+} from "@/data/productConstants";
 
 export const LOW_STOCK_THRESHOLD = 3; // fallback only
 
 export interface ProductFilterValues {
   search: string;
-  tipo: string;
-  filial: string;
-  stockStatus: string;
+  // Product type
+  tipoItem: string; // "all" | "normal" | "acessorio"
+  tipo: string; // tipo_produto_id
+  // Registration fields
+  categoriaIdade: string;
+  genero: string;
+  estilo: string;
+  corArmacao: string;
+  material: string;
+  materialAro: string;
+  materialHaste: string;
+  tipoLente: string;
+  // Accessory-specific
+  corAcessorio: string;
+  // Price
   priceMin: string;
   priceMax: string;
+  // Stock
+  filial: string;
+  stockStatus: string;
 }
 
 const emptyFilters: ProductFilterValues = {
   search: "",
+  tipoItem: "all",
   tipo: "all",
-  filial: "all",
-  stockStatus: "all",
+  categoriaIdade: "all",
+  genero: "all",
+  estilo: "all",
+  corArmacao: "all",
+  material: "all",
+  materialAro: "all",
+  materialHaste: "all",
+  tipoLente: "all",
+  corAcessorio: "all",
   priceMin: "",
   priceMax: "",
+  filial: "all",
+  stockStatus: "all",
 };
 
 interface ProductFiltersProps {
@@ -47,30 +77,81 @@ export function getStockStatus(stock: number, minStock?: number): "in_stock" | "
   return "in_stock";
 }
 
-export function applyProductFilters<T extends { model: string; code: string; color: string; stock: number; min_stock: number; retail_price: number; filial_id: string; status: string }>(
+export function applyProductFilters<T extends {
+  model: string; code: string; color: string; stock: number; min_stock: number;
+  retail_price: number; filial_id: string; status: string; is_acessorio: boolean;
+  categoria_idade: string; genero: string; estilo: string; cor_armacao: string;
+  material: string; material_aro: string; material_haste: string; tipo_lente: string;
+}>(
   products: T[],
   filters: ProductFilterValues
 ): T[] {
   return products.filter(p => {
-    // Hide inactive by default
     if (p.status === "inativo") return false;
 
     if (filters.search) {
       const q = filters.search.toLowerCase();
       if (!p.model.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !p.color.toLowerCase().includes(q)) return false;
     }
+
+    // Type filters
+    if (filters.tipoItem === "normal" && p.is_acessorio) return false;
+    if (filters.tipoItem === "acessorio" && !p.is_acessorio) return false;
     if (filters.tipo !== "all" && (p as any).tipo_produto_id !== filters.tipo) return false;
+
+    // Registration field filters
+    if (filters.categoriaIdade !== "all" && p.categoria_idade !== filters.categoriaIdade) return false;
+    if (filters.genero !== "all" && p.genero !== filters.genero) return false;
+    if (filters.estilo !== "all" && p.estilo !== filters.estilo) return false;
+    if (filters.corArmacao !== "all" && p.cor_armacao !== filters.corArmacao) return false;
+    if (filters.material !== "all" && p.material !== filters.material) return false;
+    if (filters.materialAro !== "all" && p.material_aro !== filters.materialAro) return false;
+    if (filters.materialHaste !== "all" && p.material_haste !== filters.materialHaste) return false;
+    if (filters.tipoLente !== "all" && p.tipo_lente !== filters.tipoLente) return false;
+
+    // Accessory color
+    if (filters.corAcessorio !== "all") {
+      if (filters.corAcessorio === "nenhuma") {
+        if (p.color && p.color !== "") return false;
+      } else {
+        if (p.color !== filters.corAcessorio) return false;
+      }
+    }
+
+    // Filial
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
 
+    // Stock status
     const status = getStockStatus(p.stock, p.min_stock);
     if (filters.stockStatus === "in_stock" && status !== "in_stock") return false;
     if (filters.stockStatus === "low_stock" && status !== "low_stock") return false;
     if (filters.stockStatus === "out_of_stock" && status !== "out_of_stock") return false;
 
+    // Price
     if (filters.priceMin && Number(p.retail_price) < Number(filters.priceMin)) return false;
     if (filters.priceMax && Number(p.retail_price) > Number(filters.priceMax)) return false;
     return true;
   });
+}
+
+function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos" }: {
+  label: string; value: string; onValueChange: (v: string) => void;
+  options: readonly string[] | string[]; allLabel?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-caption">{label}</Label>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="h-8 text-sm">
+          <SelectValue placeholder={allLabel} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{allLabel}</SelectItem>
+          {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 }
 
 export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
@@ -79,17 +160,26 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const [open, setOpen] = useState(false);
   const [priceError, setPriceError] = useState("");
 
-  const activeCount = [
-    filters.tipo !== "all",
-    filters.filial !== "all",
-    filters.stockStatus !== "all",
-    !!filters.priceMin,
-    !!filters.priceMax,
-  ].filter(Boolean).length;
+  const countActive = (f: ProductFilterValues) => {
+    const keys: (keyof ProductFilterValues)[] = [
+      "tipoItem", "tipo", "categoriaIdade", "genero", "estilo", "corArmacao",
+      "material", "materialAro", "materialHaste", "tipoLente", "corAcessorio",
+      "filial", "stockStatus",
+    ];
+    let count = keys.filter(k => f[k] !== "all").length;
+    if (f.priceMin) count++;
+    if (f.priceMax) count++;
+    return count;
+  };
+
+  const activeCount = countActive(filters);
+
+  const showAccessoryFilters = draft.tipoItem === "acessorio" || draft.tipoItem === "all";
+  const showFrameFilters = draft.tipoItem === "normal" || draft.tipoItem === "all";
 
   const validatePrice = (d: ProductFilterValues): boolean => {
     if (d.priceMin && d.priceMax && Number(d.priceMin) > Number(d.priceMax)) {
-      setPriceError("O preço mínimo não pode ser maior que o preço máximo.");
+      setPriceError("Valor mínimo não pode ser maior que o máximo");
       return false;
     }
     setPriceError("");
@@ -134,8 +224,8 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-4 space-y-4" align="end">
-          <div className="flex items-center justify-between">
+        <PopoverContent className="w-96 p-0" align="end">
+          <div className="flex items-center justify-between p-4 pb-2">
             <h3 className="text-sm font-semibold">Filtros</h3>
             {activeCount > 0 && (
               <Button variant="ghost" size="sm" className="h-7 text-caption text-muted-foreground gap-1" onClick={handleClear}>
@@ -145,75 +235,157 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
             )}
           </div>
 
-          {tipos.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-caption">Tipo de Produto</Label>
-              <Select value={draft.tipo} onValueChange={(v) => setDraft({ ...draft, tipo: v })}>
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
-                </SelectContent>
-              </Select>
+          <ScrollArea className="max-h-[460px]">
+            <div className="p-4 pt-2 space-y-3">
+              {/* --- Tipo de Item --- */}
+              <div className="space-y-1">
+                <Label className="text-caption">Tipo de Item</Label>
+                <Select value={draft.tipoItem} onValueChange={(v) => setDraft({ ...draft, tipoItem: v })}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="normal">Produto Normal</SelectItem>
+                    <SelectItem value="acessorio">Acessório</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {tipos.length > 0 && (
+                <div className="space-y-1">
+                  <Label className="text-caption">Tipo de Produto</Label>
+                  <Select value={draft.tipo} onValueChange={(v) => setDraft({ ...draft, tipo: v })}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* --- Frame Filters --- */}
+              {showFrameFilters && (
+                <>
+                  <Separator />
+                  <p className="text-caption text-muted-foreground font-medium">Armação</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FilterSelect label="Categoria Idade" value={draft.categoriaIdade}
+                      onValueChange={(v) => setDraft({ ...draft, categoriaIdade: v })}
+                      options={CATEGORIAS_IDADE} allLabel="Todas" />
+                    <FilterSelect label="Gênero" value={draft.genero}
+                      onValueChange={(v) => setDraft({ ...draft, genero: v })}
+                      options={GENEROS} />
+                  </div>
+                  <FilterSelect label="Estilo" value={draft.estilo}
+                    onValueChange={(v) => setDraft({ ...draft, estilo: v })}
+                    options={ESTILOS} />
+                  <FilterSelect label="Cor da Armação" value={draft.corArmacao}
+                    onValueChange={(v) => setDraft({ ...draft, corArmacao: v })}
+                    options={TODAS_CORES} allLabel="Todas" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FilterSelect label="Material Aro" value={draft.materialAro}
+                      onValueChange={(v) => setDraft({ ...draft, materialAro: v })}
+                      options={MATERIAIS} />
+                    <FilterSelect label="Material Haste" value={draft.materialHaste}
+                      onValueChange={(v) => setDraft({ ...draft, materialHaste: v })}
+                      options={MATERIAIS} />
+                  </div>
+                  <FilterSelect label="Material" value={draft.material}
+                    onValueChange={(v) => setDraft({ ...draft, material: v })}
+                    options={MATERIAIS} />
+                  <FilterSelect label="Tipo de Lente" value={draft.tipoLente}
+                    onValueChange={(v) => setDraft({ ...draft, tipoLente: v })}
+                    options={TIPOS_LENTE} />
+                </>
+              )}
+
+              {/* --- Accessory Filters --- */}
+              {showAccessoryFilters && (
+                <>
+                  <Separator />
+                  <p className="text-caption text-muted-foreground font-medium">Acessório</p>
+                  <div className="space-y-1">
+                    <Label className="text-caption">Cor do Acessório</Label>
+                    <Select value={draft.corAcessorio} onValueChange={(v) => setDraft({ ...draft, corAcessorio: v })}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                        {TODAS_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {/* --- Stock & Filial --- */}
+              <Separator />
+              <p className="text-caption text-muted-foreground font-medium">Estoque</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-caption">Filial</Label>
+                  <Select value={draft.filial} onValueChange={(v) => setDraft({ ...draft, filial: v })}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-caption">Status Estoque</Label>
+                  <Select value={draft.stockStatus} onValueChange={(v) => setDraft({ ...draft, stockStatus: v })}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="in_stock">Normal</SelectItem>
+                      <SelectItem value="low_stock">Baixo ⚠</SelectItem>
+                      <SelectItem value="out_of_stock">Esgotado 🔴</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* --- Price --- */}
+              <Separator />
+              <div className="space-y-1">
+                <Label className="text-caption">Faixa de Preço (R$)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Mín"
+                    value={draft.priceMin}
+                    onChange={(e) => { setDraft({ ...draft, priceMin: e.target.value }); setPriceError(""); }}
+                    className="h-8 text-sm"
+                  />
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Máx"
+                    value={draft.priceMax}
+                    onChange={(e) => { setDraft({ ...draft, priceMax: e.target.value }); setPriceError(""); }}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                {priceError && (
+                  <p className="text-[11px] text-destructive">{priceError}</p>
+                )}
+              </div>
             </div>
-          )}
+          </ScrollArea>
 
-          <div className="space-y-1.5">
-            <Label className="text-caption">Filial</Label>
-            <Select value={draft.filial} onValueChange={(v) => setDraft({ ...draft, filial: v })}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as Filiais</SelectItem>
-                {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-caption">Estoque</Label>
-            <Select value={draft.stockStatus} onValueChange={(v) => setDraft({ ...draft, stockStatus: v })}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="in_stock">Em estoque (&gt; 3 un.)</SelectItem>
-                <SelectItem value="low_stock">Estoque baixo (≤ 3 un.)</SelectItem>
-                <SelectItem value="out_of_stock">Sem estoque</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-caption">Faixa de Preço (R$)</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                min="0"
-                placeholder="Mín"
-                value={draft.priceMin}
-                onChange={(e) => { setDraft({ ...draft, priceMin: e.target.value }); setPriceError(""); }}
-                className="h-8 text-sm"
-              />
-              <Input
-                type="number"
-                min="0"
-                placeholder="Máx"
-                value={draft.priceMax}
-                onChange={(e) => { setDraft({ ...draft, priceMax: e.target.value }); setPriceError(""); }}
-                className="h-8 text-sm"
-              />
-            </div>
-            {priceError && (
-              <p className="text-[11px] text-destructive">{priceError}</p>
-            )}
-          </div>
-
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-2 p-4 pt-2 border-t">
             <Button variant="outline" size="sm" className="flex-1 h-8" onClick={handleClear}>
               Limpar Filtros
             </Button>
