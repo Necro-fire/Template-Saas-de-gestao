@@ -29,11 +29,26 @@ function stockLevelBadge(level: StockLevel, stock: number) {
 
 export default function Estoque() {
   const { selectedFilial } = useFilial();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: products } = useProducts();
   const { data: tipos, refetch: refetchTipos } = useProductTypes();
   const { filters, setFilters } = useProductFilters();
   const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [editTipoValue, setEditTipoValue] = useState("");
+
+  // Pre-apply category filter from URL param (e.g. ?tipo=<tipo_id>)
+  useEffect(() => {
+    const tipoParam = searchParams.get("tipo");
+    if (tipoParam && tipos.length > 0) {
+      const match = tipos.find(t => t.id === tipoParam);
+      if (match) {
+        setFilters(prev => ({ ...prev, tipo: tipoParam }));
+        // Clear the param so it doesn't persist on filter changes
+        searchParams.delete("tipo");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, tipos]);
 
   const filtered = useMemo(() => applyProductFilters(products, filters, tipos), [products, filters, tipos]);
 
