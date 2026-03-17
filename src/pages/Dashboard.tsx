@@ -1,4 +1,5 @@
 import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,7 @@ interface StockAlert {
   stock: number;
   categoryMin: number;
   products: DbProduct[];
+  tipoId: string | null;
 }
 
 function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] {
@@ -58,6 +60,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
         stock: 0,
         categoryMin: getCategoryMin(p, tipos),
         products: [p],
+        tipoId: p.tipo_produto_id,
       });
     });
 
@@ -79,12 +82,13 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
       stock: p.stock,
       categoryMin: getCategoryMin(p, tipos),
       products: [p],
+      tipoId: p.tipo_produto_id,
     });
   });
 
   // Normal products — grouped by tipo_produto (category)
   const normalAlerts = nonNormal.filter(p => !p.is_acessorio);
-  const grouped = new Map<string, { level: StockLevel; products: DbProduct[]; catMin: number }>();
+  const grouped = new Map<string, { level: StockLevel; products: DbProduct[]; catMin: number; tipoId: string | null }>();
   normalAlerts.forEach(p => {
     const catMin = getCategoryMin(p, tipos);
     const level = getStockLevel(p.stock, catMin);
@@ -92,7 +96,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
     const key = tipo?.nome_tipo || p.category || p.model;
     const existing = grouped.get(key);
     if (!existing) {
-      grouped.set(key, { level, products: [p], catMin });
+      grouped.set(key, { level, products: [p], catMin, tipoId: p.tipo_produto_id });
     } else {
       existing.products.push(p);
       // Use worst level
@@ -107,6 +111,7 @@ function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] 
       stock: Math.min(...data.products.map(p => p.stock)),
       categoryMin: data.catMin,
       products: data.products,
+      tipoId: data.tipoId,
     });
   });
 
@@ -140,6 +145,7 @@ function alertBgClass(level: StockLevel) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { data: products } = useProducts();
   const { data: tipos } = useProductTypes();
   const { data: sales } = useVendas();
@@ -208,7 +214,14 @@ export default function Dashboard() {
               )}
               <div className="space-y-1 max-h-[300px] overflow-y-auto">
                 {alerts.map((alert, i) => (
-                  <div key={i} className={`flex items-center justify-between py-2 px-3 rounded-md ${alertBgClass(alert.level)}`}>
+                  <div
+                    key={i}
+                    className={`flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all ${alertBgClass(alert.level)}`}
+                    onClick={() => {
+                      const params = alert.tipoId ? `?tipo=${alert.tipoId}` : "";
+                      navigate(`/estoque${params}`);
+                    }}
+                  >
                     <div>
                       <p className="text-ui font-medium">{alert.message}</p>
                       <p className="text-caption text-muted-foreground">
