@@ -7,8 +7,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
-
-import { ProductFilters, useProductFilters, applyProductFilters, getStockStatus, LOW_STOCK_THRESHOLD } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin } from "@/components/ProductFilters";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -163,13 +162,20 @@ export default function Produtos() {
                     ) : (
                       <div />
                     )}
-                    <Badge
-                      variant={getStockStatus(product.stock, product.min_stock) === "out_of_stock" ? "destructive" : getStockStatus(product.stock, product.min_stock) === "low_stock" ? "outline" : "secondary"}
-                      className="text-caption tabular-nums"
-                    >
-                      {product.stock} un.
-                      {getStockStatus(product.stock, product.min_stock) === "low_stock" && " ⚠"}
-                    </Badge>
+                    {(() => {
+                      const catMin = getCategoryMin(product, tipos);
+                      const level = getStockLevel(product.stock, catMin);
+                      return (
+                        <Badge
+                          variant={level === "out_of_stock" ? "destructive" : level === "critical" || level === "low" ? "outline" : "secondary"}
+                          className={`text-caption tabular-nums ${level === "critical" ? "border-orange-500 text-orange-600" : level === "low" ? "border-warning text-warning" : ""}`}
+                        >
+                          {product.stock} un.
+                          {level === "low" && " ⚠"}
+                          {level === "critical" && " 🟠"}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                 </div>
               );
