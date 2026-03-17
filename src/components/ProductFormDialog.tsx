@@ -553,11 +553,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             <div>
               <Label>{isEditing ? "Quantidade em estoque" : "Quantidade a adicionar"}</Label>
               <div className="mt-1.5">
-                {isEditing ? (
-                  <NumericStepper value={quantidade ? Number(quantidade) : 1} onChange={(v) => setQuantidade(String(v))} min={0} />
-                ) : (
-                  <Input value="1" disabled className="w-20 text-center font-semibold tabular-nums" />
-                )}
+                <Input value="1" disabled className="w-20 text-center font-semibold tabular-nums" />
               </div>
             </div>
           </div>
