@@ -37,85 +37,49 @@ function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
 interface StockAlert {
   message: string;
   level: StockLevel;
-  stock: number;
+  totalStock: number;
   categoryMin: number;
-  products: DbProduct[];
-  tipoId: string | null;
+  productCount: number;
+  tipoId: string;
 }
 
+/**
+ * Category-only alerts: one alert per tipo_produto.
+ * Compares total stock of all active products in that category
+ * against the category's estoque_minimo_alerta.
+ */
 function buildAlerts(products: DbProduct[], tipos: TipoProduto[]): StockAlert[] {
   const alerts: StockAlert[] = [];
   const active = products.filter(p => p.status !== "inativo");
 
-  // --- Out of stock (individual for all) ---
-  active
-    .filter(p => getStockLevel(p.stock, getCategoryMin(p, tipos)) === "out_of_stock")
-    .forEach(p => {
-      const name = p.is_acessorio
-        ? `${p.subcategoria_acessorio || p.model}${p.color && p.color.toLowerCase() !== "nenhuma" ? ` ${p.color}` : ""}`
-        : p.model;
-      alerts.push({
-        message: `${name} sem estoque`,
-        level: "out_of_stock",
-        stock: 0,
-        categoryMin: getCategoryMin(p, tipos),
-        products: [p],
-        tipoId: p.tipo_produto_id,
-      });
-    });
+  tipos.forEach(tipo => {
+    const catProducts = active.filter(p => p.tipo_produto_id === tipo.id);
+    if (catProducts.length === 0) return;
 
-  // --- Critical & Low ---
-  const nonNormal = active.filter(p => {
-    const l = getStockLevel(p.stock, getCategoryMin(p, tipos));
-    return l === "critical" || l === "low";
-  });
+    const totalStock = catProducts.reduce((sum, p) => sum + p.stock, 0);
+    const catMin = tipo.estoque_minimo_alerta;
 
-  // Accessories — individual
-  nonNormal.filter(p => p.is_acessorio).forEach(p => {
-    const level = getStockLevel(p.stock, getCategoryMin(p, tipos));
-    const name = p.subcategoria_acessorio || p.model;
-    const cor = p.color && p.color.toLowerCase() !== "nenhuma" ? ` ${p.color}` : "";
-    const label = level === "critical" ? "em estado crítico" : "está com estoque baixo";
-    alerts.push({
-      message: `${name}${cor} ${label}`,
-      level,
-      stock: p.stock,
-      categoryMin: getCategoryMin(p, tipos),
-      products: [p],
-      tipoId: p.tipo_produto_id,
-    });
-  });
+    let level: StockLevel;
+    if (totalStock === 0) level = "out_of_stock";
+    else if (catMin > 0 && totalStock <= Math.floor(catMin / 2)) level = "critical";
+    else if (catMin > 0 && totalStock <= catMin) level = "low";
+    else return; // normal — no alert
 
-  // Normal products — grouped by tipo_produto (category)
-  const normalAlerts = nonNormal.filter(p => !p.is_acessorio);
-  const grouped = new Map<string, { level: StockLevel; products: DbProduct[]; catMin: number; tipoId: string | null }>();
-  normalAlerts.forEach(p => {
-    const catMin = getCategoryMin(p, tipos);
-    const level = getStockLevel(p.stock, catMin);
-    const tipo = tipos.find(t => t.id === p.tipo_produto_id);
-    const key = tipo?.nome_tipo || p.category || p.model;
-    const existing = grouped.get(key);
-    if (!existing) {
-      grouped.set(key, { level, products: [p], catMin, tipoId: p.tipo_produto_id });
-    } else {
-      existing.products.push(p);
-      // Use worst level
-      if (level === "critical" && existing.level === "low") existing.level = "critical";
-    }
-  });
-  grouped.forEach((data, key) => {
-    const label = data.level === "critical" ? `Estoque crítico em ${key}` : `Poucos itens em estoque para: ${key}`;
+    const label =
+      level === "out_of_stock" ? `${tipo.nome_tipo} sem estoque`
+      : level === "critical" ? `Estoque crítico: ${tipo.nome_tipo}`
+      : `Estoque baixo: ${tipo.nome_tipo}`;
+
     alerts.push({
       message: label,
-      level: data.level,
-      stock: Math.min(...data.products.map(p => p.stock)),
-      categoryMin: data.catMin,
-      products: data.products,
-      tipoId: data.tipoId,
+      level,
+      totalStock,
+      categoryMin: catMin,
+      productCount: catProducts.length,
+      tipoId: tipo.id,
     });
   });
 
-  // Sort: out_of_stock first, then critical, then low
   const order: Record<StockLevel, number> = { out_of_stock: 0, critical: 1, low: 2, normal: 3 };
   alerts.sort((a, b) => order[a.level] - order[b.level]);
 
