@@ -32,11 +32,46 @@ export default function Produtos() {
 
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
+  const [deleteCheck, setDeleteCheck] = useState<{ canDelete: boolean; reason?: string } | null>(null);
+
+  const checkAndDelete = async (product: DbProduct) => {
+    setDeletingProduct(product);
+    // Check sales
+    const { count: salesCount } = await (supabase as any)
+      .from("venda_items")
+      .select("id", { count: "exact", head: true })
+      .eq("produto_id", product.id);
+    if (salesCount && salesCount > 0) {
+      setDeleteCheck({ canDelete: false, reason: "Este produto já possui vendas registradas e não pode ser excluído." });
+      return;
+    }
+    // Check stock
+    const { data: estoque } = await (supabase as any)
+      .from("estoque")
+      .select("quantidade")
+      .eq("produto_id", product.id);
+    const totalStock = (estoque || []).reduce((sum: number, e: any) => sum + (e.quantidade || 0), 0);
+    if (totalStock > 0) {
+      setDeleteCheck({ canDelete: false, reason: "Não é possível excluir um produto com estoque disponível." });
+      return;
+    }
+    setDeleteCheck({ canDelete: true });
+  };
+
   const handleDelete = async () => {
     if (!deletingProduct) return;
     const { error } = await (supabase as any).from("produtos").delete().eq("id", deletingProduct.id);
     if (error) { toast.error("Erro ao excluir produto"); } else { toast.success("Produto excluído"); }
     setDeletingProduct(null);
+    setDeleteCheck(null);
+  };
+
+  const handleInactivate = async () => {
+    if (!deletingProduct) return;
+    const { error } = await (supabase as any).from("produtos").update({ status: "inativo" }).eq("id", deletingProduct.id);
+    if (error) { toast.error("Erro ao inativar produto"); } else { toast.success("Produto inativado com sucesso"); }
+    setDeletingProduct(null);
+    setDeleteCheck(null);
   };
 
   const handleEdit = (product: DbProduct) => {
@@ -82,7 +117,7 @@ export default function Produtos() {
                     <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => setDeletingProduct(product)}>
+                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => checkAndDelete(product)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -158,17 +193,31 @@ export default function Produtos() {
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
         <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
 
-        <AlertDialog open={!!deletingProduct} onOpenChange={(o) => !o && setDeletingProduct(null)}>
+        <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {deleteCheck?.canDelete === false ? "Não é possível excluir" : "Excluir produto?"}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                O produto "{deletingProduct?.model}" será removido permanentemente.
+                {deleteCheck === null
+                  ? "Verificando dependências..."
+                  : deleteCheck.canDelete
+                    ? `O produto "${deletingProduct?.model}" (${deletingProduct?.code}) será removido permanentemente.`
+                    : deleteCheck.reason}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+              {deleteCheck?.canDelete === false ? (
+                <AlertDialogAction onClick={handleInactivate} className="bg-amber-600 text-white hover:bg-amber-700">
+                  Inativar Produto
+                </AlertDialogAction>
+              ) : deleteCheck?.canDelete ? (
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              ) : null}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

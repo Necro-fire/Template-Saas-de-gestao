@@ -46,11 +46,14 @@ export function getStockStatus(stock: number): "in_stock" | "low_stock" | "out_o
   return "in_stock";
 }
 
-export function applyProductFilters<T extends { model: string; code: string; color: string; stock: number; min_stock: number; retail_price: number; filial_id: string }>(
+export function applyProductFilters<T extends { model: string; code: string; color: string; stock: number; min_stock: number; retail_price: number; filial_id: string; status: string }>(
   products: T[],
   filters: ProductFilterValues
 ): T[] {
   return products.filter(p => {
+    // Hide inactive by default
+    if (p.status === "inativo") return false;
+
     if (filters.search) {
       const q = filters.search.toLowerCase();
       if (!p.model.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !p.color.toLowerCase().includes(q)) return false;
