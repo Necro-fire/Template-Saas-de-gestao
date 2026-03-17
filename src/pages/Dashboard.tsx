@@ -191,7 +191,6 @@ export default function Dashboard() {
                     </div>
                     {alertBadge(alert.level, alert.totalStock)}
                   </div>
-                  </div>
                 ))}
                 {!hasAlerts && (
                   <p className="text-ui text-muted-foreground py-4 text-center">Todos os produtos com estoque adequado ✓</p>
