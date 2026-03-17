@@ -214,7 +214,14 @@ export default function Dashboard() {
               )}
               <div className="space-y-1 max-h-[300px] overflow-y-auto">
                 {alerts.map((alert, i) => (
-                  <div key={i} className={`flex items-center justify-between py-2 px-3 rounded-md ${alertBgClass(alert.level)}`}>
+                  <div
+                    key={i}
+                    className={`flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all ${alertBgClass(alert.level)}`}
+                    onClick={() => {
+                      const params = alert.tipoId ? `?tipo=${alert.tipoId}` : "";
+                      navigate(`/estoque${params}`);
+                    }}
+                  >
                     <div>
                       <p className="text-ui font-medium">{alert.message}</p>
                       <p className="text-caption text-muted-foreground">
