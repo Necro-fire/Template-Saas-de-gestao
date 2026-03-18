@@ -23,7 +23,7 @@ import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
 import Empresas from "./pages/Empresas";
 import CertificadoDigital from "./pages/CertificadoDigital";
 import Cargos from "./pages/Cargos";
-import Permissoes from "./pages/Permissoes";
+
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -59,7 +59,7 @@ const router = createBrowserRouter([
       { path: "/empresas", element: <ProtectedRoute module="fiscal" action="manage"><Empresas /></ProtectedRoute> },
       { path: "/certificado-digital", element: <ProtectedRoute module="fiscal" action="manage"><CertificadoDigital /></ProtectedRoute> },
       { path: "/cargos", element: <ProtectedRoute module="admin" action="manage_roles"><Cargos /></ProtectedRoute> },
-      { path: "/permissoes", element: <ProtectedRoute module="admin" action="manage_permissions"><Permissoes /></ProtectedRoute> },
+      
       { path: "*", element: <NotFound /> },
     ],
   },
