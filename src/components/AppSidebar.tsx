@@ -63,10 +63,6 @@ const fiscalNav = [
   { title: "Certificado", url: "/certificado-digital", icon: ShieldCheck, module: "fiscal", action: "manage" },
 ];
 
-const adminNav = [
-  { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
-  { title: "Permissões", url: "/permissoes", icon: KeyRound, module: "admin", action: "manage_permissions" },
-];
 
 export function AppSidebar() {
   const { state } = useSidebar();
