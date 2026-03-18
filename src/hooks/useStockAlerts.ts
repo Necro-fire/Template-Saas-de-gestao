@@ -1,0 +1,74 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface AlertaEstoque {
+  id: string;
+  tipo: string; // 'produto' | 'acessorio'
+  categoria: string;
+  cor: string | null;
+  quantidade_minima: number;
+  created_at: string;
+}
+
+export function useStockAlerts() {
+  const [data, setData] = useState<AlertaEstoque[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetch = useCallback(async () => {
+    const { data: rows, error } = await (supabase as any)
+      .from("alertas_estoque")
+      .select("*")
+      .order("tipo,categoria,cor");
+    if (!error && rows) setData(rows);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetch();
+    const channel = supabase
+      .channel("alertas_estoque-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "alertas_estoque" }, () => fetch())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetch]);
+
+  const upsert = async (alert: Omit<AlertaEstoque, "id" | "created_at">) => {
+    // Check if exists
+    let query = (supabase as any)
+      .from("alertas_estoque")
+      .select("id")
+      .eq("tipo", alert.tipo)
+      .eq("categoria", alert.categoria);
+    
+    if (alert.cor) {
+      query = query.eq("cor", alert.cor);
+    } else {
+      query = query.is("cor", null);
+    }
+
+    const { data: existing } = await query.maybeSingle();
+
+    if (existing) {
+      const { error } = await (supabase as any)
+        .from("alertas_estoque")
+        .update({ quantidade_minima: alert.quantidade_minima })
+        .eq("id", existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await (supabase as any)
+        .from("alertas_estoque")
+        .insert(alert);
+      if (error) throw error;
+    }
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await (supabase as any)
+      .from("alertas_estoque")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  };
+
+  return { data, loading, refetch: fetch, upsert, remove };
+}
