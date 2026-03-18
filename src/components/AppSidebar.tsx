@@ -43,6 +43,8 @@ const mainNav = [
   { title: "Produtos", url: "/produtos", icon: Package, module: "produtos", action: "view" },
   { title: "Clientes", url: "/clientes", icon: Users, module: "clientes", action: "view" },
   { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "funcionarios", action: "view" },
+  { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
+  { title: "Permissões", url: "/permissoes", icon: KeyRound, module: "admin", action: "manage_permissions" },
 ];
 
 const managementNav = [
@@ -61,10 +63,6 @@ const fiscalNav = [
   { title: "Certificado", url: "/certificado-digital", icon: ShieldCheck, module: "fiscal", action: "manage" },
 ];
 
-const adminNav = [
-  { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
-  { title: "Permissões", url: "/permissoes", icon: KeyRound, module: "admin", action: "manage_permissions" },
-];
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -130,14 +128,6 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {adminNav.some(i => hasPermission(i.module, i.action)) && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>{renderNavGroup(adminNav)}</SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3 space-y-2">
