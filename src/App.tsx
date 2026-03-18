@@ -4,7 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { FilialProvider } from "@/contexts/FilialContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import PDV from "./pages/PDV";
 import Produtos from "./pages/Produtos";
@@ -20,33 +22,44 @@ import EmitirNF from "./pages/EmitirNF";
 import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
 import Empresas from "./pages/Empresas";
 import CertificadoDigital from "./pages/CertificadoDigital";
+import Cargos from "./pages/Cargos";
+import Permissoes from "./pages/Permissoes";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
+    path: "/login",
+    element: <Login />,
+  },
+  {
     element: (
       <FilialProvider>
-        <AppLayout />
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
       </FilialProvider>
     ),
     children: [
-      { path: "/", element: <Dashboard /> },
-      { path: "/pdv", element: <PDV /> },
-      { path: "/produtos", element: <Produtos /> },
-      { path: "/clientes", element: <Clientes /> },
-      { path: "/funcionarios", element: <Funcionarios /> },
-      { path: "/vendas", element: <Vendas /> },
-      { path: "/estoque", element: <Estoque /> },
-      { path: "/caixa", element: <Caixa /> },
-      { path: "/malas", element: <Malas /> },
-      { path: "/relatorios", element: <Relatorios /> },
-      { path: "/notas-fiscais", element: <NotasFiscais /> },
-      { path: "/emitir-nf", element: <EmitirNF /> },
-      { path: "/configuracao-fiscal", element: <ConfiguracaoFiscal /> },
-      { path: "/empresas", element: <Empresas /> },
-      { path: "/certificado-digital", element: <CertificadoDigital /> },
+      { path: "/", element: <ProtectedRoute module="dashboard" action="view"><Dashboard /></ProtectedRoute> },
+      { path: "/pdv", element: <ProtectedRoute module="pdv" action="view"><PDV /></ProtectedRoute> },
+      { path: "/produtos", element: <ProtectedRoute module="produtos" action="view"><Produtos /></ProtectedRoute> },
+      { path: "/clientes", element: <ProtectedRoute module="clientes" action="view"><Clientes /></ProtectedRoute> },
+      { path: "/funcionarios", element: <ProtectedRoute module="funcionarios" action="view"><Funcionarios /></ProtectedRoute> },
+      { path: "/vendas", element: <ProtectedRoute module="vendas" action="view"><Vendas /></ProtectedRoute> },
+      { path: "/estoque", element: <ProtectedRoute module="estoque" action="view"><Estoque /></ProtectedRoute> },
+      { path: "/caixa", element: <ProtectedRoute module="caixa" action="view"><Caixa /></ProtectedRoute> },
+      { path: "/malas", element: <ProtectedRoute module="malas" action="view"><Malas /></ProtectedRoute> },
+      { path: "/relatorios", element: <ProtectedRoute module="relatorios" action="view"><Relatorios /></ProtectedRoute> },
+      { path: "/notas-fiscais", element: <ProtectedRoute module="fiscal" action="view"><NotasFiscais /></ProtectedRoute> },
+      { path: "/emitir-nf", element: <ProtectedRoute module="fiscal" action="manage"><EmitirNF /></ProtectedRoute> },
+      { path: "/configuracao-fiscal", element: <ProtectedRoute module="fiscal" action="manage"><ConfiguracaoFiscal /></ProtectedRoute> },
+      { path: "/empresas", element: <ProtectedRoute module="fiscal" action="manage"><Empresas /></ProtectedRoute> },
+      { path: "/certificado-digital", element: <ProtectedRoute module="fiscal" action="manage"><CertificadoDigital /></ProtectedRoute> },
+      { path: "/cargos", element: <ProtectedRoute module="admin" action="manage_roles"><Cargos /></ProtectedRoute> },
+      { path: "/permissoes", element: <ProtectedRoute module="admin" action="manage_permissions"><Permissoes /></ProtectedRoute> },
       { path: "*", element: <NotFound /> },
     ],
   },
@@ -55,9 +68,11 @@ const router = createBrowserRouter([
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <RouterProvider router={router} />
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
