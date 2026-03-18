@@ -62,12 +62,12 @@ export function useProductFilters() {
 
 /**
  * Get the category minimum for a product by looking up its tipo_produto_id in the tipos list.
- * Falls back to 3 if no category is assigned.
+ * Falls back to 0 if no category is assigned.
  */
 export function getCategoryMin(product: { tipo_produto_id: string | null }, tipos: TipoProduto[]): number {
-  if (!product.tipo_produto_id) return 3;
+  if (!product.tipo_produto_id) return 0;
   const tipo = tipos.find(t => t.id === product.tipo_produto_id);
-  return tipo?.estoque_minimo_alerta ?? 3;
+  return tipo?.estoque_minimo_alerta ?? 0;
 }
 
 /**
