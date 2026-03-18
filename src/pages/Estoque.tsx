@@ -98,7 +98,10 @@ export default function Estoque() {
           <p className="text-ui text-muted-foreground">Controle de estoque · {filtered.length} produtos</p>
         </div>
 
-        {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
+        <div className="flex flex-wrap gap-2">
+          {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
+          <StockAlertConfigDialog />
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <Card className="shadow-card">
