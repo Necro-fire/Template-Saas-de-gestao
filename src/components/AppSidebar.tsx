@@ -122,7 +122,7 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-
+        {managementNav.some(i => hasPermission(i.module, i.action)) && (
           <SidebarGroup>
             <SidebarGroupLabel>Gestão</SidebarGroupLabel>
             <SidebarGroupContent>
