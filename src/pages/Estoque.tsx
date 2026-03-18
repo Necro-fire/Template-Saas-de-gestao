@@ -37,17 +37,45 @@ export default function Estoque() {
   const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [editTipoValue, setEditTipoValue] = useState("");
 
-  // Pre-apply category filter from URL param (e.g. ?tipo=<tipo_id>)
+  // Pre-apply filters from URL params (e.g. ?tipo=<tipo_id>, ?estilo=Quadrado, ?subcategoria=Estojos&cor=Azul)
   useEffect(() => {
     const tipoParam = searchParams.get("tipo");
+    const estiloParam = searchParams.get("estilo");
+    const subcategoriaParam = searchParams.get("subcategoria");
+    const corParam = searchParams.get("cor");
+
+    let changed = false;
+
     if (tipoParam && tipos.length > 0) {
       const match = tipos.find(t => t.id === tipoParam);
       if (match) {
         setFilters(prev => ({ ...prev, tipo: tipoParam }));
-        // Clear the param so it doesn't persist on filter changes
-        searchParams.delete("tipo");
-        setSearchParams(searchParams, { replace: true });
+        changed = true;
       }
+    }
+
+    if (estiloParam) {
+      setFilters(prev => ({ ...prev, estilo: estiloParam, tipoItem: "normal" }));
+      changed = true;
+    }
+
+    if (subcategoriaParam) {
+      setFilters(prev => ({
+        ...prev,
+        tipoItem: "acessorio",
+        search: subcategoriaParam,
+        ...(corParam ? { corAcessorio: corParam } : {}),
+      }));
+      changed = true;
+    }
+
+    if (changed) {
+      // Clear params so they don't persist on filter changes
+      searchParams.delete("tipo");
+      searchParams.delete("estilo");
+      searchParams.delete("subcategoria");
+      searchParams.delete("cor");
+      setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, tipos]);
 
