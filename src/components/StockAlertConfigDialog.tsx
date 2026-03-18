@@ -313,10 +313,10 @@ export function StockAlertConfigDialog() {
                 {formVariacao && coresAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Cor (opcional)</Label>
-                    <Select value={formCor} onValueChange={setFormCor}>
+                    <Select value={formCor || "__all__"} onValueChange={(v) => setFormCor(v === "__all__" ? "" : v)}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas as cores" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas as cores</SelectItem>
+                        <SelectItem value="__all__">Todas as cores</SelectItem>
                         {coresAc.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
