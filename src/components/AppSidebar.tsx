@@ -42,6 +42,9 @@ const mainNav = [
   { title: "PDV", url: "/pdv", icon: ShoppingCart, module: "pdv", action: "view" },
   { title: "Produtos", url: "/produtos", icon: Package, module: "produtos", action: "view" },
   { title: "Clientes", url: "/clientes", icon: Users, module: "clientes", action: "view" },
+];
+
+const staffNav = [
   { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "funcionarios", action: "view" },
   { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
   { title: "Permissões", url: "/permissoes", icon: KeyRound, module: "admin", action: "manage_permissions" },
@@ -109,6 +112,15 @@ export function AppSidebar() {
             <SidebarMenu>{renderNavGroup(mainNav)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {staffNav.some(i => hasPermission(i.module, i.action)) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Funcionários</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderNavGroup(staffNav)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {managementNav.some(i => hasPermission(i.module, i.action)) && (
           <SidebarGroup>
