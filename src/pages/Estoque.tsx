@@ -11,6 +11,7 @@ import { useProducts } from "@/hooks/useSupabaseData";
 import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
+import { StockAlertConfigDialog } from "@/components/StockAlertConfigDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
