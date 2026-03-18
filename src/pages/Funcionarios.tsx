@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, Plus, UserCog, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, UserCog, Eye, EyeOff, Pencil, Trash2, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+import { applyPhoneMask, isValidPhone } from '@/lib/phoneMask';
 
 interface Funcionario {
   id: string;
@@ -21,6 +22,7 @@ interface Funcionario {
   filial_id: string;
   status: string;
   created_at: string;
+  user_id: string | null;
 }
 
 interface Role {
@@ -29,14 +31,25 @@ interface Role {
   description: string;
 }
 
+interface UserRole {
+  role_id: string;
+  user_id: string;
+}
+
 export default function Funcionarios() {
   const [search, setSearch] = useState('');
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
+  const [viewingFunc, setViewingFunc] = useState<Funcionario | null>(null);
+  const [deletingFunc, setDeletingFunc] = useState<Funcionario | null>(null);
   const { selectedFilial } = useFilial();
-  const { isAdmin, session } = useAuth();
+  const { isAdmin } = useAuth();
 
   // Form state
   const [nome, setNome] = useState('');
@@ -49,12 +62,14 @@ export default function Funcionarios() {
   const [roleId, setRoleId] = useState('');
 
   const loadData = async () => {
-    const [funcRes, rolesRes] = await Promise.all([
+    const [funcRes, rolesRes, urRes] = await Promise.all([
       supabase.from('funcionarios_auth').select('*').order('created_at', { ascending: false }),
       supabase.from('roles').select('*').order('name'),
+      supabase.from('user_roles').select('*'),
     ]);
     if (funcRes.data) setFuncionarios(funcRes.data as Funcionario[]);
     if (rolesRes.data) setRoles(rolesRes.data);
+    if (urRes.data) setUserRoles(urRes.data);
   };
 
   useEffect(() => { loadData(); }, []);
@@ -63,7 +78,7 @@ export default function Funcionarios() {
     if (selectedFilial !== 'all' && f.filial_id !== selectedFilial) return false;
     if (!search) return true;
     const s = search.toLowerCase();
-    return f.nome.toLowerCase().includes(s) || f.codigo_acesso.toLowerCase().includes(s) || f.cargo.toLowerCase().includes(s);
+    return f.nome.toLowerCase().includes(s) || f.codigo_acesso.toLowerCase().includes(s) || (f.cargo || '').toLowerCase().includes(s);
   });
 
   const generateCode = () => {
@@ -71,47 +86,130 @@ export default function Funcionarios() {
     setCodigoAcesso(`FUNC${num}`);
   };
 
-  const handleCreate = async () => {
-    if (!nome.trim() || !codigoAcesso.trim() || !senha.trim()) {
-      return toast.error('Nome, código de acesso e senha são obrigatórios');
+  const resetForm = () => {
+    setNome(''); setCodigoAcesso(''); setSenha(''); setTelefone('');
+    setCargo(''); setFilialId('1'); setRoleId(''); setEditingFunc(null);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    generateCode();
+    setDialogOpen(true);
+  };
+
+  const openEdit = (func: Funcionario) => {
+    setEditingFunc(func);
+    setNome(func.nome);
+    setCodigoAcesso(func.codigo_acesso);
+    setSenha('');
+    setTelefone(func.telefone || '');
+    setCargo(func.cargo || '');
+    setFilialId(func.filial_id || '1');
+    // Find role for this user
+    const ur = func.user_id ? userRoles.find(u => u.user_id === func.user_id) : null;
+    setRoleId(ur?.role_id || '');
+    setDialogOpen(true);
+  };
+
+  const openView = (func: Funcionario) => {
+    setViewingFunc(func);
+    setViewDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!nome.trim() || !codigoAcesso.trim()) {
+      return toast.error('Nome e código de acesso são obrigatórios');
     }
-    if (senha.length < 6) return toast.error('Senha deve ter pelo menos 6 caracteres');
+    if (!editingFunc && !senha.trim()) {
+      return toast.error('Senha é obrigatória para novos funcionários');
+    }
+    if (!editingFunc && senha.length < 6) {
+      return toast.error('Senha deve ter pelo menos 6 caracteres');
+    }
+    if (telefone && !isValidPhone(telefone)) {
+      return toast.error('Telefone deve estar no formato (XX) X XXXX-XXXX');
+    }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('auth-api', {
-        body: {
-          action: 'create-employee',
+      if (editingFunc) {
+        // Update funcionario
+        await supabase.from('funcionarios_auth').update({
           nome,
-          codigo_acesso: codigoAcesso,
-          password: senha,
           telefone,
           cargo,
           filial_id: filialId,
-          role_id: roleId || undefined,
-        },
-      });
+        }).eq('id', editingFunc.id);
 
-      if (error || data?.error) {
-        toast.error(data?.error || 'Erro ao criar funcionário');
+        // Update role if user_id exists
+        if (editingFunc.user_id) {
+          await supabase.from('user_roles').delete().eq('user_id', editingFunc.user_id);
+          if (roleId) {
+            await supabase.from('user_roles').insert({ user_id: editingFunc.user_id, role_id: roleId });
+          }
+        }
+
+        toast.success('Funcionário atualizado');
       } else {
+        // Create via edge function
+        const { data, error } = await supabase.functions.invoke('auth-api', {
+          body: {
+            action: 'create-employee',
+            nome,
+            codigo_acesso: codigoAcesso,
+            password: senha,
+            telefone,
+            cargo,
+            filial_id: filialId,
+            role_id: roleId || undefined,
+          },
+        });
+
+        if (error || data?.error) {
+          toast.error(data?.error || 'Erro ao criar funcionário');
+          setLoading(false);
+          return;
+        }
         toast.success(`Funcionário criado! Código: ${codigoAcesso}`);
-        setDialogOpen(false);
-        resetForm();
-        loadData();
       }
+
+      setDialogOpen(false);
+      resetForm();
+      loadData();
     } catch {
-      toast.error('Erro ao criar funcionário');
+      toast.error('Erro ao salvar funcionário');
     }
     setLoading(false);
   };
 
-  const resetForm = () => {
-    setNome(''); setCodigoAcesso(''); setSenha(''); setTelefone('');
-    setCargo(''); setFilialId('1'); setRoleId('');
+  const handleDelete = async () => {
+    if (!deletingFunc) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-api', {
+        body: { action: 'delete-employee', funcionario_id: deletingFunc.id },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || 'Erro ao excluir');
+      } else {
+        toast.success('Funcionário excluído');
+        loadData();
+      }
+    } catch {
+      toast.error('Erro ao excluir funcionário');
+    }
+    setDeleteDialogOpen(false);
+    setDeletingFunc(null);
+    setLoading(false);
   };
 
   const getFilialName = (id: string) => filiais.find(f => f.id === id)?.name || id;
+  const getRoleName = (func: Funcionario) => {
+    if (!func.user_id) return null;
+    const ur = userRoles.find(u => u.user_id === func.user_id);
+    if (!ur) return null;
+    return roles.find(r => r.id === ur.role_id)?.name || null;
+  };
 
   return (
     <div>
@@ -123,7 +221,7 @@ export default function Funcionarios() {
             <p className="text-ui text-muted-foreground">{filtered.length} funcionários</p>
           </div>
           {isAdmin && (
-            <Button size="sm" className="gap-1.5" onClick={() => { resetForm(); generateCode(); setDialogOpen(true); }}>
+            <Button size="sm" className="gap-1.5" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               Novo Funcionário
             </Button>
@@ -139,30 +237,46 @@ export default function Funcionarios() {
 
         {filtered.length > 0 ? (
           <div className="space-y-1">
-            {filtered.map(func => (
-              <div key={func.id} className="flex items-center justify-between py-3 px-4 rounded-md hover:bg-secondary/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center">
-                    <UserCog className="h-4 w-4 text-primary" />
+            {filtered.map(func => {
+              const roleName = getRoleName(func);
+              return (
+                <div key={func.id} className="flex items-center justify-between py-3 px-4 rounded-md hover:bg-secondary/50 transition-colors">
+                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => openView(func)}>
+                    <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center">
+                      <UserCog className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-ui font-medium">{func.nome}</p>
+                      <p className="text-caption text-muted-foreground">
+                        {func.cargo || 'Sem cargo'} · Código: {func.codigo_acesso}
+                        {func.telefone && ` · ${func.telefone}`}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-ui font-medium">{func.nome}</p>
-                    <p className="text-caption text-muted-foreground">
-                      {func.cargo || 'Sem cargo'} · Código: {func.codigo_acesso}
-                      {func.telefone && ` · ${func.telefone}`}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    {roleName && (
+                      <Badge variant="secondary" className="text-caption capitalize">{roleName}</Badge>
+                    )}
+                    {selectedFilial === 'all' && (
+                      <Badge variant="outline" className="text-caption">{getFilialName(func.filial_id)}</Badge>
+                    )}
+                    <Badge variant={func.status === 'active' ? 'secondary' : 'outline'} className="text-caption">
+                      {func.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                    {isAdmin && (
+                      <>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {selectedFilial === 'all' && (
-                    <Badge variant="outline" className="text-caption">{getFilialName(func.filial_id)}</Badge>
-                  )}
-                  <Badge variant={func.status === 'active' ? 'secondary' : 'outline'} className="text-caption">
-                    {func.status === 'active' ? 'Ativo' : 'Inativo'}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -173,11 +287,11 @@ export default function Funcionarios() {
         )}
       </div>
 
-      {/* Create Employee Dialog */}
+      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Novo Funcionário</DialogTitle>
+            <DialogTitle>{editingFunc ? 'Editar Funcionário' : 'Novo Funcionário'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -189,33 +303,46 @@ export default function Funcionarios() {
               <div className="space-y-2">
                 <Label>Código de Acesso *</Label>
                 <div className="flex gap-2">
-                  <Input value={codigoAcesso} onChange={e => setCodigoAcesso(e.target.value.toUpperCase())} placeholder="FUNC001" className="uppercase" />
-                  <Button type="button" variant="outline" size="sm" onClick={generateCode} className="shrink-0 text-xs">
-                    Gerar
-                  </Button>
+                  <Input value={codigoAcesso} onChange={e => setCodigoAcesso(e.target.value.toUpperCase())} placeholder="FUNC001" className="uppercase" disabled={!!editingFunc} />
+                  {!editingFunc && (
+                    <Button type="button" variant="outline" size="sm" onClick={generateCode} className="shrink-0 text-xs">
+                      Gerar
+                    </Button>
+                  )}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Senha *</Label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={senha}
-                    onChange={e => setSenha(e.target.value)}
-                    placeholder="Mín. 6 caracteres"
-                    className="pr-9"
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+              {!editingFunc && (
+                <div className="space-y-2">
+                  <Label>Senha *</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      value={senha}
+                      onChange={e => setSenha(e.target.value)}
+                      placeholder="Mín. 6 caracteres"
+                      className="pr-9"
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Telefone</Label>
-                <Input value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={telefone}
+                    onChange={e => setTelefone(applyPhoneMask(e.target.value))}
+                    placeholder="(00) 0 0000-0000"
+                    className="pl-9"
+                    maxLength={16}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Cargo/Função</Label>
@@ -252,8 +379,79 @@ export default function Funcionarios() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={loading}>
-              {loading ? 'Criando...' : 'Criar Funcionário'}
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? 'Salvando...' : editingFunc ? 'Salvar Alterações' : 'Criar Funcionário'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Funcionário</DialogTitle>
+          </DialogHeader>
+          {viewingFunc && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center">
+                  <UserCog className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-lg font-medium">{viewingFunc.nome}</p>
+                  <Badge variant={viewingFunc.status === 'active' ? 'secondary' : 'outline'}>
+                    {viewingFunc.status === 'active' ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Código de Acesso</p>
+                  <p className="font-medium">{viewingFunc.codigo_acesso}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Cargo</p>
+                  <p className="font-medium">{viewingFunc.cargo || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Telefone</p>
+                  <p className="font-medium">{viewingFunc.telefone || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Filial</p>
+                  <p className="font-medium">{getFilialName(viewingFunc.filial_id)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Cargo (permissões)</p>
+                  <p className="font-medium capitalize">{getRoleName(viewingFunc) || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Cadastrado em</p>
+                  <p className="font-medium">{viewingFunc.created_at ? new Date(viewingFunc.created_at).toLocaleDateString('pt-BR') : '—'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewDialogOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir Funcionário</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tem certeza que deseja excluir <strong>{deletingFunc?.nome}</strong>? Esta ação não pode ser desfeita.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              {loading ? 'Excluindo...' : 'Excluir'}
             </Button>
           </DialogFooter>
         </DialogContent>
