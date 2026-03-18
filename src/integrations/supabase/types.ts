@@ -142,6 +142,66 @@ export type Database = {
           },
         ]
       }
+      funcionarios_auth: {
+        Row: {
+          cargo: string | null
+          codigo_acesso: string
+          created_at: string | null
+          filial_id: string | null
+          id: string
+          nome: string
+          status: string | null
+          telefone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cargo?: string | null
+          codigo_acesso: string
+          created_at?: string | null
+          filial_id?: string | null
+          id?: string
+          nome: string
+          status?: string | null
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cargo?: string | null
+          codigo_acesso?: string
+          created_at?: string | null
+          filial_id?: string | null
+          id?: string
+          nome?: string
+          status?: string | null
+          telefone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      permissions: {
+        Row: {
+          action: string
+          created_at: string | null
+          description: string | null
+          id: string
+          module: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           altura_lente: number
@@ -276,6 +336,84 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string
+          id: string
+          nome?: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          id?: string
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          id?: string
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       tipos_produto: {
         Row: {
           created_at: string
@@ -296,6 +434,32 @@ export type Database = {
           nome_tipo?: string
         }
         Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       venda_items: {
         Row: {
@@ -401,6 +565,18 @@ export type Database = {
     }
     Functions: {
       generate_product_codes: { Args: never; Returns: Json }
+      get_user_permissions: {
+        Args: { _user_id: string }
+        Returns: {
+          action: string
+          module: string
+        }[]
+      }
+      has_permission: {
+        Args: { _action: string; _module: string; _user_id: string }
+        Returns: boolean
+      }
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
