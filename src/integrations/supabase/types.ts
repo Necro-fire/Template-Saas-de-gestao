@@ -170,6 +170,7 @@ export type Database = {
           material_haste: string
           min_stock: number
           model: string
+          ncm: string
           referencia: string
           retail_price: number
           status: string
@@ -210,6 +211,7 @@ export type Database = {
           material_haste?: string
           min_stock?: number
           model: string
+          ncm?: string
           referencia?: string
           retail_price?: number
           status?: string
@@ -250,6 +252,7 @@ export type Database = {
           material_haste?: string
           min_stock?: number
           model?: string
+          ncm?: string
           referencia?: string
           retail_price?: number
           status?: string

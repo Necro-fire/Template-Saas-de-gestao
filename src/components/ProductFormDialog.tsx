@@ -64,6 +64,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [bridgeSize, setBridgeSize] = useState("");
   const [templeSize, setTempleSize] = useState("");
   const [tipoLente, setTipoLente] = useState("");
+  const [ncm, setNcm] = useState("");
 
   // Accessory fields (new hierarchical)
   const [subcategoriaAcessorio, setSubcategoriaAcessorio] = useState(""); // legacy compat
@@ -109,6 +110,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setCorAcessorio((product as any).cor_acessorio || "");
       setMaterialAcessorio((product as any).material_acessorio || "");
       setTipoProdutoId(product.tipo_produto_id || "");
+      setNcm((product as any).ncm || "");
       setWholesaleEnabled(product.wholesale_price > 0);
       setWholesalePrice(product.wholesale_price ? String(product.wholesale_price) : "");
       setWholesaleMinQty(product.wholesale_min_qty ? String(product.wholesale_min_qty) : "");
@@ -144,6 +146,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setBridgeSize("");
     setTempleSize("");
     setTipoLente("");
+    setNcm("");
     setSubcategoriaAcessorio("");
     setCategoriaAcessorio("");
     setTipoAcessorio("");
@@ -222,6 +225,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
     if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
+    if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
     setSaving(true);
     try {
@@ -288,6 +292,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           tipo_lente: isAcessorio ? "" : tipoLente,
           subcategoria_acessorio: isAcessorio ? subcatComputed : "",
           hash_produto: hash,
+          ncm,
           stock: qty,
           ...accessoryFields,
           ...wholesaleData,
@@ -349,6 +354,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               tipo_lente: isAcessorio ? "" : tipoLente,
               subcategoria_acessorio: isAcessorio ? subcatComputed : "",
               hash_produto: hash,
+              ncm,
               ...accessoryFields,
               ...wholesaleData,
             };
@@ -432,6 +438,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             <div>
               <Label htmlFor="product-name">Nome do produto *</Label>
               <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="ncm">Código NCM *</Label>
+              <Input
+                id="ncm"
+                value={ncm}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                  setNcm(v);
+                }}
+                placeholder="Ex: 90049090"
+                maxLength={8}
+                className="mt-1.5"
+              />
+              {ncm.length > 0 && ncm.length < 8 && (
+                <p className="text-xs text-destructive mt-1">{8 - ncm.length} dígitos restantes</p>
+              )}
             </div>
             {isEditing && product && (
               <div className="grid grid-cols-2 gap-3">
