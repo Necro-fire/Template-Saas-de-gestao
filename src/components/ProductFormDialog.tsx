@@ -17,9 +17,13 @@ import { useProductTypes } from "@/hooks/useProductTypes";
 import { generateProductHash } from "@/lib/productHash";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
-  MATERIAIS, TIPOS_LENTE, SUBCATEGORIAS_ACESSORIOS,
+  MATERIAIS, TIPOS_LENTE,
   MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE,
 } from "@/data/productConstants";
+import {
+  ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
+  getCoresByVariacao, getMateriaisByCategoria, isEstojo,
+} from "@/data/accessoryConstants";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -61,10 +65,22 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [templeSize, setTempleSize] = useState("");
   const [tipoLente, setTipoLente] = useState("");
 
-  // Accessory field
-  const [subcategoriaAcessorio, setSubcategoriaAcessorio] = useState("");
+  // Accessory fields (new hierarchical)
+  const [subcategoriaAcessorio, setSubcategoriaAcessorio] = useState(""); // legacy compat
+  const [categoriaAcessorio, setCategoriaAcessorio] = useState("");
+  const [tipoAcessorio, setTipoAcessorio] = useState("");
+  const [variacaoAcessorio, setVariacaoAcessorio] = useState("");
+  const [corAcessorio, setCorAcessorio] = useState("");
+  const [materialAcessorio, setMaterialAcessorio] = useState("");
 
   const isEditing = !!product;
+
+  // Derived lists for cascading selects
+  const tiposAcessorio = getTiposByCategoria(categoriaAcessorio);
+  const variacoesAcessorio = getVariacoesByTipo(categoriaAcessorio, tipoAcessorio);
+  const coresAcessorio = getCoresByVariacao(categoriaAcessorio, tipoAcessorio, variacaoAcessorio);
+  const materiaisEstojo = getMateriaisByCategoria(categoriaAcessorio);
+  const showMaterial = isEstojo(categoriaAcessorio);
 
   useEffect(() => {
     if (product) {
@@ -75,7 +91,28 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setDetail(product.description || "");
       setFilial(filialLocked ? selectedFilial : product.filial_id);
       setQuantidade(String(product.stock));
-      // ... keep existing code
+      setCategoriaIdade(product.categoria_idade || "");
+      setGenero(product.genero || "");
+      setEstilo(product.estilo || "");
+      setCorArmacao(product.cor_armacao || "");
+      setMaterialAro(product.material_aro || "");
+      setMaterialHaste(product.material_haste || "");
+      setLensSize(product.lens_size ? String(product.lens_size) : "");
+      setAlturaLente(product.altura_lente ? String(product.altura_lente) : "");
+      setBridgeSize(product.bridge_size ? String(product.bridge_size) : "");
+      setTempleSize(product.temple_size ? String(product.temple_size) : "");
+      setTipoLente(product.tipo_lente || "");
+      setSubcategoriaAcessorio((product as any).subcategoria_acessorio || "");
+      setCategoriaAcessorio((product as any).categoria_acessorio || "");
+      setTipoAcessorio((product as any).tipo_acessorio || "");
+      setVariacaoAcessorio((product as any).variacao_acessorio || "");
+      setCorAcessorio((product as any).cor_acessorio || "");
+      setMaterialAcessorio((product as any).material_acessorio || "");
+      setTipoProdutoId(product.tipo_produto_id || "");
+      setWholesaleEnabled(product.wholesale_price > 0);
+      setWholesalePrice(product.wholesale_price ? String(product.wholesale_price) : "");
+      setWholesaleMinQty(product.wholesale_min_qty ? String(product.wholesale_min_qty) : "");
+      setImagePreview(product.image_url || null);
       setDuplicateInfo(null);
     } else {
       resetForm();
@@ -108,7 +145,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setTempleSize("");
     setTipoLente("");
     setSubcategoriaAcessorio("");
+    setCategoriaAcessorio("");
+    setTipoAcessorio("");
+    setVariacaoAcessorio("");
+    setCorAcessorio("");
+    setMaterialAcessorio("");
     setDuplicateInfo(null);
+  };
+
+  // Build a legacy-compat subcategoria string from hierarchical fields
+  const buildSubcategoria = () => {
+    if (!categoriaAcessorio) return "";
+    const parts = [categoriaAcessorio, tipoAcessorio, variacaoAcessorio].filter(Boolean);
+    return parts.join(" > ");
   };
 
   // Check for duplicates when key fields change (only for new products)
@@ -131,7 +180,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       templeSize: Number(templeSize) || 0,
       tipoLente,
       isAcessorio,
-      subcategoriaAcessorio,
+      subcategoriaAcessorio: buildSubcategoria(),
     });
 
     const checkDuplicate = async () => {
@@ -148,7 +197,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
     const timeout = setTimeout(checkDuplicate, 500);
     return () => clearTimeout(timeout);
-  }, [referencia, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, subcategoriaAcessorio, filial, isEditing]);
+  }, [referencia, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -185,6 +234,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
         : { wholesale_price: 0, wholesale_min_qty: 0 };
 
+      const subcatComputed = buildSubcategoria();
+
       const hash = generateProductHash({
         referencia: referencia.trim(),
         categoriaIdade,
@@ -199,13 +250,20 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         templeSize: Number(templeSize) || 0,
         tipoLente,
         isAcessorio,
-        subcategoriaAcessorio,
+        subcategoriaAcessorio: subcatComputed,
       });
 
       const qty = Number(quantidade) || 1;
 
+      const accessoryFields = {
+        categoria_acessorio: isAcessorio ? categoriaAcessorio : "",
+        tipo_acessorio: isAcessorio ? tipoAcessorio : "",
+        variacao_acessorio: isAcessorio ? variacaoAcessorio : "",
+        cor_acessorio: isAcessorio ? corAcessorio : "",
+        material_acessorio: isAcessorio ? materialAcessorio : "",
+      };
+
       if (isEditing) {
-        // Update existing product
         const baseData = {
           referencia: referencia.trim(),
           model: name.trim(),
@@ -219,7 +277,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           genero: isAcessorio ? "" : genero,
           estilo: isAcessorio ? "" : estilo,
           cor_armacao: isAcessorio ? "" : corArmacao,
-          color: isAcessorio ? "" : corArmacao,
+          color: isAcessorio ? corAcessorio : corArmacao,
           material_aro: isAcessorio ? "" : materialAro,
           material_haste: isAcessorio ? "" : materialHaste,
           material: isAcessorio ? "" : materialAro,
@@ -228,16 +286,16 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
           temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
           tipo_lente: isAcessorio ? "" : tipoLente,
-          subcategoria_acessorio: isAcessorio ? subcategoriaAcessorio : "",
+          subcategoria_acessorio: isAcessorio ? subcatComputed : "",
           hash_produto: hash,
           stock: qty,
+          ...accessoryFields,
           ...wholesaleData,
         };
 
         const { error } = await (supabase as any).from("produtos").update(baseData).eq("id", product!.id);
         if (error) throw error;
 
-        // Sync estoque (set absolute value)
         const { data: existingEstoque } = await (supabase as any)
           .from("estoque")
           .select("id")
@@ -253,18 +311,15 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
         toast.success("Produto atualizado com sucesso!");
       } else {
-        // New product - check for duplicates
         const filials = filial === "all" ? ["1", "2", "3"] : [filial];
 
         for (const fId of filials) {
           const existing = await findProductByHash(hash, fId);
 
           if (existing) {
-            // Product exists - just add stock
             await upsertEstoque(existing.id, fId, qty);
             toast.success(`Produto "${existing.model}" já existe na filial ${fId}. +${qty} unidades adicionadas ao estoque!`);
           } else {
-            // Generate auto code and barcode
             const codes = await generateProductCodes();
 
             const baseData = {
@@ -283,7 +338,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               genero: isAcessorio ? "" : genero,
               estilo: isAcessorio ? "" : estilo,
               cor_armacao: isAcessorio ? "" : corArmacao,
-              color: isAcessorio ? "" : corArmacao,
+              color: isAcessorio ? corAcessorio : corArmacao,
               material_aro: isAcessorio ? "" : materialAro,
               material_haste: isAcessorio ? "" : materialHaste,
               material: isAcessorio ? "" : materialAro,
@@ -292,15 +347,15 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
               temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
               tipo_lente: isAcessorio ? "" : tipoLente,
-              subcategoria_acessorio: isAcessorio ? subcategoriaAcessorio : "",
+              subcategoria_acessorio: isAcessorio ? subcatComputed : "",
               hash_produto: hash,
+              ...accessoryFields,
               ...wholesaleData,
             };
 
             const { data: newProduct, error } = await (supabase as any).from("produtos").insert(baseData).select().single();
             if (error) throw error;
 
-            // Create estoque entry
             await (supabase as any).from("estoque").insert({
               produto_id: newProduct.id,
               filial_id: fId,
@@ -526,21 +581,105 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </>
           )}
 
-          {/* ACCESSORY-SPECIFIC FIELDS */}
+          {/* ACCESSORY-SPECIFIC FIELDS — Cascading selects */}
           {isAcessorio && (
             <fieldset className="space-y-3 rounded-lg border p-3">
-              <legend className="text-sm font-semibold px-1">Categoria do Acessório</legend>
-              <Select value={subcategoriaAcessorio} onValueChange={setSubcategoriaAcessorio}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o acessório" /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SUBCATEGORIAS_ACESSORIOS).map(([grupo, items]) => (
-                    <div key={grupo}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{grupo}</div>
-                      {items.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
+              <legend className="text-sm font-semibold px-1">Classificação do Acessório</legend>
+
+              {/* Categoria */}
+              <div>
+                <Label>Categoria *</Label>
+                <Select
+                  value={categoriaAcessorio}
+                  onValueChange={(v) => {
+                    setCategoriaAcessorio(v);
+                    setTipoAcessorio("");
+                    setVariacaoAcessorio("");
+                    setCorAcessorio("");
+                    setMaterialAcessorio("");
+                  }}
+                >
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
+                  <SelectContent>
+                    {ACESSORIOS_CATEGORIAS.map(c => (
+                      <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tipo */}
+              {categoriaAcessorio && tiposAcessorio.length > 0 && (
+                <div>
+                  <Label>Tipo *</Label>
+                  <Select
+                    value={tipoAcessorio}
+                    onValueChange={(v) => {
+                      setTipoAcessorio(v);
+                      setVariacaoAcessorio("");
+                      setCorAcessorio("");
+                    }}
+                  >
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+                    <SelectContent>
+                      {tiposAcessorio.map(t => (
+                        <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Variação */}
+              {tipoAcessorio && variacoesAcessorio.length > 0 && (
+                <div>
+                  <Label>Variação *</Label>
+                  <Select
+                    value={variacaoAcessorio}
+                    onValueChange={(v) => {
+                      setVariacaoAcessorio(v);
+                      setCorAcessorio("");
+                    }}
+                  >
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a variação" /></SelectTrigger>
+                    <SelectContent>
+                      {variacoesAcessorio.map(v => (
+                        <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Material (Estojos only) */}
+              {showMaterial && materiaisEstojo.length > 0 && (
+                <div>
+                  <Label>Material</Label>
+                  <Select value={materialAcessorio} onValueChange={setMaterialAcessorio}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o material" /></SelectTrigger>
+                    <SelectContent>
+                      {materiaisEstojo.map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Cor */}
+              {variacaoAcessorio && coresAcessorio.length > 0 && (
+                <div>
+                  <Label>Cor</Label>
+                  <Select value={corAcessorio} onValueChange={setCorAcessorio}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                    <SelectContent>
+                      {coresAcessorio.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </fieldset>
           )}
 
