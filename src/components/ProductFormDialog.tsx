@@ -354,6 +354,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               tipo_lente: isAcessorio ? "" : tipoLente,
               subcategoria_acessorio: isAcessorio ? subcatComputed : "",
               hash_produto: hash,
+              ncm,
               ...accessoryFields,
               ...wholesaleData,
             };
