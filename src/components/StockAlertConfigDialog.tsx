@@ -264,14 +264,14 @@ export function StockAlertConfigDialog() {
                 {formCatAcessorio && tiposAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Tipo (opcional)</Label>
-                    <Select value={formTipoAcessorio} onValueChange={(v) => {
-                      setFormTipoAcessorio(v);
+                    <Select value={formTipoAcessorio || "__all__"} onValueChange={(v) => {
+                      setFormTipoAcessorio(v === "__all__" ? "" : v);
                       setFormVariacao("");
                       setFormCor("");
                     }}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos os tipos</SelectItem>
+                        <SelectItem value="__all__">Todos os tipos</SelectItem>
                         {tiposAc.map(t => <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
