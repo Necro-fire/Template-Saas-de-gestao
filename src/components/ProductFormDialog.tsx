@@ -225,6 +225,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
     if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
+    if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
     setSaving(true);
     try {
