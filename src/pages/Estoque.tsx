@@ -11,6 +11,7 @@ import { useProducts } from "@/hooks/useSupabaseData";
 import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
+import { StockAlertConfigDialog } from "@/components/StockAlertConfigDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -36,17 +37,45 @@ export default function Estoque() {
   const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [editTipoValue, setEditTipoValue] = useState("");
 
-  // Pre-apply category filter from URL param (e.g. ?tipo=<tipo_id>)
+  // Pre-apply filters from URL params (e.g. ?tipo=<tipo_id>, ?estilo=Quadrado, ?subcategoria=Estojos&cor=Azul)
   useEffect(() => {
     const tipoParam = searchParams.get("tipo");
+    const estiloParam = searchParams.get("estilo");
+    const subcategoriaParam = searchParams.get("subcategoria");
+    const corParam = searchParams.get("cor");
+
+    let changed = false;
+
     if (tipoParam && tipos.length > 0) {
       const match = tipos.find(t => t.id === tipoParam);
       if (match) {
         setFilters(prev => ({ ...prev, tipo: tipoParam }));
-        // Clear the param so it doesn't persist on filter changes
-        searchParams.delete("tipo");
-        setSearchParams(searchParams, { replace: true });
+        changed = true;
       }
+    }
+
+    if (estiloParam) {
+      setFilters(prev => ({ ...prev, estilo: estiloParam, tipoItem: "normal" }));
+      changed = true;
+    }
+
+    if (subcategoriaParam) {
+      setFilters(prev => ({
+        ...prev,
+        tipoItem: "acessorio",
+        search: subcategoriaParam,
+        ...(corParam ? { corAcessorio: corParam } : {}),
+      }));
+      changed = true;
+    }
+
+    if (changed) {
+      // Clear params so they don't persist on filter changes
+      searchParams.delete("tipo");
+      searchParams.delete("estilo");
+      searchParams.delete("subcategoria");
+      searchParams.delete("cor");
+      setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, tipos]);
 
@@ -97,7 +126,10 @@ export default function Estoque() {
           <p className="text-ui text-muted-foreground">Controle de estoque · {filtered.length} produtos</p>
         </div>
 
-        {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
+        <div className="flex flex-wrap gap-2">
+          {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
+          <StockAlertConfigDialog />
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <Card className="shadow-card">

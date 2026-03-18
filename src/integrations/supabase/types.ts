@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      alertas_estoque: {
+        Row: {
+          categoria: string
+          cor: string | null
+          created_at: string
+          id: string
+          quantidade_minima: number
+          tipo: string
+        }
+        Insert: {
+          categoria: string
+          cor?: string | null
+          created_at?: string
+          id?: string
+          quantidade_minima?: number
+          tipo?: string
+        }
+        Update: {
+          categoria?: string
+          cor?: string | null
+          created_at?: string
+          id?: string
+          quantidade_minima?: number
+          tipo?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           city: string
