@@ -439,6 +439,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               <Label htmlFor="product-name">Nome do produto *</Label>
               <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
             </div>
+            <div>
+              <Label htmlFor="ncm">Código NCM *</Label>
+              <Input
+                id="ncm"
+                value={ncm}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                  setNcm(v);
+                }}
+                placeholder="Ex: 90049090"
+                maxLength={8}
+                className="mt-1.5"
+              />
+              {ncm.length > 0 && ncm.length < 8 && (
+                <p className="text-xs text-destructive mt-1">{8 - ncm.length} dígitos restantes</p>
+              )}
+            </div>
             {isEditing && product && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
