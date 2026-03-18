@@ -128,14 +128,6 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {adminNav.some(i => hasPermission(i.module, i.action)) && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>{renderNavGroup(adminNav)}</SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3 space-y-2">
