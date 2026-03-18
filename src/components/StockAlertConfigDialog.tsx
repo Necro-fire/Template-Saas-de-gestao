@@ -299,10 +299,10 @@ export function StockAlertConfigDialog() {
                 {showMat && materiaisAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Material (opcional)</Label>
-                    <Select value={formMaterial} onValueChange={setFormMaterial}>
+                    <Select value={formMaterial || "__all__"} onValueChange={(v) => setFormMaterial(v === "__all__" ? "" : v)}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os materiais" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos os materiais</SelectItem>
+                        <SelectItem value="__all__">Todos os materiais</SelectItem>
                         {materiaisAc.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
