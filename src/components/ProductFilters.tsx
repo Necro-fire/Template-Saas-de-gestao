@@ -134,7 +134,7 @@ export function applyProductFilters<T extends {
 
     // Stock status using category min
     if (filters.stockStatus !== "all") {
-      const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 3);
+      const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 0);
       const level = getStockLevel(p.stock, catMin);
       if (filters.stockStatus === "normal" && level !== "normal") return false;
       if (filters.stockStatus === "low" && level !== "low") return false;
