@@ -1,11 +1,10 @@
 import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
+import { type StockLevel } from "@/components/ProductFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, useVendas, type DbProduct } from "@/hooks/useSupabaseData";
-import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { useStockAlerts, type AlertaEstoque } from "@/hooks/useStockAlerts";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 
