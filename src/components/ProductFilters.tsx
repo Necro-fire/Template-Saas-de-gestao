@@ -79,8 +79,6 @@ export function getCategoryMin(product: { tipo_produto_id: string | null }, tipo
  */
 export function getStockLevel(stock: number, categoryMin: number): StockLevel {
   if (stock === 0) return "out_of_stock";
-  if (categoryMin > 0 && stock <= Math.floor(categoryMin / 2)) return "critical";
-  if (categoryMin > 0 && stock <= categoryMin) return "low";
   return "normal";
 }
 
