@@ -84,7 +84,7 @@ export function getStockLevel(stock: number, categoryMin: number): StockLevel {
 
 /** Legacy compat — maps to old 3-level values for components that still use it */
 export function getStockStatus(stock: number, minStock?: number): "in_stock" | "low_stock" | "out_of_stock" {
-  const level = getStockLevel(stock, minStock ?? 3);
+  const level = getStockLevel(stock, minStock ?? 0);
   if (level === "out_of_stock") return "out_of_stock";
   if (level === "critical" || level === "low") return "low_stock";
   return "in_stock";
