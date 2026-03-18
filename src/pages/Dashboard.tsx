@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, useVendas, type DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
+import { useStockAlerts, type AlertaEstoque } from "@/hooks/useStockAlerts";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 
 function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
