@@ -110,6 +110,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setCorAcessorio((product as any).cor_acessorio || "");
       setMaterialAcessorio((product as any).material_acessorio || "");
       setTipoProdutoId(product.tipo_produto_id || "");
+      setNcm((product as any).ncm || "");
       setWholesaleEnabled(product.wholesale_price > 0);
       setWholesalePrice(product.wholesale_price ? String(product.wholesale_price) : "");
       setWholesaleMinQty(product.wholesale_min_qty ? String(product.wholesale_min_qty) : "");
