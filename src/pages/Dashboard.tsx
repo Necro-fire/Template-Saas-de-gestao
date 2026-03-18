@@ -134,6 +134,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { data: products } = useProducts();
   const { data: tipos } = useProductTypes();
+  const { data: alertConfigs } = useStockAlerts();
   const { data: sales } = useVendas();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
@@ -144,7 +145,7 @@ export default function Dashboard() {
   const salesTotalValue = filteredSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   const activeProducts = products.filter(p => p.status !== "inativo");
-  const alerts = buildAlerts(products, tipos);
+  const alerts = buildConfigAlerts(products, alertConfigs);
   const outAlerts = alerts.filter(a => a.level === "out_of_stock");
   const critAlerts = alerts.filter(a => a.level === "critical");
   const lowAlerts = alerts.filter(a => a.level === "low");
@@ -203,25 +204,23 @@ export default function Dashboard() {
                   <div
                     key={i}
                     className={`flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all ${alertBgClass(alert.level)}`}
-                    onClick={() => {
-                      const params = alert.tipoId ? `?tipo=${alert.tipoId}` : "";
-                      navigate(`/estoque${params}`);
-                    }}
+                    onClick={() => navigate(alert.navigateTo)}
                   >
                     <div>
                       <p className="text-ui font-medium">{alert.message}</p>
                       <p className="text-caption text-muted-foreground">
-                        {alert.products.length <= 3
-                          ? alert.products.map(p => p.code).join(", ")
-                          : `${alert.products.slice(0, 3).map(p => p.code).join(", ")} +${alert.products.length - 3}`}
-                        {" · mín: "}{alert.categoryMin}
+                        {alert.totalStock} un. · mín: {alert.minimo}
                       </p>
                     </div>
-                    {alertBadge(alert.level, alert.stock)}
+                    {alertBadge(alert.level, alert.totalStock)}
                   </div>
                 ))}
                 {!hasAlerts && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">Todos os produtos com estoque adequado ✓</p>
+                  <p className="text-ui text-muted-foreground py-4 text-center">
+                    {alertConfigs.length === 0
+                      ? "Configure alertas em Estoque → Configurações de Alerta"
+                      : "Todos os produtos com estoque adequado ✓"}
+                  </p>
                 )}
               </div>
             </CardContent>
