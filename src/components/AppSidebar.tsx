@@ -42,6 +42,9 @@ const mainNav = [
   { title: "PDV", url: "/pdv", icon: ShoppingCart, module: "pdv", action: "view" },
   { title: "Produtos", url: "/produtos", icon: Package, module: "produtos", action: "view" },
   { title: "Clientes", url: "/clientes", icon: Users, module: "clientes", action: "view" },
+];
+
+const staffNav = [
   { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "funcionarios", action: "view" },
   { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
   { title: "Permissões", url: "/permissoes", icon: KeyRound, module: "admin", action: "manage_permissions" },
