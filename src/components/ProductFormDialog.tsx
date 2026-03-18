@@ -64,6 +64,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [bridgeSize, setBridgeSize] = useState("");
   const [templeSize, setTempleSize] = useState("");
   const [tipoLente, setTipoLente] = useState("");
+  const [ncm, setNcm] = useState("");
 
   // Accessory fields (new hierarchical)
   const [subcategoriaAcessorio, setSubcategoriaAcessorio] = useState(""); // legacy compat
