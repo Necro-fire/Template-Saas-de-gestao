@@ -37,12 +37,15 @@ export default function Estoque() {
   const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [editTipoValue, setEditTipoValue] = useState("");
 
-  // Pre-apply filters from URL params (e.g. ?tipo=<tipo_id>, ?estilo=Quadrado, ?subcategoria=Estojos&cor=Azul)
+  // Pre-apply filters from URL params
   useEffect(() => {
     const tipoParam = searchParams.get("tipo");
     const estiloParam = searchParams.get("estilo");
-    const subcategoriaParam = searchParams.get("subcategoria");
+    const catAcessorioParam = searchParams.get("catAcessorio");
+    const tipoAcessorioParam = searchParams.get("tipoAcessorio");
     const corParam = searchParams.get("cor");
+    // Legacy params
+    const subcategoriaParam = searchParams.get("subcategoria");
 
     let changed = false;
 
@@ -59,7 +62,19 @@ export default function Estoque() {
       changed = true;
     }
 
-    if (subcategoriaParam) {
+    if (catAcessorioParam) {
+      setFilters(prev => ({
+        ...prev,
+        tipoItem: "acessorio",
+        catAcessorio: catAcessorioParam,
+        ...(tipoAcessorioParam ? { tipoAcessorio: tipoAcessorioParam } : {}),
+        ...(corParam ? { corAcessorio: corParam } : {}),
+      }));
+      changed = true;
+    }
+
+    // Legacy: subcategoria param → search
+    if (subcategoriaParam && !catAcessorioParam) {
       setFilters(prev => ({
         ...prev,
         tipoItem: "acessorio",
@@ -70,11 +85,12 @@ export default function Estoque() {
     }
 
     if (changed) {
-      // Clear params so they don't persist on filter changes
       searchParams.delete("tipo");
       searchParams.delete("estilo");
-      searchParams.delete("subcategoria");
+      searchParams.delete("catAcessorio");
+      searchParams.delete("tipoAcessorio");
       searchParams.delete("cor");
+      searchParams.delete("subcategoria");
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, tipos]);
@@ -252,6 +268,7 @@ export default function Estoque() {
                   const typeName = getTypeName(p.tipo_produto_id);
                   const catMin = getCategoryMin(p, tipos);
                   const level = getStockLevel(p.stock, catMin);
+                  const accCat = (p as any).categoria_acessorio || "";
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -259,7 +276,10 @@ export default function Estoque() {
                         <div>
                           <p className="text-ui font-medium">{p.model}</p>
                           <div className="flex items-center gap-2">
-                            <p className="text-caption text-muted-foreground">{p.color} · {p.material}</p>
+                            <p className="text-caption text-muted-foreground">
+                              {p.is_acessorio && accCat ? accCat : p.color}
+                              {p.material ? ` · ${p.material}` : ""}
+                            </p>
                             {typeName && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{typeName}</Badge>}
                             {p.is_acessorio && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-accent text-accent-foreground">Acessório</Badge>}
                           </div>
