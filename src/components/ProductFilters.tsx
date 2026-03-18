@@ -62,12 +62,12 @@ export function useProductFilters() {
 
 /**
  * Get the category minimum for a product by looking up its tipo_produto_id in the tipos list.
- * Falls back to 3 if no category is assigned.
+ * Falls back to 0 if no category is assigned.
  */
 export function getCategoryMin(product: { tipo_produto_id: string | null }, tipos: TipoProduto[]): number {
-  if (!product.tipo_produto_id) return 3;
+  if (!product.tipo_produto_id) return 0;
   const tipo = tipos.find(t => t.id === product.tipo_produto_id);
-  return tipo?.estoque_minimo_alerta ?? 3;
+  return tipo?.estoque_minimo_alerta ?? 0;
 }
 
 /**
@@ -84,7 +84,7 @@ export function getStockLevel(stock: number, categoryMin: number): StockLevel {
 
 /** Legacy compat — maps to old 3-level values for components that still use it */
 export function getStockStatus(stock: number, minStock?: number): "in_stock" | "low_stock" | "out_of_stock" {
-  const level = getStockLevel(stock, minStock ?? 3);
+  const level = getStockLevel(stock, minStock ?? 0);
   if (level === "out_of_stock") return "out_of_stock";
   if (level === "critical" || level === "low") return "low_stock";
   return "in_stock";
@@ -134,7 +134,7 @@ export function applyProductFilters<T extends {
 
     // Stock status using category min
     if (filters.stockStatus !== "all") {
-      const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 3);
+      const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 0);
       const level = getStockLevel(p.stock, catMin);
       if (filters.stockStatus === "normal" && level !== "normal") return false;
       if (filters.stockStatus === "low" && level !== "low") return false;
