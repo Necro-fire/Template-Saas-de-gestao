@@ -6,6 +6,9 @@ export interface AlertaEstoque {
   tipo: string; // 'produto' | 'acessorio'
   categoria: string;
   cor: string | null;
+  tipo_acessorio: string;
+  variacao_acessorio: string;
+  material_acessorio: string;
   quantidade_minima: number;
   created_at: string;
 }
@@ -33,13 +36,16 @@ export function useStockAlerts() {
   }, [fetch]);
 
   const upsert = async (alert: Omit<AlertaEstoque, "id" | "created_at">) => {
-    // Check if exists
+    // Check if exists with same combination
     let query = (supabase as any)
       .from("alertas_estoque")
       .select("id")
       .eq("tipo", alert.tipo)
-      .eq("categoria", alert.categoria);
-    
+      .eq("categoria", alert.categoria)
+      .eq("tipo_acessorio", alert.tipo_acessorio || "")
+      .eq("variacao_acessorio", alert.variacao_acessorio || "")
+      .eq("material_acessorio", alert.material_acessorio || "");
+
     if (alert.cor) {
       query = query.eq("cor", alert.cor);
     } else {
@@ -57,7 +63,15 @@ export function useStockAlerts() {
     } else {
       const { error } = await (supabase as any)
         .from("alertas_estoque")
-        .insert(alert);
+        .insert({
+          tipo: alert.tipo,
+          categoria: alert.categoria,
+          cor: alert.cor,
+          tipo_acessorio: alert.tipo_acessorio || "",
+          variacao_acessorio: alert.variacao_acessorio || "",
+          material_acessorio: alert.material_acessorio || "",
+          quantidade_minima: alert.quantidade_minima,
+        });
       if (error) throw error;
     }
   };

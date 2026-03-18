@@ -20,24 +20,33 @@ export type Database = {
           cor: string | null
           created_at: string
           id: string
+          material_acessorio: string
           quantidade_minima: number
           tipo: string
+          tipo_acessorio: string
+          variacao_acessorio: string
         }
         Insert: {
           categoria: string
           cor?: string | null
           created_at?: string
           id?: string
+          material_acessorio?: string
           quantidade_minima?: number
           tipo?: string
+          tipo_acessorio?: string
+          variacao_acessorio?: string
         }
         Update: {
           categoria?: string
           cor?: string | null
           created_at?: string
           id?: string
+          material_acessorio?: string
           quantidade_minima?: number
           tipo?: string
+          tipo_acessorio?: string
+          variacao_acessorio?: string
         }
         Relationships: []
       }
@@ -138,10 +147,12 @@ export type Database = {
           altura_lente: number
           barcode: string
           bridge_size: number
+          categoria_acessorio: string
           categoria_idade: string
           category: string
           code: string
           color: string
+          cor_acessorio: string
           cor_armacao: string
           created_at: string
           description: string
@@ -154,6 +165,7 @@ export type Database = {
           is_acessorio: boolean
           lens_size: number
           material: string
+          material_acessorio: string
           material_aro: string
           material_haste: string
           min_stock: number
@@ -164,8 +176,10 @@ export type Database = {
           stock: number
           subcategoria_acessorio: string
           temple_size: number
+          tipo_acessorio: string
           tipo_lente: string
           tipo_produto_id: string | null
+          variacao_acessorio: string
           wholesale_min_qty: number
           wholesale_price: number
         }
@@ -173,10 +187,12 @@ export type Database = {
           altura_lente?: number
           barcode?: string
           bridge_size?: number
+          categoria_acessorio?: string
           categoria_idade?: string
           category?: string
           code: string
           color?: string
+          cor_acessorio?: string
           cor_armacao?: string
           created_at?: string
           description?: string
@@ -189,6 +205,7 @@ export type Database = {
           is_acessorio?: boolean
           lens_size?: number
           material?: string
+          material_acessorio?: string
           material_aro?: string
           material_haste?: string
           min_stock?: number
@@ -199,8 +216,10 @@ export type Database = {
           stock?: number
           subcategoria_acessorio?: string
           temple_size?: number
+          tipo_acessorio?: string
           tipo_lente?: string
           tipo_produto_id?: string | null
+          variacao_acessorio?: string
           wholesale_min_qty?: number
           wholesale_price?: number
         }
@@ -208,10 +227,12 @@ export type Database = {
           altura_lente?: number
           barcode?: string
           bridge_size?: number
+          categoria_acessorio?: string
           categoria_idade?: string
           category?: string
           code?: string
           color?: string
+          cor_acessorio?: string
           cor_armacao?: string
           created_at?: string
           description?: string
@@ -224,6 +245,7 @@ export type Database = {
           is_acessorio?: boolean
           lens_size?: number
           material?: string
+          material_acessorio?: string
           material_aro?: string
           material_haste?: string
           min_stock?: number
@@ -234,8 +256,10 @@ export type Database = {
           stock?: number
           subcategoria_acessorio?: string
           temple_size?: number
+          tipo_acessorio?: string
           tipo_lente?: string
           tipo_produto_id?: string | null
+          variacao_acessorio?: string
           wholesale_min_qty?: number
           wholesale_price?: number
         }

@@ -14,6 +14,7 @@ import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS, TIPOS_LENTE,
 } from "@/data/productConstants";
+import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
 
 export type StockLevel = "normal" | "low" | "critical" | "out_of_stock";
 
@@ -29,6 +30,9 @@ export interface ProductFilterValues {
   materialAro: string;
   materialHaste: string;
   tipoLente: string;
+  // Accessory hierarchical filters
+  catAcessorio: string;
+  tipoAcessorio: string;
   corAcessorio: string;
   priceMin: string;
   priceMax: string;
@@ -48,6 +52,8 @@ const emptyFilters: ProductFilterValues = {
   materialAro: "all",
   materialHaste: "all",
   tipoLente: "all",
+  catAcessorio: "all",
+  tipoAcessorio: "all",
   corAcessorio: "all",
   priceMin: "",
   priceMax: "",
@@ -71,18 +77,14 @@ export function getCategoryMin(product: { tipo_produto_id: string | null }, tipo
 }
 
 /**
- * 4-level stock status based on category minimum:
- * - out_of_stock: stock === 0
- * - critical: stock <= min / 2
- * - low: stock <= min
- * - normal: stock > min
+ * Stock level: out_of_stock if 0, normal otherwise.
  */
 export function getStockLevel(stock: number, categoryMin: number): StockLevel {
   if (stock === 0) return "out_of_stock";
   return "normal";
 }
 
-/** Legacy compat — maps to old 3-level values for components that still use it */
+/** Legacy compat */
 export function getStockStatus(stock: number, minStock?: number): "in_stock" | "low_stock" | "out_of_stock" {
   const level = getStockLevel(stock, minStock ?? 0);
   if (level === "out_of_stock") return "out_of_stock";
@@ -122,17 +124,26 @@ export function applyProductFilters<T extends {
     if (filters.materialHaste !== "all" && p.material_haste !== filters.materialHaste) return false;
     if (filters.tipoLente !== "all" && p.tipo_lente !== filters.tipoLente) return false;
 
+    // Accessory hierarchical filters
+    if (filters.catAcessorio !== "all") {
+      const pCat = (p as any).categoria_acessorio || "";
+      if (pCat !== filters.catAcessorio) return false;
+    }
+    if (filters.tipoAcessorio !== "all") {
+      const pTipo = (p as any).tipo_acessorio || "";
+      if (pTipo !== filters.tipoAcessorio) return false;
+    }
     if (filters.corAcessorio !== "all") {
-      if (filters.corAcessorio === "nenhuma") {
-        if (p.color && p.color !== "") return false;
+      const pCor = (p as any).cor_acessorio || "";
+      if (filters.corAcessorio === "Nenhuma") {
+        if (pCor && pCor !== "" && pCor !== "Nenhuma") return false;
       } else {
-        if (p.color !== filters.corAcessorio) return false;
+        if (pCor !== filters.corAcessorio) return false;
       }
     }
 
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
 
-    // Stock status using category min
     if (filters.stockStatus !== "all") {
       const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 0);
       const level = getStockLevel(p.stock, catMin);
@@ -179,7 +190,8 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const countActive = (f: ProductFilterValues) => {
     const keys: (keyof ProductFilterValues)[] = [
       "tipoItem", "tipo", "categoriaIdade", "genero", "estilo", "corArmacao",
-      "material", "materialAro", "materialHaste", "tipoLente", "corAcessorio",
+      "material", "materialAro", "materialHaste", "tipoLente",
+      "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
     ];
     let count = keys.filter(k => f[k] !== "all").length;
@@ -191,6 +203,9 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const activeCount = countActive(filters);
   const showAccessoryFilters = draft.tipoItem === "acessorio" || draft.tipoItem === "all";
   const showFrameFilters = draft.tipoItem === "normal" || draft.tipoItem === "all";
+
+  // Cascading types for accessory filter
+  const tiposAcFiltro = draft.catAcessorio !== "all" ? getTiposByCategoria(draft.catAcessorio) : [];
 
   const validatePrice = (d: ProductFilterValues): boolean => {
     if (d.priceMin && d.priceMax && Number(d.priceMin) > Number(d.priceMax)) {
@@ -310,13 +325,28 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                 <>
                   <Separator />
                   <p className="text-caption text-muted-foreground font-medium">Acessório</p>
+                  <FilterSelect
+                    label="Categoria"
+                    value={draft.catAcessorio}
+                    onValueChange={(v) => setDraft({ ...draft, catAcessorio: v, tipoAcessorio: "all", corAcessorio: "all" })}
+                    options={ACESSORIOS_CATEGORIAS.map(c => c.nome)}
+                    allLabel="Todas"
+                  />
+                  {tiposAcFiltro.length > 0 && (
+                    <FilterSelect
+                      label="Tipo"
+                      value={draft.tipoAcessorio}
+                      onValueChange={(v) => setDraft({ ...draft, tipoAcessorio: v })}
+                      options={tiposAcFiltro.map(t => t.nome)}
+                    />
+                  )}
                   <div className="space-y-1">
                     <Label className="text-caption">Cor do Acessório</Label>
                     <Select value={draft.corAcessorio} onValueChange={(v) => setDraft({ ...draft, corAcessorio: v })}>
                       <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                        <SelectItem value="Nenhuma">Nenhuma</SelectItem>
                         {TODAS_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>

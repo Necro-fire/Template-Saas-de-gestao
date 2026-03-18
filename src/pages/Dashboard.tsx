@@ -52,26 +52,37 @@ function buildConfigAlerts(products: DbProduct[], alertConfigs: AlertaEstoque[])
     let navParams: string;
 
     if (config.tipo === "produto") {
-      // Products matched by estilo (armação category)
       matching = active.filter(p => !p.is_acessorio && p.estilo === config.categoria);
       label = config.categoria;
       navParams = `?estilo=${encodeURIComponent(config.categoria)}`;
     } else {
-      // Accessories matched by subcategoria + optional color
+      // Match accessories by hierarchical fields
       matching = active.filter(p => {
         if (!p.is_acessorio) return false;
-        // Match by subcategoria_acessorio or by the category group
-        const matchesCat = p.subcategoria_acessorio === config.categoria || p.model === config.categoria;
-        if (!matchesCat) return false;
-        if (config.cor) {
-          return p.color === config.cor;
-        }
+        const pCat = (p as any).categoria_acessorio || "";
+        const pTipo = (p as any).tipo_acessorio || "";
+        const pVar = (p as any).variacao_acessorio || "";
+        const pCor = (p as any).cor_acessorio || "";
+        const pMat = (p as any).material_acessorio || "";
+
+        if (pCat !== config.categoria) return false;
+        if (config.tipo_acessorio && pTipo !== config.tipo_acessorio) return false;
+        if (config.variacao_acessorio && pVar !== config.variacao_acessorio) return false;
+        if (config.material_acessorio && pMat !== config.material_acessorio) return false;
+        if (config.cor && config.cor !== "Nenhuma" && pCor !== config.cor) return false;
         return true;
       });
-      label = config.cor ? `${config.categoria} - ${config.cor}` : config.categoria;
-      navParams = config.cor
-        ? `?subcategoria=${encodeURIComponent(config.categoria)}&cor=${encodeURIComponent(config.cor)}`
-        : `?subcategoria=${encodeURIComponent(config.categoria)}`;
+
+      const parts = [config.categoria];
+      if (config.tipo_acessorio) parts.push(config.tipo_acessorio);
+      if (config.variacao_acessorio) parts.push(config.variacao_acessorio);
+      if (config.material_acessorio) parts.push(config.material_acessorio);
+      if (config.cor && config.cor !== "Nenhuma") parts.push(config.cor);
+      label = parts.join(" › ");
+
+      navParams = `?catAcessorio=${encodeURIComponent(config.categoria)}`;
+      if (config.tipo_acessorio) navParams += `&tipoAcessorio=${encodeURIComponent(config.tipo_acessorio)}`;
+      if (config.cor) navParams += `&cor=${encodeURIComponent(config.cor)}`;
     }
 
     const totalStock = matching.reduce((sum, p) => sum + p.stock, 0);
@@ -100,7 +111,6 @@ function buildConfigAlerts(products: DbProduct[], alertConfigs: AlertaEstoque[])
     }
   }
 
-  // Sort: out_of_stock first, then critical, then low
   const order: Record<string, number> = { out_of_stock: 0, critical: 1, low: 2 };
   alerts.sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3));
 
