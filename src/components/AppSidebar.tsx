@@ -113,7 +113,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {managementNav.some(i => hasPermission(i.module, i.action)) && (
+        {staffNav.some(i => hasPermission(i.module, i.action)) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Funcionários</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderNavGroup(staffNav)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+
           <SidebarGroup>
             <SidebarGroupLabel>Gestão</SidebarGroupLabel>
             <SidebarGroupContent>
