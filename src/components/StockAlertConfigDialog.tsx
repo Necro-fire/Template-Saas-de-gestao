@@ -264,14 +264,14 @@ export function StockAlertConfigDialog() {
                 {formCatAcessorio && tiposAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Tipo (opcional)</Label>
-                    <Select value={formTipoAcessorio} onValueChange={(v) => {
-                      setFormTipoAcessorio(v);
+                    <Select value={formTipoAcessorio || "__all__"} onValueChange={(v) => {
+                      setFormTipoAcessorio(v === "__all__" ? "" : v);
                       setFormVariacao("");
                       setFormCor("");
                     }}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos os tipos</SelectItem>
+                        <SelectItem value="__all__">Todos os tipos</SelectItem>
                         {tiposAc.map(t => <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -282,13 +282,13 @@ export function StockAlertConfigDialog() {
                 {formTipoAcessorio && variacoesAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Variação (opcional)</Label>
-                    <Select value={formVariacao} onValueChange={(v) => {
-                      setFormVariacao(v);
+                    <Select value={formVariacao || "__all__"} onValueChange={(v) => {
+                      setFormVariacao(v === "__all__" ? "" : v);
                       setFormCor("");
                     }}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas as variações" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas as variações</SelectItem>
+                        <SelectItem value="__all__">Todas as variações</SelectItem>
                         {variacoesAc.map(v => <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -299,10 +299,10 @@ export function StockAlertConfigDialog() {
                 {showMat && materiaisAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Material (opcional)</Label>
-                    <Select value={formMaterial} onValueChange={setFormMaterial}>
+                    <Select value={formMaterial || "__all__"} onValueChange={(v) => setFormMaterial(v === "__all__" ? "" : v)}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os materiais" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos os materiais</SelectItem>
+                        <SelectItem value="__all__">Todos os materiais</SelectItem>
                         {materiaisAc.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -313,10 +313,10 @@ export function StockAlertConfigDialog() {
                 {formVariacao && coresAc.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-caption">Cor (opcional)</Label>
-                    <Select value={formCor} onValueChange={setFormCor}>
+                    <Select value={formCor || "__all__"} onValueChange={(v) => setFormCor(v === "__all__" ? "" : v)}>
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas as cores" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas as cores</SelectItem>
+                        <SelectItem value="__all__">Todas as cores</SelectItem>
                         {coresAc.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
