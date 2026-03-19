@@ -768,6 +768,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancelar_venda: {
+        Args: {
+          _motivo: string
+          _user_id: string
+          _user_name: string
+          _venda_id: string
+        }
+        Returns: undefined
+      }
       generate_product_codes: { Args: never; Returns: Json }
       get_profiles_count: { Args: never; Returns: number }
       get_user_permissions: {
