@@ -26,6 +26,7 @@ export default function Clientes() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
 
