@@ -44,7 +44,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [cancelling, setCancelling] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (!venda || !open) return;
