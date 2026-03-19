@@ -700,42 +700,57 @@ export type Database = {
       }
       vendas: {
         Row: {
+          cancelled_at: string | null
+          cancelled_by_id: string | null
+          cancelled_by_name: string | null
           client_id: string | null
           client_name: string
           created_at: string
           discount: number
           filial_id: string
           id: string
+          motivo_cancelamento: string | null
           number: number
           origin: string
           payment_method: string
           seller_name: string
+          status: string
           total: number
         }
         Insert: {
+          cancelled_at?: string | null
+          cancelled_by_id?: string | null
+          cancelled_by_name?: string | null
           client_id?: string | null
           client_name?: string
           created_at?: string
           discount?: number
           filial_id?: string
           id?: string
+          motivo_cancelamento?: string | null
           number?: number
           origin?: string
           payment_method?: string
           seller_name?: string
+          status?: string
           total?: number
         }
         Update: {
+          cancelled_at?: string | null
+          cancelled_by_id?: string | null
+          cancelled_by_name?: string | null
           client_id?: string | null
           client_name?: string
           created_at?: string
           discount?: number
           filial_id?: string
           id?: string
+          motivo_cancelamento?: string | null
           number?: number
           origin?: string
           payment_method?: string
           seller_name?: string
+          status?: string
           total?: number
         }
         Relationships: [
