@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type DbVenda } from "@/hooks/useSupabaseData";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface RecentSalesCardProps {
