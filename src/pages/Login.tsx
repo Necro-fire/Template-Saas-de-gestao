@@ -88,9 +88,12 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      toast.success('Administrador criado com sucesso!');
-      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-      if (!loginError) navigate('/');
+      toast.success('Administrador criado! Faça login para continuar.');
+      setIsSetup(false);
+      setEmail('');
+      setPassword('');
+      setSetupNome('');
+      setTab('admin');
     } catch {
       toast.error('Erro ao configurar');
     }
