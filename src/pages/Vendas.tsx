@@ -6,8 +6,12 @@ import { useVendas } from "@/hooks/useSupabaseData";
 
 export default function Vendas() {
   const { data: sales } = useVendas();
+  const { empresas } = useFilial();
 
-  const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
+  const getFilialName = (filialId: string) => {
+    const emp = empresas.find(e => e.id === filialId);
+    return emp?.nome_fantasia || filialId;
+  };
 
   return (
     <div>

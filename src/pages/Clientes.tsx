@@ -41,8 +41,11 @@ export default function Clientes() {
     );
   }, [clients, search]);
 
-  const getFilialName = (filialId: string) =>
-    filiais.find((f) => f.id === filialId)?.name || filialId;
+  const { empresas } = useFilial();
+  const getFilialName = (filialId: string) => {
+    const emp = empresas.find(e => e.id === filialId);
+    return emp?.nome_fantasia || filialId;
+  };
 
   const handleEdit = (client: any) => {
     setEditingClient({
