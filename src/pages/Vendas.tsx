@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Search, Banknote, CreditCard, QrCode } from "lucide-react";
+import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -92,23 +92,25 @@ export default function Vendas() {
             {filtered.map((sale) => {
               const createdAt = new Date(sale.created_at);
               const isRecent = Date.now() - createdAt.getTime() < 24 * 60 * 60 * 1000;
+              const isCancelled = sale.status === "cancelada";
 
               return (
                 <div
                   key={sale.id}
                   onClick={() => setSelectedVenda(sale)}
                   className={`flex items-center justify-between py-3 px-4 rounded-md hover:bg-secondary/50 transition-colors cursor-pointer ${
-                    isRecent ? "border-l-2 border-l-primary" : ""
+                    isCancelled ? "opacity-60 border-l-2 border-l-destructive" : isRecent ? "border-l-2 border-l-primary" : ""
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
+                    <div className={`h-9 w-9 rounded-md flex items-center justify-center ${isCancelled ? "bg-destructive/10" : "bg-primary/10"}`}>
+                      {isCancelled ? <Ban className="h-4 w-4 text-destructive" /> : <FileText className="h-4 w-4 text-primary" />}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-ui font-medium">Venda #{sale.number}</p>
-                        {isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
+                        <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>Venda #{sale.number}</p>
+                        {isCancelled && <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Cancelada</Badge>}
+                        {!isCancelled && isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
                       </div>
                       <p className="text-caption text-muted-foreground">{sale.client_name || "Cliente avulso"}</p>
                     </div>
@@ -120,7 +122,9 @@ export default function Vendas() {
                       <span className="text-caption capitalize hidden sm:inline">{sale.payment_method}</span>
                     </div>
                     <div>
-                      <p className="text-ui font-medium tabular-nums text-primary">R$ {Number(sale.total).toFixed(2)}</p>
+                      <p className={`text-ui font-medium tabular-nums ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
+                        R$ {Number(sale.total).toFixed(2)}
+                      </p>
                       <p className="text-caption text-muted-foreground">
                         {format(createdAt, "dd/MM/yy HH:mm", { locale: ptBR })}
                       </p>
