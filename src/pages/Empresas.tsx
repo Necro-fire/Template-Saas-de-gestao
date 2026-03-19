@@ -1,120 +1,185 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Plus, Building2, Pencil, Trash2, Star, StarOff, Power, PowerOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEmpresas, type DbEmpresa } from "@/hooks/useEmpresas";
+import { EmpresaFormDialog } from "@/components/EmpresaFormDialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Empresas() {
+  const { data: empresas, refetch } = useEmpresas();
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<DbEmpresa | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleEdit = (emp: DbEmpresa) => {
+    setEditing(emp);
+    setShowForm(true);
+  };
+
+  const handleNew = () => {
+    if (empresas.length >= 3) {
+      toast.error("Máximo de 3 filiais atingido");
+      return;
+    }
+    setEditing(null);
+    setShowForm(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    const { error } = await (supabase as any).from("empresas").delete().eq("id", deletingId);
+    if (error) toast.error("Erro ao excluir empresa");
+    else { toast.success("Empresa excluída"); refetch(); }
+    setDeletingId(null);
+  };
+
+  const toggleAtiva = async (emp: DbEmpresa) => {
+    const { error } = await (supabase as any).from("empresas").update({ ativa: !emp.ativa }).eq("id", emp.id);
+    if (error) toast.error("Erro ao atualizar");
+    else { toast.success(emp.ativa ? "Filial desativada" : "Filial ativada"); refetch(); }
+  };
+
+  const setDefault = async (emp: DbEmpresa) => {
+    // Remove default from all, then set this one
+    await (supabase as any).from("empresas").update({ filial_padrao: false }).neq("id", "");
+    const { error } = await (supabase as any).from("empresas").update({ filial_padrao: true }).eq("id", emp.id);
+    if (error) toast.error("Erro ao definir padrão");
+    else { toast.success("Filial padrão definida"); refetch(); }
+  };
+
+  const regimeLabel = (v: string) => {
+    const map: Record<string, string> = {
+      simples_nacional: "Simples Nacional",
+      lucro_presumido: "Lucro Presumido",
+      lucro_real: "Lucro Real",
+    };
+    return map[v] || v;
+  };
+
   return (
-    <div className="p-4 space-y-4 max-w-2xl">
-      <div>
-        <h1 className="text-title font-semibold tracking-tighter">Empresa Emissora</h1>
-        <p className="text-ui text-muted-foreground">Dados fiscais da empresa para emissão de NF-e</p>
+    <div className="p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-title font-semibold tracking-tighter">Empresas (Filiais)</h1>
+          <p className="text-ui text-muted-foreground">
+            {empresas.length}/3 filiais cadastradas
+          </p>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={handleNew} disabled={empresas.length >= 3}>
+          <Plus className="h-4 w-4" />
+          Nova Filial
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-ui">Dados Cadastrais</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1 col-span-2">
-              <Label className="text-caption">Razão Social</Label>
-              <Input placeholder="Razão social da empresa" className="h-9" />
+      {empresas.length > 0 ? (
+        <div className="space-y-3">
+          {empresas.map((emp) => (
+            <div
+              key={emp.id}
+              className={`rounded-lg border p-4 transition-colors group ${
+                !emp.ativa ? "opacity-60 bg-muted/30" : "hover:bg-secondary/50"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-ui font-medium">{emp.razao_social}</p>
+                    {emp.filial_padrao && (
+                      <Badge variant="default" className="text-caption">Padrão</Badge>
+                    )}
+                    {!emp.ativa && (
+                      <Badge variant="secondary" className="text-caption">Inativa</Badge>
+                    )}
+                  </div>
+                  {emp.nome_fantasia && (
+                    <p className="text-caption text-muted-foreground">{emp.nome_fantasia}</p>
+                  )}
+                  <p className="text-caption text-muted-foreground">
+                    CNPJ: {emp.cnpj}
+                    {emp.regime_tributario && ` · ${regimeLabel(emp.regime_tributario)}`}
+                  </p>
+                  {(emp.cidade || emp.estado) && (
+                    <p className="text-caption text-muted-foreground">
+                      {[emp.endereco, emp.numero, emp.bairro, emp.cidade, emp.estado].filter(Boolean).join(", ")}
+                    </p>
+                  )}
+                  {(emp.telefone || emp.celular) && (
+                    <p className="text-caption text-muted-foreground">
+                      {[emp.telefone, emp.celular].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => setDefault(emp)}
+                    title={emp.filial_padrao ? "Filial padrão" : "Definir como padrão"}
+                  >
+                    {emp.filial_padrao ? <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" /> : <StarOff className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => toggleAtiva(emp)}
+                    title={emp.ativa ? "Desativar" : "Ativar"}
+                  >
+                    {emp.ativa ? <Power className="h-3.5 w-3.5 text-green-600" /> : <PowerOff className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={() => handleEdit(emp)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8 text-destructive"
+                    onClick={() => setDeletingId(emp.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Nome Fantasia</Label>
-              <Input placeholder="Nome fantasia" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">CNPJ</Label>
-              <Input placeholder="00.000.000/0000-00" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Inscrição Estadual</Label>
-              <Input placeholder="Inscrição estadual" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Regime Tributário</Label>
-              <Select>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
-                  <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
-                  <SelectItem value="Lucro Real">Lucro Real</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">CNAE</Label>
-              <Input placeholder="CNAE" className="h-9" />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1 col-span-2">
-              <Label className="text-caption">Endereço</Label>
-              <Input placeholder="Endereço completo" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Cidade</Label>
-              <Input placeholder="Cidade" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Estado</Label>
-              <Input placeholder="UF" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">CEP</Label>
-              <Input placeholder="00000-000" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Telefone</Label>
-              <Input placeholder="(00) 0000-0000" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Email</Label>
-              <Input placeholder="email@empresa.com" className="h-9" />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label className="text-caption">Série da NF</Label>
-              <Input placeholder="1" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Ambiente</Label>
-              <Select>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="homologacao">Homologação</SelectItem>
-                  <SelectItem value="producao">Produção</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Código Município</Label>
-              <Input placeholder="Código do município" className="h-9" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-caption">Código IBGE</Label>
-              <Input placeholder="Código IBGE" className="h-9" />
-            </div>
-          </div>
-
-          <Button className="w-full h-10" onClick={() => toast.success("Dados da empresa salvos")}>
-            Salvar
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <Building2 className="h-12 w-12 mb-3 opacity-30" />
+          <p className="text-ui font-medium">Nenhuma filial cadastrada</p>
+          <p className="text-caption mt-1">Cadastre sua primeira empresa para começar</p>
+          <Button size="sm" className="mt-4 gap-1.5" onClick={handleNew}>
+            <Plus className="h-4 w-4" />
+            Cadastrar Empresa
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      <EmpresaFormDialog
+        open={showForm}
+        onOpenChange={(v) => { setShowForm(v); if (!v) setEditing(null); }}
+        editingEmpresa={editing}
+        currentCount={empresas.length}
+      />
+
+      <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir empresa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A empresa será removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

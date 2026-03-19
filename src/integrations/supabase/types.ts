@@ -61,6 +61,7 @@ export type Database = {
           endereco: string
           filial_id: string
           id: string
+          inscricao_estadual: string
           observacoes: string
           phone: string
           responsible_name: string
@@ -80,6 +81,7 @@ export type Database = {
           endereco?: string
           filial_id?: string
           id?: string
+          inscricao_estadual?: string
           observacoes?: string
           phone?: string
           responsible_name: string
@@ -99,6 +101,7 @@ export type Database = {
           endereco?: string
           filial_id?: string
           id?: string
+          inscricao_estadual?: string
           observacoes?: string
           phone?: string
           responsible_name?: string
@@ -107,6 +110,84 @@ export type Database = {
           store_name?: string
           tipo_cliente?: string
           whatsapp?: string
+        }
+        Relationships: []
+      }
+      empresas: {
+        Row: {
+          ambiente: string
+          ativa: boolean
+          bairro: string
+          celular: string
+          cep: string
+          cidade: string
+          cnae: string
+          cnpj: string
+          codigo_ibge: string
+          codigo_municipio: string
+          created_at: string
+          email: string
+          endereco: string
+          estado: string
+          filial_padrao: boolean
+          id: string
+          inscricao_estadual: string
+          nome_fantasia: string
+          numero: string
+          razao_social: string
+          regime_tributario: string
+          serie_nf: string
+          telefone: string
+        }
+        Insert: {
+          ambiente?: string
+          ativa?: boolean
+          bairro?: string
+          celular?: string
+          cep?: string
+          cidade?: string
+          cnae?: string
+          cnpj: string
+          codigo_ibge?: string
+          codigo_municipio?: string
+          created_at?: string
+          email?: string
+          endereco?: string
+          estado?: string
+          filial_padrao?: boolean
+          id?: string
+          inscricao_estadual?: string
+          nome_fantasia?: string
+          numero?: string
+          razao_social: string
+          regime_tributario?: string
+          serie_nf?: string
+          telefone?: string
+        }
+        Update: {
+          ambiente?: string
+          ativa?: boolean
+          bairro?: string
+          celular?: string
+          cep?: string
+          cidade?: string
+          cnae?: string
+          cnpj?: string
+          codigo_ibge?: string
+          codigo_municipio?: string
+          created_at?: string
+          email?: string
+          endereco?: string
+          estado?: string
+          filial_padrao?: boolean
+          id?: string
+          inscricao_estadual?: string
+          nome_fantasia?: string
+          numero?: string
+          razao_social?: string
+          regime_tributario?: string
+          serie_nf?: string
+          telefone?: string
         }
         Relationships: []
       }
