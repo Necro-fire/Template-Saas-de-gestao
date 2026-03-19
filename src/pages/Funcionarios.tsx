@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFilial } from '@/contexts/FilialContext';
+import { useFilial, filiais } from '@/contexts/FilialContext';
 import { FilialSelector } from '@/components/FilialSelector';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,7 @@ export default function Funcionarios() {
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
   const [viewingFunc, setViewingFunc] = useState<Funcionario | null>(null);
   const [deletingFunc, setDeletingFunc] = useState<Funcionario | null>(null);
-  const { selectedFilial, empresas } = useFilial();
+  const { selectedFilial } = useFilial();
   const { isAdmin } = useAuth();
 
   // Form state
@@ -203,7 +203,7 @@ export default function Funcionarios() {
     setLoading(false);
   };
 
-  const getFilialName = (id: string) => empresas.find(e => e.id === id)?.nome_fantasia || id;
+  const getFilialName = (id: string) => filiais.find(f => f.id === id)?.name || id;
   const getRoleName = (func: Funcionario) => {
     if (!func.user_id) return null;
     const ur = userRoles.find(u => u.user_id === func.user_id);
@@ -356,8 +356,8 @@ export default function Funcionarios() {
                 <Select value={filialId} onValueChange={setFilialId}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {empresas.map(e => (
-                      <SelectItem key={e.id} value={e.id}>{e.nome_fantasia || e.razao_social}</SelectItem>
+                    {filiais.map(f => (
+                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

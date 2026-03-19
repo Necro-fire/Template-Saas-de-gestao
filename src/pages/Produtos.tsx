@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Plus, Package, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useFilial } from "@/contexts/FilialContext";
+import { useFilial, filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";
@@ -22,8 +22,7 @@ export default function Produtos() {
   const { data: products } = useProducts();
   const { data: tipos } = useProductTypes();
 
-  const { empresas } = useFilial();
-  const getFilialName = (filialId: string) => empresas.find(e => e.id === filialId)?.nome_fantasia || filialId;
+  const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
   const getTypeName = (tipoProdutoId: string | null) => {
     if (!tipoProdutoId) return null;
     return tipos.find(t => t.id === tipoProdutoId)?.nome_tipo || null;

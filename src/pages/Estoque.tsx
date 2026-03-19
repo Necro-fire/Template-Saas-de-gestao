@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useFilial } from "@/contexts/FilialContext";
+import { filiais } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
+import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
 import { StockAlertConfigDialog } from "@/components/StockAlertConfigDialog";
@@ -28,7 +29,7 @@ function stockLevelBadge(level: StockLevel, stock: number) {
 }
 
 export default function Estoque() {
-  const { selectedFilial, empresas } = useFilial();
+  const { selectedFilial } = useFilial();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products } = useProducts();
   const { data: tipos, refetch: refetchTipos } = useProductTypes();
@@ -286,7 +287,7 @@ export default function Estoque() {
                       </div>
                       <div className="flex items-center gap-3">
                         {selectedFilial === "all" && (
-                          <Badge variant="outline" className="text-caption">{empresas.find(e => e.id === p.filial_id)?.nome_fantasia || p.filial_id}</Badge>
+                          <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                         )}
                         {stockLevelBadge(level, p.stock)}
                         <span className="text-caption text-muted-foreground tabular-nums min-w-[60px] text-right">mín: {catMin}</span>

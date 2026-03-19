@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useFilial } from "@/contexts/FilialContext";
+import { filiais, useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
@@ -181,7 +181,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
 
 export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const { data: tipos } = useProductTypes();
-  const { selectedFilial, empresas } = useFilial();
+  const { selectedFilial } = useFilial();
   const filialLocked = selectedFilial !== "all";
   const [draft, setDraft] = useState<ProductFilterValues>({ ...filters });
   const [open, setOpen] = useState(false);
@@ -372,7 +372,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                       <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas</SelectItem>
-                        {empresas.map(e => <SelectItem key={e.id} value={e.id}>{e.nome_fantasia || e.razao_social}</SelectItem>)}
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
