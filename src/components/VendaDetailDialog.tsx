@@ -246,7 +246,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Cancelar Venda #{venda.number}?
+              Cancelar Venda {items[0]?.product_code || `#${venda.number}`}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação irá reverter automaticamente o estoque e o financeiro.
