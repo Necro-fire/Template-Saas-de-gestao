@@ -84,9 +84,12 @@ export default function Empresas() {
           {empresas.map((emp) => (
             <div
               key={emp.id}
-              className={`rounded-lg border p-4 transition-colors group ${
-                !emp.ativa ? "opacity-60 bg-muted/30" : "hover:bg-secondary/50"
+              className={`rounded-lg border p-4 transition-colors group cursor-pointer ${
+                !emp.ativa ? "opacity-60 bg-muted/30" :
+                selectedFilial === emp.id ? "border-primary bg-primary/5 ring-1 ring-primary/20" :
+                "hover:bg-secondary/50"
               }`}
+              onClick={() => emp.ativa && setSelectedFilial(emp.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="min-w-0 space-y-1">
