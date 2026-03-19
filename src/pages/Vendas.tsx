@@ -24,6 +24,24 @@ export default function Vendas() {
   const { preset, range, onChange } = useDateRangeFilter();
   const [search, setSearch] = useState("");
   const [selectedVenda, setSelectedVenda] = useState<DbVenda | null>(null);
+  const [vendaCodesMap, setVendaCodesMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (sales.length === 0) return;
+    const vendaIds = sales.map(s => s.id);
+    (supabase as any)
+      .from("venda_items")
+      .select("venda_id, product_code")
+      .in("venda_id", vendaIds)
+      .then(({ data }: { data: { venda_id: string; product_code: string }[] | null }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        data.forEach(item => {
+          if (!map[item.venda_id]) map[item.venda_id] = item.product_code;
+        });
+        setVendaCodesMap(map);
+      });
+  }, [sales]);
 
   const filtered = useMemo(() => {
     let result = filterByDateRange(sales, range);
