@@ -291,89 +291,11 @@ export async function cancelarVenda(
   userId: string,
   userName: string
 ) {
-  // 1. Get the venda
-  const { data: venda, error: vendaErr } = await (supabase as any)
-    .from("vendas")
-    .select("*")
-    .eq("id", vendaId)
-    .single();
-  if (vendaErr || !venda) throw new Error("Venda não encontrada");
-  if (venda.status === "cancelada") throw new Error("Esta venda já foi cancelada");
-
-  // 2. Get venda items
-  const { data: items } = await (supabase as any)
-    .from("venda_items")
-    .select("*")
-    .eq("venda_id", vendaId);
-
-  // 3. Reverse stock for each item
-  if (items && items.length > 0) {
-    for (const item of items) {
-      // Update estoque
-      const { data: estoque } = await (supabase as any)
-        .from("estoque")
-        .select("id, quantidade")
-        .eq("produto_id", item.produto_id)
-        .eq("filial_id", venda.filial_id)
-        .maybeSingle();
-
-      if (estoque) {
-        await (supabase as any)
-          .from("estoque")
-          .update({ quantidade: estoque.quantidade + item.quantity })
-          .eq("id", estoque.id);
-      }
-
-      // Update produtos.stock
-      const { data: prod } = await (supabase as any)
-        .from("produtos")
-        .select("stock")
-        .eq("id", item.produto_id)
-        .maybeSingle();
-
-      if (prod) {
-        await (supabase as any)
-          .from("produtos")
-          .update({ stock: prod.stock + item.quantity })
-          .eq("id", item.produto_id);
-      }
-    }
-  }
-
-  // 4. Reverse caixa movimentacao if exists
-  const { data: movExisting } = await (supabase as any)
-    .from("caixa_movimentacoes")
-    .select("id, caixa_id, valor")
-    .eq("venda_id", vendaId)
-    .eq("tipo", "venda")
-    .maybeSingle();
-
-  if (movExisting) {
-    await (supabase as any)
-      .from("caixa_movimentacoes")
-      .insert({
-        caixa_id: movExisting.caixa_id,
-        tipo: "cancelamento",
-        valor: -movExisting.valor,
-        forma_pagamento: venda.payment_method,
-        descricao: `Cancelamento Venda #${venda.number} — ${motivo}`,
-        venda_id: vendaId,
-        usuario_id: userId,
-        usuario_nome: userName,
-      });
-  }
-
-  // 5. Mark venda as cancelled
-  const { error: updateErr } = await (supabase as any)
-    .from("vendas")
-    .update({
-      status: "cancelada",
-      cancelled_at: new Date().toISOString(),
-      cancelled_by_id: userId,
-      cancelled_by_name: userName,
-      motivo_cancelamento: motivo,
-    })
-    .eq("id", vendaId);
-
-  if (updateErr) throw new Error(updateErr.message);
+  const { error } = await (supabase as any).rpc("cancelar_venda", {
+    _venda_id: vendaId,
+    _motivo: motivo,
+    _user_id: userId,
+    _user_name: userName,
+  });
+  if (error) throw new Error(error.message);
 }
