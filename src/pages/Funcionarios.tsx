@@ -48,7 +48,7 @@ export default function Funcionarios() {
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
   const [viewingFunc, setViewingFunc] = useState<Funcionario | null>(null);
   const [deletingFunc, setDeletingFunc] = useState<Funcionario | null>(null);
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, empresas } = useFilial();
   const { isAdmin } = useAuth();
 
   // Form state
