@@ -76,7 +76,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         venda.id,
         motivo.trim(),
         user?.id || "",
-        user?.nome || user?.email || ""
+        profile?.nome || user?.email || ""
       );
       toast.success("Venda cancelada com sucesso");
       setShowCancelConfirm(false);
