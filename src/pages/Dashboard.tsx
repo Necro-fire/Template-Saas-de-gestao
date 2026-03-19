@@ -1,169 +1,48 @@
-import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { type StockLevel } from "@/components/ProductFilters";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Package, ShoppingCart, TrendingUp, Users } from "lucide-react";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProducts, useClients, useVendas, type DbProduct } from "@/hooks/useSupabaseData";
-import { useStockAlerts, type AlertaEstoque } from "@/hooks/useStockAlerts";
+import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
+import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
-
-function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
-  title: string; value: string; subtitle: string;
-  icon: React.ElementType; trend?: "up" | "down";
-}) {
-  return (
-    <Card className="shadow-card">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-caption text-muted-foreground">{title}</p>
-            <p className="text-title font-semibold tracking-tighter tabular-nums mt-1">{value}</p>
-            <div className="flex items-center gap-1 mt-1">
-              {trend === "up" && <ArrowUpRight className="h-3 w-3 text-success" />}
-              {trend === "down" && <ArrowDownRight className="h-3 w-3 text-destructive" />}
-              <p className="text-caption text-muted-foreground">{subtitle}</p>
-            </div>
-          </div>
-          <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface StockAlert {
-  message: string;
-  level: "out_of_stock" | "critical" | "low";
-  totalStock: number;
-  minimo: number;
-  navigateTo: string;
-}
-
-function buildConfigAlerts(products: DbProduct[], alertConfigs: AlertaEstoque[]): StockAlert[] {
-  const alerts: StockAlert[] = [];
-  const active = products.filter(p => p.status !== "inativo");
-
-  for (const config of alertConfigs) {
-    let matching: DbProduct[];
-    let label: string;
-    let navParams: string;
-
-    if (config.tipo === "produto") {
-      matching = active.filter(p => !p.is_acessorio && p.estilo === config.categoria);
-      label = config.categoria;
-      navParams = `?estilo=${encodeURIComponent(config.categoria)}`;
-    } else {
-      // Match accessories by hierarchical fields
-      matching = active.filter(p => {
-        if (!p.is_acessorio) return false;
-        const pCat = (p as any).categoria_acessorio || "";
-        const pTipo = (p as any).tipo_acessorio || "";
-        const pVar = (p as any).variacao_acessorio || "";
-        const pCor = (p as any).cor_acessorio || "";
-        const pMat = (p as any).material_acessorio || "";
-
-        if (pCat !== config.categoria) return false;
-        if (config.tipo_acessorio && pTipo !== config.tipo_acessorio) return false;
-        if (config.variacao_acessorio && pVar !== config.variacao_acessorio) return false;
-        if (config.material_acessorio && pMat !== config.material_acessorio) return false;
-        if (config.cor && config.cor !== "Nenhuma" && pCor !== config.cor) return false;
-        return true;
-      });
-
-      const parts = [config.categoria];
-      if (config.tipo_acessorio) parts.push(config.tipo_acessorio);
-      if (config.variacao_acessorio) parts.push(config.variacao_acessorio);
-      if (config.material_acessorio) parts.push(config.material_acessorio);
-      if (config.cor && config.cor !== "Nenhuma") parts.push(config.cor);
-      label = parts.join(" › ");
-
-      navParams = `?catAcessorio=${encodeURIComponent(config.categoria)}`;
-      if (config.tipo_acessorio) navParams += `&tipoAcessorio=${encodeURIComponent(config.tipo_acessorio)}`;
-      if (config.cor) navParams += `&cor=${encodeURIComponent(config.cor)}`;
-    }
-
-    const totalStock = matching.reduce((sum, p) => sum + p.stock, 0);
-
-    if (totalStock <= config.quantidade_minima) {
-      let level: "out_of_stock" | "critical" | "low";
-      if (totalStock === 0) {
-        level = "out_of_stock";
-      } else if (totalStock <= Math.floor(config.quantidade_minima / 2)) {
-        level = "critical";
-      } else {
-        level = "low";
-      }
-
-      const msg = config.tipo === "produto"
-        ? `Alerta de estoque baixo na armação ${label.toLowerCase()}`
-        : `${label} está com estoque baixo`;
-
-      alerts.push({
-        message: msg,
-        level,
-        totalStock,
-        minimo: config.quantidade_minima,
-        navigateTo: `/estoque${navParams}`,
-      });
-    }
-  }
-
-  const order: Record<string, number> = { out_of_stock: 0, critical: 1, low: 2 };
-  alerts.sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3));
-
-  return alerts;
-}
-
-function alertBadge(level: StockLevel, stock: number) {
-  switch (level) {
-    case "out_of_stock":
-      return <Badge variant="destructive" className="text-caption">Esgotado</Badge>;
-    case "critical":
-      return <Badge className="text-caption bg-orange-600 text-white hover:bg-orange-700">Crítico</Badge>;
-    case "low":
-      return <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{stock} un. ⚠</Badge>;
-    default:
-      return null;
-  }
-}
-
-function alertBgClass(level: StockLevel) {
-  switch (level) {
-    case "out_of_stock": return "bg-destructive/5";
-    case "critical": return "bg-orange-500/5";
-    case "low": return "bg-warning/5";
-    default: return "";
-  }
-}
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { StockAlertCard, buildConfigAlerts } from "@/components/dashboard/StockAlertCard";
+import { RecentSalesCard } from "@/components/dashboard/RecentSalesCard";
+import { SalesChart } from "@/components/dashboard/SalesChart";
+import { PaymentDonutChart } from "@/components/dashboard/PaymentDonutChart";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { data: products } = useProducts();
+  const { data: products, loading: loadingProducts } = useProducts();
   const { data: alertConfigs } = useStockAlerts();
-  const { data: sales } = useVendas();
+  const { data: sales, loading: loadingSales } = useVendas();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
+
+  const isLoading = loadingProducts || loadingSales;
 
   const filteredSales = filterByDateRange(sales, range);
   const filteredClients = filterByDateRange(clients, range);
 
-  const salesTotalValue = filteredSales.reduce((acc, s) => acc + Number(s.total), 0);
+  const activeSales = filteredSales.filter(s => s.status !== "cancelada");
+  const salesTotalValue = activeSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   const activeProducts = products.filter(p => p.status !== "inativo");
   const alerts = buildConfigAlerts(products, alertConfigs);
-  const outAlerts = alerts.filter(a => a.level === "out_of_stock");
-  const critAlerts = alerts.filter(a => a.level === "critical");
-  const lowAlerts = alerts.filter(a => a.level === "low");
   const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
-  const hasAlerts = alerts.length > 0;
+
+  if (isLoading) {
+    return (
+      <div>
+        <FilialSelector />
+        <DashboardSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div>
       <FilialSelector />
       <div className="p-4 space-y-4">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-title font-semibold tracking-tighter">Dashboard</h1>
@@ -172,92 +51,50 @@ export default function Dashboard() {
           <DateRangeFilter preset={preset} range={range} onChange={onDateChange} />
         </div>
 
+        {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard title="Vendas no Período" value={`R$ ${salesTotalValue.toFixed(2)}`} subtitle={filteredSales.length > 0 ? `${filteredSales.length} vendas` : "Sem dados no período"} icon={ShoppingCart} />
-          <MetricCard title="Ticket Médio" value={filteredSales.length > 0 ? `R$ ${(salesTotalValue / filteredSales.length).toFixed(2)}` : "R$ 0.00"} subtitle={filteredSales.length > 0 ? `${filteredSales.length} vendas` : "Sem dados no período"} icon={TrendingUp} />
-          <MetricCard title="Total em Estoque" value={String(totalStock)} subtitle={`${activeProducts.length} produtos`} icon={Package} />
-          <MetricCard title="Clientes no Período" value={String(filteredClients.filter(c => c.status === "active").length)} subtitle={filteredClients.length > 0 ? "ativos" : "Sem dados no período"} icon={Users} />
+          <MetricCard
+            title="Vendas no Período"
+            value={`R$ ${salesTotalValue.toFixed(2)}`}
+            subtitle={activeSales.length > 0 ? `${activeSales.length} vendas` : "Sem dados no período"}
+            icon={ShoppingCart}
+            accentColor="primary"
+          />
+          <MetricCard
+            title="Ticket Médio"
+            value={activeSales.length > 0 ? `R$ ${(salesTotalValue / activeSales.length).toFixed(2)}` : "R$ 0.00"}
+            subtitle={activeSales.length > 0 ? `${activeSales.length} vendas` : "Sem dados no período"}
+            icon={TrendingUp}
+            accentColor="success"
+          />
+          <MetricCard
+            title="Total em Estoque"
+            value={String(totalStock)}
+            subtitle={`${activeProducts.length} produtos`}
+            icon={Package}
+            accentColor="warning"
+          />
+          <MetricCard
+            title="Clientes no Período"
+            value={String(filteredClients.filter(c => c.status === "active").length)}
+            subtitle={filteredClients.length > 0 ? "ativos" : "Sem dados no período"}
+            icon={Users}
+            accentColor="primary"
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="shadow-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-ui font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-warning" />
-                Alerta de Estoque
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-3">
-              {hasAlerts && (
-                <div className="flex flex-wrap gap-2">
-                  {outAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-destructive text-destructive gap-1">
-                      🔴 {outAlerts.length} esgotado{outAlerts.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                  {critAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-orange-500 text-orange-600 gap-1">
-                      🟠 {critAlerts.length} crítico{critAlerts.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                  {lowAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-warning text-warning gap-1">
-                      ⚠ {lowAlerts.length} baixo{lowAlerts.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                </div>
-              )}
-              <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                {alerts.map((alert, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all ${alertBgClass(alert.level)}`}
-                    onClick={() => navigate(alert.navigateTo)}
-                  >
-                    <div>
-                      <p className="text-ui font-medium">{alert.message}</p>
-                      <p className="text-caption text-muted-foreground">
-                        {alert.totalStock} un. · mín: {alert.minimo}
-                      </p>
-                    </div>
-                    {alertBadge(alert.level, alert.totalStock)}
-                  </div>
-                ))}
-                {!hasAlerts && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">
-                    {alertConfigs.length === 0
-                      ? "Configure alertas em Estoque → Configurações de Alerta"
-                      : "Todos os produtos com estoque adequado ✓"}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <SalesChart sales={filteredSales} range={range} />
+          </div>
+          <PaymentDonutChart sales={filteredSales} />
+        </div>
 
-          <Card className="shadow-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-ui font-semibold">Vendas Recentes</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-1">
-                {filteredSales.slice(0, 10).map(sale => (
-                  <div key={sale.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
-                    <div>
-                      <p className="text-ui font-medium">#{sale.number}</p>
-                      <p className="text-caption text-muted-foreground">{sale.client_name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-ui font-medium tabular-nums text-primary">R$ {Number(sale.total).toFixed(2)}</p>
-                      <p className="text-caption text-muted-foreground">{sale.payment_method}</p>
-                    </div>
-                  </div>
-                ))}
-                {filteredSales.length === 0 && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">Sem vendas no período selecionado.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Alerts + Recent Sales */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <StockAlertCard alerts={alerts} alertConfigsCount={alertConfigs.length} />
+          <RecentSalesCard sales={filteredSales} />
         </div>
       </div>
     </div>
