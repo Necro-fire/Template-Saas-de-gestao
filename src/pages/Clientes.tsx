@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Plus, Users, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Users, Pencil, Trash2, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { filiais, useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useClients } from "@/hooks/useSupabaseData";
 import { ClientFormDialog } from "@/components/ClientFormDialog";
+import { ClientHistoryDialog } from "@/components/ClientHistoryDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -25,6 +26,7 @@ export default function Clientes() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
 
@@ -136,6 +138,15 @@ export default function Clientes() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setHistoryClient({ id: client.id, name: client.responsible_name })}
+                    title="Histórico"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleEdit(client)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -172,6 +183,13 @@ export default function Clientes() {
           if (!v) setEditingClient(null);
         }}
         editingClient={editingClient}
+      />
+
+      <ClientHistoryDialog
+        open={!!historyClient}
+        onOpenChange={(v) => !v && setHistoryClient(null)}
+        clientId={historyClient?.id ?? null}
+        clientName={historyClient?.name ?? ""}
       />
 
       <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
