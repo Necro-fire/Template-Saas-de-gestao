@@ -7,6 +7,7 @@ import { filiais, useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useClients } from "@/hooks/useSupabaseData";
 import { ClientFormDialog } from "@/components/ClientFormDialog";
+import { ClientHistoryDialog } from "@/components/ClientHistoryDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
