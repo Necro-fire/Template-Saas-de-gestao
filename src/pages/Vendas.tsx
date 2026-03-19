@@ -1,6 +1,6 @@
 import { FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { filiais } from "@/contexts/FilialContext";
+import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useVendas } from "@/hooks/useSupabaseData";
 
