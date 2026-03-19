@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Plus, Building2, Pencil, Trash2, Star, StarOff, Power, PowerOff } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, Star, StarOff, Power, PowerOff, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, type DbEmpresa } from "@/hooks/useEmpresas";
 import { EmpresaFormDialog } from "@/components/EmpresaFormDialog";
+import { useFilial } from "@/contexts/FilialContext";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
