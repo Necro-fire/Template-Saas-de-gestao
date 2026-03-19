@@ -1,263 +1,278 @@
-import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { type StockLevel } from "@/components/ProductFilters";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { format, subDays, subMonths, eachDayOfInterval, eachMonthOfInterval, startOfDay, startOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProducts, useClients, useVendas, type DbProduct } from "@/hooks/useSupabaseData";
-import { useStockAlerts, type AlertaEstoque } from "@/hooks/useStockAlerts";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
+import { useProducts, useClients, useVendas, type DbVenda } from "@/hooks/useSupabaseData";
+import { useStockAlerts } from "@/hooks/useStockAlerts";
+import { useCaixas, type DbCaixaMovimentacao } from "@/hooks/useCaixa";
 
-function MetricCard({ title, value, subtitle, icon: Icon, trend }: {
-  title: string; value: string; subtitle: string;
-  icon: React.ElementType; trend?: "up" | "down";
-}) {
-  return (
-    <Card className="shadow-card">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-caption text-muted-foreground">{title}</p>
-            <p className="text-title font-semibold tracking-tighter tabular-nums mt-1">{value}</p>
-            <div className="flex items-center gap-1 mt-1">
-              {trend === "up" && <ArrowUpRight className="h-3 w-3 text-success" />}
-              {trend === "down" && <ArrowDownRight className="h-3 w-3 text-destructive" />}
-              <p className="text-caption text-muted-foreground">{subtitle}</p>
-            </div>
-          </div>
-          <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+import { MetricCards } from "@/components/dashboard/MetricCards";
+import { FinancialFlowChart } from "@/components/dashboard/FinancialFlowChart";
+import { TopProductsChart } from "@/components/dashboard/TopProductsChart";
+import { SalesStatusChart } from "@/components/dashboard/SalesStatusChart";
+import { PaymentMethodsChart } from "@/components/dashboard/PaymentMethodsChart";
+import { ClientsChart } from "@/components/dashboard/ClientsChart";
+import { SellerRanking } from "@/components/dashboard/SellerRanking";
+import { StockOverview } from "@/components/dashboard/StockOverview";
+import { CaixaSummary } from "@/components/dashboard/CaixaSummary";
+import { RecentSalesList } from "@/components/dashboard/RecentSalesList";
+import { RecentMovementsList } from "@/components/dashboard/RecentMovementsList";
+
+function useAllMovimentacoes() {
+  const [movs, setMovs] = useState<DbCaixaMovimentacao[]>([]);
+  const { selectedFilial } = useFilial();
+
+  const fetchAll = useCallback(async () => {
+    // Get caixas for selected filial
+    let caixaQuery = (supabase as any).from("caixas").select("id");
+    if (selectedFilial !== "all") caixaQuery = caixaQuery.eq("filial_id", selectedFilial);
+    const { data: caixas } = await caixaQuery;
+    if (!caixas || caixas.length === 0) { setMovs([]); return; }
+
+    const ids = caixas.map((c: any) => c.id);
+    const { data } = await (supabase as any)
+      .from("caixa_movimentacoes")
+      .select("*")
+      .in("caixa_id", ids)
+      .order("created_at", { ascending: false });
+    if (data) setMovs(data);
+  }, [selectedFilial]);
+
+  useEffect(() => {
+    fetchAll();
+    const ch = supabase.channel("all-mov-dash").on("postgres_changes", { event: "*", schema: "public", table: "caixa_movimentacoes" }, () => fetchAll()).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [fetchAll]);
+
+  return movs;
 }
 
-interface StockAlert {
-  message: string;
-  level: "out_of_stock" | "critical" | "low";
-  totalStock: number;
-  minimo: number;
-  navigateTo: string;
-}
+function useVendaItems(vendaIds: string[]) {
+  const [items, setItems] = useState<{ produto_id: string; product_model: string; quantity: number }[]>([]);
 
-function buildConfigAlerts(products: DbProduct[], alertConfigs: AlertaEstoque[]): StockAlert[] {
-  const alerts: StockAlert[] = [];
-  const active = products.filter(p => p.status !== "inativo");
-
-  for (const config of alertConfigs) {
-    let matching: DbProduct[];
-    let label: string;
-    let navParams: string;
-
-    if (config.tipo === "produto") {
-      matching = active.filter(p => !p.is_acessorio && p.estilo === config.categoria);
-      label = config.categoria;
-      navParams = `?estilo=${encodeURIComponent(config.categoria)}`;
-    } else {
-      // Match accessories by hierarchical fields
-      matching = active.filter(p => {
-        if (!p.is_acessorio) return false;
-        const pCat = (p as any).categoria_acessorio || "";
-        const pTipo = (p as any).tipo_acessorio || "";
-        const pVar = (p as any).variacao_acessorio || "";
-        const pCor = (p as any).cor_acessorio || "";
-        const pMat = (p as any).material_acessorio || "";
-
-        if (pCat !== config.categoria) return false;
-        if (config.tipo_acessorio && pTipo !== config.tipo_acessorio) return false;
-        if (config.variacao_acessorio && pVar !== config.variacao_acessorio) return false;
-        if (config.material_acessorio && pMat !== config.material_acessorio) return false;
-        if (config.cor && config.cor !== "Nenhuma" && pCor !== config.cor) return false;
-        return true;
-      });
-
-      const parts = [config.categoria];
-      if (config.tipo_acessorio) parts.push(config.tipo_acessorio);
-      if (config.variacao_acessorio) parts.push(config.variacao_acessorio);
-      if (config.material_acessorio) parts.push(config.material_acessorio);
-      if (config.cor && config.cor !== "Nenhuma") parts.push(config.cor);
-      label = parts.join(" › ");
-
-      navParams = `?catAcessorio=${encodeURIComponent(config.categoria)}`;
-      if (config.tipo_acessorio) navParams += `&tipoAcessorio=${encodeURIComponent(config.tipo_acessorio)}`;
-      if (config.cor) navParams += `&cor=${encodeURIComponent(config.cor)}`;
-    }
-
-    const totalStock = matching.reduce((sum, p) => sum + p.stock, 0);
-
-    if (totalStock <= config.quantidade_minima) {
-      let level: "out_of_stock" | "critical" | "low";
-      if (totalStock === 0) {
-        level = "out_of_stock";
-      } else if (totalStock <= Math.floor(config.quantidade_minima / 2)) {
-        level = "critical";
-      } else {
-        level = "low";
+  useEffect(() => {
+    if (vendaIds.length === 0) { setItems([]); return; }
+    (async () => {
+      // Fetch in batches if needed (supabase limit)
+      const batchSize = 50;
+      const allItems: any[] = [];
+      for (let i = 0; i < vendaIds.length; i += batchSize) {
+        const batch = vendaIds.slice(i, i + batchSize);
+        const { data } = await (supabase as any)
+          .from("venda_items")
+          .select("produto_id, product_model, quantity")
+          .in("venda_id", batch);
+        if (data) allItems.push(...data);
       }
+      setItems(allItems);
+    })();
+  }, [vendaIds.join(",")]);
 
-      const msg = config.tipo === "produto"
-        ? `Alerta de estoque baixo na armação ${label.toLowerCase()}`
-        : `${label} está com estoque baixo`;
-
-      alerts.push({
-        message: msg,
-        level,
-        totalStock,
-        minimo: config.quantidade_minima,
-        navigateTo: `/estoque${navParams}`,
-      });
-    }
-  }
-
-  const order: Record<string, number> = { out_of_stock: 0, critical: 1, low: 2 };
-  alerts.sort((a, b) => (order[a.level] ?? 3) - (order[b.level] ?? 3));
-
-  return alerts;
-}
-
-function alertBadge(level: StockLevel, stock: number) {
-  switch (level) {
-    case "out_of_stock":
-      return <Badge variant="destructive" className="text-caption">Esgotado</Badge>;
-    case "critical":
-      return <Badge className="text-caption bg-orange-600 text-white hover:bg-orange-700">Crítico</Badge>;
-    case "low":
-      return <Badge variant="outline" className="text-caption tabular-nums border-warning text-warning">{stock} un. ⚠</Badge>;
-    default:
-      return null;
-  }
-}
-
-function alertBgClass(level: StockLevel) {
-  switch (level) {
-    case "out_of_stock": return "bg-destructive/5";
-    case "critical": return "bg-orange-500/5";
-    case "low": return "bg-warning/5";
-    default: return "";
-  }
+  return items;
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const { data: products } = useProducts();
   const { data: alertConfigs } = useStockAlerts();
-  const { data: sales } = useVendas();
-  const { data: clients } = useClients();
+  const { data: allSales } = useVendas();
+  const { data: allClients } = useClients();
+  const { caixas } = useCaixas();
+  const allMovs = useAllMovimentacoes();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
 
-  const filteredSales = filterByDateRange(sales, range);
-  const filteredClients = filterByDateRange(clients, range);
+  const filteredSales = filterByDateRange(allSales, range);
+  const filteredClients = filterByDateRange(allClients, range);
 
-  const salesTotalValue = filteredSales.reduce((acc, s) => acc + Number(s.total), 0);
+  // Previous period for comparison
+  const periodMs = range.to.getTime() - range.from.getTime();
+  const prevRange = { from: new Date(range.from.getTime() - periodMs), to: new Date(range.from.getTime() - 1) };
+  const prevSales = filterByDateRange(allSales, prevRange);
 
-  const activeProducts = products.filter(p => p.status !== "inativo");
-  const alerts = buildConfigAlerts(products, alertConfigs);
-  const outAlerts = alerts.filter(a => a.level === "out_of_stock");
-  const critAlerts = alerts.filter(a => a.level === "critical");
-  const lowAlerts = alerts.filter(a => a.level === "low");
-  const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
-  const hasAlerts = alerts.length > 0;
+  const completedSales = filteredSales.filter(s => s.status !== "cancelada");
+  const cancelledSales = filteredSales.filter(s => s.status === "cancelada");
+
+  const totalRevenue = completedSales.reduce((a, s) => a + Number(s.total), 0);
+  const prevRevenue = prevSales.filter(s => s.status !== "cancelada").reduce((a, s) => a + Number(s.total), 0);
+
+  // Expenses from movimentacoes in period
+  const filteredMovs = allMovs.filter(m => {
+    const t = new Date(m.created_at).getTime();
+    return t >= range.from.getTime() && t <= range.to.getTime();
+  });
+  const totalExpenses = filteredMovs
+    .filter(m => m.tipo === "saida" || m.tipo === "sangria")
+    .reduce((a, m) => a + Math.abs(m.valor), 0);
+  const prevMovs = allMovs.filter(m => {
+    const t = new Date(m.created_at).getTime();
+    return t >= prevRange.from.getTime() && t <= prevRange.to.getTime();
+  });
+  const prevExpenses = prevMovs
+    .filter(m => m.tipo === "saida" || m.tipo === "sangria")
+    .reduce((a, m) => a + Math.abs(m.valor), 0);
+
+  // Daily revenue sparkline
+  const dailyRevenue = useMemo(() => {
+    const days = eachDayOfInterval({ start: range.from, end: range.to });
+    return days.map(d => {
+      const dayStart = startOfDay(d).getTime();
+      const dayEnd = dayStart + 86400000;
+      return completedSales
+        .filter(s => { const t = new Date(s.created_at).getTime(); return t >= dayStart && t < dayEnd; })
+        .reduce((a, s) => a + Number(s.total), 0);
+    });
+  }, [completedSales, range]);
+
+  // Financial flow chart data (monthly or daily based on period)
+  const flowData = useMemo(() => {
+    const isLongPeriod = periodMs > 35 * 86400000;
+    if (isLongPeriod) {
+      const months = eachMonthOfInterval({ start: range.from, end: range.to });
+      return months.map(m => {
+        const ms = startOfMonth(m).getTime();
+        const me = startOfMonth(new Date(m.getFullYear(), m.getMonth() + 1)).getTime();
+        const receitas = completedSales.filter(s => { const t = new Date(s.created_at).getTime(); return t >= ms && t < me; }).reduce((a, s) => a + Number(s.total), 0);
+        const despesas = filteredMovs.filter(mv => { const t = new Date(mv.created_at).getTime(); return t >= ms && t < me && (mv.tipo === "saida" || mv.tipo === "sangria"); }).reduce((a, mv) => a + Math.abs(mv.valor), 0);
+        return { label: format(m, "MMM", { locale: ptBR }), receitas, despesas };
+      });
+    }
+    const days = eachDayOfInterval({ start: range.from, end: range.to });
+    return days.map(d => {
+      const ds = startOfDay(d).getTime();
+      const de = ds + 86400000;
+      const receitas = completedSales.filter(s => { const t = new Date(s.created_at).getTime(); return t >= ds && t < de; }).reduce((a, s) => a + Number(s.total), 0);
+      const despesas = filteredMovs.filter(mv => { const t = new Date(mv.created_at).getTime(); return t >= ds && t < de && (mv.tipo === "saida" || mv.tipo === "sangria"); }).reduce((a, mv) => a + Math.abs(mv.valor), 0);
+      return { label: format(d, "dd/MM", { locale: ptBR }), receitas, despesas };
+    });
+  }, [completedSales, filteredMovs, range, periodMs]);
+
+  // Top products
+  const vendaIds = useMemo(() => completedSales.map(s => s.id), [completedSales]);
+  const vendaItems = useVendaItems(vendaIds);
+
+  const topProducts = useMemo(() => {
+    const map = new Map<string, number>();
+    vendaItems.forEach(i => {
+      map.set(i.product_model, (map.get(i.product_model) || 0) + i.quantity);
+    });
+    return [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, qty]) => ({ name: name.length > 15 ? name.slice(0, 15) + "…" : name, qty }));
+  }, [vendaItems]);
+
+  // Payment methods
+  const paymentData = useMemo(() => {
+    const map = new Map<string, { total: number; count: number }>();
+    completedSales.forEach(s => {
+      const key = s.payment_method || "Outro";
+      const curr = map.get(key) || { total: 0, count: 0 };
+      map.set(key, { total: curr.total + Number(s.total), count: curr.count + 1 });
+    });
+    return [...map.entries()].map(([method, d]) => ({ method, ...d })).sort((a, b) => b.total - a.total);
+  }, [completedSales]);
+
+  // Clients by month
+  const clientsData = useMemo(() => {
+    const isLong = periodMs > 35 * 86400000;
+    if (isLong) {
+      const months = eachMonthOfInterval({ start: range.from, end: range.to });
+      return months.map(m => {
+        const ms = startOfMonth(m).getTime();
+        const me = startOfMonth(new Date(m.getFullYear(), m.getMonth() + 1)).getTime();
+        const novos = filteredClients.filter(c => { const t = new Date(c.created_at).getTime(); return t >= ms && t < me; }).length;
+        return { label: format(m, "MMM", { locale: ptBR }), novos };
+      });
+    }
+    // Weekly buckets for shorter periods
+    const days = eachDayOfInterval({ start: range.from, end: range.to });
+    const weekSize = Math.max(Math.ceil(days.length / 7), 1);
+    const buckets: { label: string; novos: number }[] = [];
+    for (let i = 0; i < days.length; i += weekSize) {
+      const slice = days.slice(i, i + weekSize);
+      const ds = startOfDay(slice[0]).getTime();
+      const de = startOfDay(slice[slice.length - 1]).getTime() + 86400000;
+      const novos = filteredClients.filter(c => { const t = new Date(c.created_at).getTime(); return t >= ds && t < de; }).length;
+      buckets.push({ label: format(slice[0], "dd/MM", { locale: ptBR }), novos });
+    }
+    return buckets;
+  }, [filteredClients, range, periodMs]);
+
+  // Seller ranking
+  const sellerData = useMemo(() => {
+    const map = new Map<string, { sales: number; revenue: number }>();
+    completedSales.forEach(s => {
+      const name = s.seller_name || "Sem vendedor";
+      const curr = map.get(name) || { sales: 0, revenue: 0 };
+      map.set(name, { sales: curr.sales + 1, revenue: curr.revenue + Number(s.total) });
+    });
+    return [...map.entries()]
+      .map(([name, d]) => ({ name, ...d }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+  }, [completedSales]);
+
+  // Caixa movs for summary (only from open caixa or latest)
+  const caixaAberto = caixas.find(c => c.status === "aberto");
+  const caixaMovs = useMemo(() => {
+    if (!caixaAberto) return [];
+    return allMovs.filter(m => m.caixa_id === caixaAberto.id);
+  }, [caixaAberto, allMovs]);
 
   return (
     <div>
       <FilialSelector />
       <div className="p-4 space-y-4">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-title font-semibold tracking-tighter">Dashboard</h1>
-            <p className="text-ui text-muted-foreground">Visão geral do sistema</p>
+            <p className="text-ui text-muted-foreground">Visão geral completa do sistema</p>
           </div>
           <DateRangeFilter preset={preset} range={range} onChange={onDateChange} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard title="Vendas no Período" value={`R$ ${salesTotalValue.toFixed(2)}`} subtitle={filteredSales.length > 0 ? `${filteredSales.length} vendas` : "Sem dados no período"} icon={ShoppingCart} />
-          <MetricCard title="Ticket Médio" value={filteredSales.length > 0 ? `R$ ${(salesTotalValue / filteredSales.length).toFixed(2)}` : "R$ 0.00"} subtitle={filteredSales.length > 0 ? `${filteredSales.length} vendas` : "Sem dados no período"} icon={TrendingUp} />
-          <MetricCard title="Total em Estoque" value={String(totalStock)} subtitle={`${activeProducts.length} produtos`} icon={Package} />
-          <MetricCard title="Clientes no Período" value={String(filteredClients.filter(c => c.status === "active").length)} subtitle={filteredClients.length > 0 ? "ativos" : "Sem dados no período"} icon={Users} />
+        {/* 1. Metric Cards */}
+        <MetricCards
+          totalRevenue={totalRevenue}
+          totalExpenses={totalExpenses}
+          totalSales={completedSales.length}
+          prevRevenue={prevRevenue}
+          prevExpenses={prevExpenses}
+          prevSales={prevSales.filter(s => s.status !== "cancelada").length}
+          dailyRevenue={dailyRevenue}
+        />
+
+        {/* 2. Financial Flow */}
+        <FinancialFlowChart data={flowData} />
+
+        {/* 3 + 4. Products + Sales Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TopProductsChart data={topProducts} />
+          <SalesStatusChart concluidas={completedSales.length} canceladas={cancelledSales.length} />
         </div>
 
+        {/* 5 + 6. Payment + Clients */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="shadow-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-ui font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-warning" />
-                Alerta de Estoque
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-3">
-              {hasAlerts && (
-                <div className="flex flex-wrap gap-2">
-                  {outAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-destructive text-destructive gap-1">
-                      🔴 {outAlerts.length} esgotado{outAlerts.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                  {critAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-orange-500 text-orange-600 gap-1">
-                      🟠 {critAlerts.length} crítico{critAlerts.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                  {lowAlerts.length > 0 && (
-                    <Badge variant="outline" className="text-caption border-warning text-warning gap-1">
-                      ⚠ {lowAlerts.length} baixo{lowAlerts.length > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                </div>
-              )}
-              <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                {alerts.map((alert, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all ${alertBgClass(alert.level)}`}
-                    onClick={() => navigate(alert.navigateTo)}
-                  >
-                    <div>
-                      <p className="text-ui font-medium">{alert.message}</p>
-                      <p className="text-caption text-muted-foreground">
-                        {alert.totalStock} un. · mín: {alert.minimo}
-                      </p>
-                    </div>
-                    {alertBadge(alert.level, alert.totalStock)}
-                  </div>
-                ))}
-                {!hasAlerts && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">
-                    {alertConfigs.length === 0
-                      ? "Configure alertas em Estoque → Configurações de Alerta"
-                      : "Todos os produtos com estoque adequado ✓"}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <PaymentMethodsChart data={paymentData} />
+          <ClientsChart data={clientsData} />
+        </div>
 
-          <Card className="shadow-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-ui font-semibold">Vendas Recentes</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-1">
-                {filteredSales.slice(0, 10).map(sale => (
-                  <div key={sale.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
-                    <div>
-                      <p className="text-ui font-medium">#{sale.number}</p>
-                      <p className="text-caption text-muted-foreground">{sale.client_name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-ui font-medium tabular-nums text-primary">R$ {Number(sale.total).toFixed(2)}</p>
-                      <p className="text-caption text-muted-foreground">{sale.payment_method}</p>
-                    </div>
-                  </div>
-                ))}
-                {filteredSales.length === 0 && (
-                  <p className="text-ui text-muted-foreground py-4 text-center">Sem vendas no período selecionado.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* 7 + 8. Seller Ranking + Stock */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SellerRanking sellers={sellerData} />
+          <StockOverview products={products} alertConfigs={alertConfigs} />
+        </div>
+
+        {/* 9. Caixa */}
+        <CaixaSummary caixas={caixas} movimentacoes={caixaMovs} />
+
+        {/* 10. Lists */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <RecentSalesList sales={filteredSales.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())} />
+          <RecentMovementsList movimentacoes={filteredMovs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())} />
         </div>
       </div>
     </div>
