@@ -70,6 +70,11 @@ export interface DbVenda {
   origin: string;
   filial_id: string;
   created_at: string;
+  status: string;
+  cancelled_at: string | null;
+  cancelled_by_id: string | null;
+  cancelled_by_name: string;
+  motivo_cancelamento: string;
 }
 
 export interface DbVendaItem {
