@@ -14,6 +14,7 @@ import {
 
 export default function Empresas() {
   const { data: empresas, refetch } = useEmpresas();
+  const { selectedFilial, setSelectedFilial } = useFilial();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DbEmpresa | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
