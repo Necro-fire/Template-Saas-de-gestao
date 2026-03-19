@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-react";
@@ -10,6 +10,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
+import { supabase } from "@/integrations/supabase/client";
 
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
