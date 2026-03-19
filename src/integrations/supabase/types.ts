@@ -50,6 +50,114 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_movimentacoes: {
+        Row: {
+          caixa_id: string
+          created_at: string
+          descricao: string
+          forma_pagamento: string
+          id: string
+          tipo: string
+          usuario_id: string
+          usuario_nome: string
+          valor: number
+          venda_id: string | null
+        }
+        Insert: {
+          caixa_id: string
+          created_at?: string
+          descricao?: string
+          forma_pagamento?: string
+          id?: string
+          tipo: string
+          usuario_id: string
+          usuario_nome?: string
+          valor?: number
+          venda_id?: string | null
+        }
+        Update: {
+          caixa_id?: string
+          created_at?: string
+          descricao?: string
+          forma_pagamento?: string
+          id?: string
+          tipo?: string
+          usuario_id?: string
+          usuario_nome?: string
+          valor?: number
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixa_movimentacoes_caixa_id_fkey"
+            columns: ["caixa_id"]
+            isOneToOne: false
+            referencedRelation: "caixas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caixa_movimentacoes_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caixas: {
+        Row: {
+          aberto_em: string
+          created_at: string
+          diferenca: number | null
+          fechado_em: string | null
+          filial_id: string
+          id: string
+          observacoes_fechamento: string | null
+          status: string
+          usuario_abertura_id: string
+          usuario_abertura_nome: string
+          usuario_fechamento_id: string | null
+          usuario_fechamento_nome: string | null
+          valor_abertura: number
+          valor_fechamento_esperado: number | null
+          valor_fechamento_informado: number | null
+        }
+        Insert: {
+          aberto_em?: string
+          created_at?: string
+          diferenca?: number | null
+          fechado_em?: string | null
+          filial_id?: string
+          id?: string
+          observacoes_fechamento?: string | null
+          status?: string
+          usuario_abertura_id: string
+          usuario_abertura_nome?: string
+          usuario_fechamento_id?: string | null
+          usuario_fechamento_nome?: string | null
+          valor_abertura?: number
+          valor_fechamento_esperado?: number | null
+          valor_fechamento_informado?: number | null
+        }
+        Update: {
+          aberto_em?: string
+          created_at?: string
+          diferenca?: number | null
+          fechado_em?: string | null
+          filial_id?: string
+          id?: string
+          observacoes_fechamento?: string | null
+          status?: string
+          usuario_abertura_id?: string
+          usuario_abertura_nome?: string
+          usuario_fechamento_id?: string | null
+          usuario_fechamento_nome?: string | null
+          valor_abertura?: number
+          valor_fechamento_esperado?: number | null
+          valor_fechamento_informado?: number | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           city: string
