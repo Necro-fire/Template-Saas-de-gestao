@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Plus, Building2, Pencil, Trash2, Star, StarOff, Power, PowerOff } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, Star, StarOff, Power, PowerOff, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, type DbEmpresa } from "@/hooks/useEmpresas";
 import { EmpresaFormDialog } from "@/components/EmpresaFormDialog";
+import { useFilial } from "@/contexts/FilialContext";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -13,6 +14,7 @@ import {
 
 export default function Empresas() {
   const { data: empresas, refetch } = useEmpresas();
+  const { selectedFilial, setSelectedFilial } = useFilial();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<DbEmpresa | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -82,9 +84,12 @@ export default function Empresas() {
           {empresas.map((emp) => (
             <div
               key={emp.id}
-              className={`rounded-lg border p-4 transition-colors group ${
-                !emp.ativa ? "opacity-60 bg-muted/30" : "hover:bg-secondary/50"
+              className={`rounded-lg border p-4 transition-colors group cursor-pointer ${
+                !emp.ativa ? "opacity-60 bg-muted/30" :
+                selectedFilial === emp.id ? "border-primary bg-primary/5 ring-1 ring-primary/20" :
+                "hover:bg-secondary/50"
               }`}
+              onClick={() => emp.ativa && setSelectedFilial(emp.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="min-w-0 space-y-1">
@@ -92,6 +97,11 @@ export default function Empresas() {
                     <p className="text-ui font-medium">{emp.razao_social}</p>
                     {emp.filial_padrao && (
                       <Badge variant="default" className="text-caption">Padrão</Badge>
+                    )}
+                    {selectedFilial === emp.id && emp.ativa && (
+                      <Badge variant="outline" className="text-caption border-primary text-primary gap-1">
+                        <Check className="h-3 w-3" /> Selecionada
+                      </Badge>
                     )}
                     {!emp.ativa && (
                       <Badge variant="secondary" className="text-caption">Inativa</Badge>

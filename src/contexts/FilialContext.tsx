@@ -1,41 +1,79 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-export type FilialId = "1" | "2" | "3" | "all";
-
-export interface Filial {
-  id: FilialId;
-  name: string;
+export interface Empresa {
+  id: string;
+  nome_fantasia: string;
+  razao_social: string;
+  cnpj: string;
+  ativa: boolean;
+  filial_padrao: boolean;
 }
 
-export const filiais: Filial[] = [
-  { id: "1", name: "Filial 1" },
-  { id: "2", name: "Filial 2" },
-  { id: "3", name: "Filial 3" },
-];
-
 interface FilialContextType {
-  selectedFilial: FilialId;
-  setSelectedFilial: (id: FilialId) => void;
-  filterByFilial: <T extends { filialId: string }>(items: T[]) => T[];
+  selectedFilial: string;
+  setSelectedFilial: (id: string) => void;
+  empresas: Empresa[];
+  loading: boolean;
   filialLabel: string;
+  refetchEmpresas: () => void;
 }
 
 const FilialContext = createContext<FilialContextType | null>(null);
 
 export function FilialProvider({ children }: { children: ReactNode }) {
-  const [selectedFilial, setSelectedFilial] = useState<FilialId>("all");
+  const [selectedFilial, setSelectedFilial] = useState<string>(() => {
+    return localStorage.getItem("selectedFilial") || "all";
+  });
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filterByFilial = <T extends { filialId: string }>(items: T[]): T[] => {
-    if (selectedFilial === "all") return items;
-    return items.filter(item => item.filialId === selectedFilial);
-  };
+  const fetchEmpresas = useCallback(async () => {
+    const { data, error } = await (supabase as any)
+      .from("empresas")
+      .select("id, nome_fantasia, razao_social, cnpj, ativa, filial_padrao")
+      .order("created_at", { ascending: true });
+    if (!error && data) {
+      setEmpresas(data);
+      // If selected filial no longer exists and isn't "all", reset
+      if (selectedFilial !== "all" && !data.find((e: Empresa) => e.id === selectedFilial)) {
+        const padrao = data.find((e: Empresa) => e.filial_padrao);
+        const newSel = padrao ? padrao.id : "all";
+        setSelectedFilial(newSel);
+        localStorage.setItem("selectedFilial", newSel);
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchEmpresas();
+    const channel = supabase
+      .channel("empresas-filial")
+      .on("postgres_changes", { event: "*", schema: "public", table: "empresas" }, () => fetchEmpresas())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchEmpresas]);
+
+  useEffect(() => {
+    localStorage.setItem("selectedFilial", selectedFilial);
+  }, [selectedFilial]);
+
+  const activeEmpresas = empresas.filter(e => e.ativa);
 
   const filialLabel = selectedFilial === "all"
     ? "Todas as Filiais"
-    : `Filial ${selectedFilial}`;
+    : activeEmpresas.find(e => e.id === selectedFilial)?.nome_fantasia || "Filial";
 
   return (
-    <FilialContext.Provider value={{ selectedFilial, setSelectedFilial, filterByFilial, filialLabel }}>
+    <FilialContext.Provider value={{
+      selectedFilial,
+      setSelectedFilial,
+      empresas: activeEmpresas,
+      loading,
+      filialLabel,
+      refetchEmpresas: fetchEmpresas,
+    }}>
       {children}
     </FilialContext.Provider>
   );
@@ -46,3 +84,7 @@ export function useFilial() {
   if (!ctx) throw new Error("useFilial must be used within FilialProvider");
   return ctx;
 }
+
+// Keep backward compat export
+export type FilialId = string;
+export const filiais: { id: string; name: string }[] = [];

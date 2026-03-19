@@ -32,7 +32,7 @@ interface ProductFormDialogProps {
 }
 
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, empresas } = useFilial();
   const filialLocked = selectedFilial !== "all";
   const [isAcessorio, setIsAcessorio] = useState(false);
   const [referencia, setReferencia] = useState("");
@@ -760,9 +760,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <SelectValue placeholder="Selecione a filial" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Filial 1</SelectItem>
-                  <SelectItem value="2">Filial 2</SelectItem>
-                  <SelectItem value="3">Filial 3</SelectItem>
+                  {empresas.map((e, i) => (
+                    <SelectItem key={e.id} value={e.id}>{e.nome_fantasia || `Filial ${i + 1}`}</SelectItem>
+                  ))}
                   {!isEditing && <SelectItem value="all">Todas as Filiais</SelectItem>}
                 </SelectContent>
               </Select>
