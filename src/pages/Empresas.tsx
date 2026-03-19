@@ -98,6 +98,11 @@ export default function Empresas() {
                     {emp.filial_padrao && (
                       <Badge variant="default" className="text-caption">Padrão</Badge>
                     )}
+                    {selectedFilial === emp.id && emp.ativa && (
+                      <Badge variant="outline" className="text-caption border-primary text-primary gap-1">
+                        <Check className="h-3 w-3" /> Selecionada
+                      </Badge>
+                    )}
                     {!emp.ativa && (
                       <Badge variant="secondary" className="text-caption">Inativa</Badge>
                     )}
