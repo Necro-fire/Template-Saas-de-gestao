@@ -239,25 +239,6 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="text-center">
-            {!isSetup ? (
-              <button
-                type="button"
-                onClick={() => setIsSetup(true)}
-                className="text-white/30 hover:text-white/50 text-xs transition-colors"
-              >
-                Primeiro acesso? Configurar administrador
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsSetup(false)}
-                className="text-white/30 hover:text-white/50 text-xs transition-colors"
-              >
-                ← Voltar ao login
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
