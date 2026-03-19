@@ -565,6 +565,7 @@ export type Database = {
     }
     Functions: {
       generate_product_codes: { Args: never; Returns: Json }
+      get_profiles_count: { Args: never; Returns: number }
       get_user_permissions: {
         Args: { _user_id: string }
         Returns: {

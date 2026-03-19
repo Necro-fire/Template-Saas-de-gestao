@@ -24,12 +24,13 @@ export default function Login() {
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        const { count } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        setIsSetup(count === 0 || count === null);
+        const { data, error } = await supabase.rpc('get_profiles_count');
+        if (error) {
+          setIsSetup(false);
+        } else {
+          setIsSetup(data === 0);
+        }
       } catch {
-        // If error, assume setup not needed
         setIsSetup(false);
       }
       setCheckingSetup(false);
