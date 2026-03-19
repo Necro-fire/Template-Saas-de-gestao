@@ -64,6 +64,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             </div>
             <div>
               <span className="text-lg">Venda #{venda.number}</span>
+              <span className="ml-2 text-xs text-muted-foreground font-mono">({venda.id.slice(0, 8).toUpperCase()})</span>
               {isRecent && (
                 <Badge className="ml-2 text-[10px]" variant="default">Recente</Badge>
               )}
