@@ -203,7 +203,7 @@ export default function Funcionarios() {
     setLoading(false);
   };
 
-  const getFilialName = (id: string) => filiais.find(f => f.id === id)?.name || id;
+  const getFilialName = (id: string) => empresas.find(e => e.id === id)?.nome_fantasia || id;
   const getRoleName = (func: Funcionario) => {
     if (!func.user_id) return null;
     const ur = userRoles.find(u => u.user_id === func.user_id);
