@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-react";
@@ -10,6 +10,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
+import { supabase } from "@/integrations/supabase/client";
 
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
@@ -23,6 +24,24 @@ export default function Vendas() {
   const { preset, range, onChange } = useDateRangeFilter();
   const [search, setSearch] = useState("");
   const [selectedVenda, setSelectedVenda] = useState<DbVenda | null>(null);
+  const [vendaCodesMap, setVendaCodesMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (sales.length === 0) return;
+    const vendaIds = sales.map(s => s.id);
+    (supabase as any)
+      .from("venda_items")
+      .select("venda_id, product_code")
+      .in("venda_id", vendaIds)
+      .then(({ data }: { data: { venda_id: string; product_code: string }[] | null }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        data.forEach(item => {
+          if (!map[item.venda_id]) map[item.venda_id] = item.product_code;
+        });
+        setVendaCodesMap(map);
+      });
+  }, [sales]);
 
   const filtered = useMemo(() => {
     let result = filterByDateRange(sales, range);
@@ -108,7 +127,7 @@ export default function Vendas() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>Venda #{sale.number}</p>
+                        <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>{vendaCodesMap[sale.id] || `#${sale.number}`}</p>
                         {isCancelled && <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Cancelada</Badge>}
                         {!isCancelled && isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
                       </div>
