@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Shield, UserCog, Lock, Mail, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, Shield, UserCog, Lock, Mail, KeyRound, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import jotsLogo from '@/assets/jots-logo.png';
 
@@ -17,7 +17,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isSetup, setIsSetup] = useState(false);
   const [setupNome, setSetupNome] = useState('');
+  const [checkingSetup, setCheckingSetup] = useState(true);
   const navigate = useNavigate();
+
+  // Auto-detect if system needs first-time setup
+  useEffect(() => {
+    const checkSetup = async () => {
+      try {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        setIsSetup(count === 0 || count === null);
+      } catch {
+        // If error, assume setup not needed
+        setIsSetup(false);
+      }
+      setCheckingSetup(false);
+    };
+    checkSetup();
+  }, []);
 
   const handleAdminLogin = async () => {
     setLoading(true);
@@ -85,6 +103,14 @@ export default function Login() {
     if (tab === 'admin') return handleAdminLogin();
     return handleEmployeeLogin();
   };
+
+  if (checkingSetup) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(221,83%,18%)] via-[hsl(221,83%,28%)] to-[hsl(221,70%,42%)]">
+        <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -213,25 +239,6 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="text-center">
-            {!isSetup ? (
-              <button
-                type="button"
-                onClick={() => setIsSetup(true)}
-                className="text-white/30 hover:text-white/50 text-xs transition-colors"
-              >
-                Primeiro acesso? Configurar administrador
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsSetup(false)}
-                className="text-white/30 hover:text-white/50 text-xs transition-colors"
-              >
-                ← Voltar ao login
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
