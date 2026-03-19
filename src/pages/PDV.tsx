@@ -174,7 +174,7 @@ export default function PDV() {
         };
       });
 
-      await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId);
+      await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "");
 
       toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
       setCart([]);
