@@ -17,7 +17,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isSetup, setIsSetup] = useState(false);
   const [setupNome, setSetupNome] = useState('');
+  const [checkingSetup, setCheckingSetup] = useState(true);
   const navigate = useNavigate();
+
+  // Auto-detect if system needs first-time setup
+  useEffect(() => {
+    const checkSetup = async () => {
+      try {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        setIsSetup(count === 0 || count === null);
+      } catch {
+        // If error, assume setup not needed
+        setIsSetup(false);
+      }
+      setCheckingSetup(false);
+    };
+    checkSetup();
+  }, []);
 
   const handleAdminLogin = async () => {
     setLoading(true);
