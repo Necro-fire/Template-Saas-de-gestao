@@ -22,7 +22,8 @@ export default function Produtos() {
   const { data: products } = useProducts();
   const { data: tipos } = useProductTypes();
 
-  const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
+  const { empresas } = useFilial();
+  const getFilialName = (filialId: string) => empresas.find(e => e.id === filialId)?.nome_fantasia || filialId;
   const getTypeName = (tipoProdutoId: string | null) => {
     if (!tipoProdutoId) return null;
     return tipos.find(t => t.id === tipoProdutoId)?.nome_tipo || null;

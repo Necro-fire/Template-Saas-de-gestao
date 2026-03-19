@@ -287,7 +287,7 @@ export default function Estoque() {
                       </div>
                       <div className="flex items-center gap-3">
                         {selectedFilial === "all" && (
-                          <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
+                          <Badge variant="outline" className="text-caption">{empresas.find(e => e.id === p.filial_id)?.nome_fantasia || p.filial_id}</Badge>
                         )}
                         {stockLevelBadge(level, p.stock)}
                         <span className="text-caption text-muted-foreground tabular-nums min-w-[60px] text-right">mín: {catMin}</span>
