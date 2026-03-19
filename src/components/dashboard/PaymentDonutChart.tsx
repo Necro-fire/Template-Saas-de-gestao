@@ -1,0 +1,89 @@
+import { useMemo } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { type DbVenda } from "@/hooks/useSupabaseData";
+
+interface PaymentDonutChartProps {
+  sales: DbVenda[];
+}
+
+const COLORS = [
+  "hsl(var(--primary))",
+  "hsl(var(--success))",
+  "hsl(var(--warning))",
+  "hsl(var(--destructive))",
+  "hsl(var(--accent))",
+];
+
+export function PaymentDonutChart({ sales }: PaymentDonutChartProps) {
+  const data = useMemo(() => {
+    const activeSales = sales.filter(s => s.status !== "cancelada");
+    const map: Record<string, number> = {};
+    activeSales.forEach(s => {
+      const method = s.payment_method || "Outros";
+      map[method] = (map[method] || 0) + Number(s.total);
+    });
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [sales]);
+
+  const total = data.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <Card className="shadow-card transition-all duration-300 hover:shadow-lg">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-ui font-semibold">Pagamentos</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        {data.length > 0 ? (
+          <div className="flex items-center gap-4">
+            <ResponsiveContainer width={140} height={140}>
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={65}
+                  paddingAngle={2}
+                  dataKey="value"
+                  animationDuration={800}
+                  animationBegin={200}
+                >
+                  {data.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [`R$ ${value.toFixed(2)}`, ""]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex-1 space-y-2">
+              {data.map((d, i) => (
+                <div key={d.name} className="flex items-center justify-between text-caption">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="text-foreground">{d.name}</span>
+                  </div>
+                  <span className="tabular-nums text-muted-foreground">
+                    {total > 0 ? `${((d.value / total) * 100).toFixed(0)}%` : "0%"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-ui text-muted-foreground py-8 text-center">Sem dados no período.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
