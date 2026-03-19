@@ -138,6 +138,15 @@ export default function Clientes() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setHistoryClient({ id: client.id, name: client.responsible_name })}
+                    title="Histórico"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleEdit(client)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
