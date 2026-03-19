@@ -104,6 +104,14 @@ export default function Login() {
     return handleEmployeeLogin();
   };
 
+  if (checkingSetup) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(221,83%,18%)] via-[hsl(221,83%,28%)] to-[hsl(221,70%,42%)]">
+        <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Left — Form */}
