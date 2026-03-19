@@ -202,7 +202,9 @@ export async function createVenda(
   paymentMethod: string,
   origin: string,
   filialId: string,
-  discount: number = 0
+  discount: number = 0,
+  userId?: string,
+  userName?: string
 ) {
   const total = items.reduce((acc, i) => acc + i.unit_price * i.quantity, 0) - discount;
 
@@ -253,6 +255,27 @@ export async function createVenda(
     .insert(vendaItems);
 
   if (itemsError) throw new Error(itemsError.message);
+
+  // Auto-register sale in open caixa if one exists
+  const { data: caixaAberto } = await (supabase as any)
+    .from("caixas")
+    .select("id")
+    .eq("filial_id", filialId)
+    .eq("status", "aberto")
+    .maybeSingle();
+
+  if (caixaAberto && userId) {
+    await (supabase as any).from("caixa_movimentacoes").insert({
+      caixa_id: caixaAberto.id,
+      tipo: "venda",
+      valor: total,
+      forma_pagamento: paymentMethod,
+      descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"}`,
+      venda_id: venda.id,
+      usuario_id: userId,
+      usuario_nome: userName || "",
+    });
+  }
 
   return venda;
 }

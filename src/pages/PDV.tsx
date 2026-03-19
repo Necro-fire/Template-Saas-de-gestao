@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFilial } from "@/contexts/FilialContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, createVenda, type DbProduct } from "@/hooks/useSupabaseData";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -43,6 +44,7 @@ export default function PDV() {
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
+  const { user, profile } = useAuth();
   const searchRef = useRef<HTMLInputElement>(null);
   const [pendingFilial, setPendingFilial] = useState<string | null>(null);
 
@@ -172,7 +174,7 @@ export default function PDV() {
         };
       });
 
-      await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId);
+      await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "");
 
       toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
       setCart([]);
