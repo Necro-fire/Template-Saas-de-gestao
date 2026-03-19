@@ -185,6 +185,13 @@ export default function Clientes() {
         editingClient={editingClient}
       />
 
+      <ClientHistoryDialog
+        open={!!historyClient}
+        onOpenChange={(v) => !v && setHistoryClient(null)}
+        clientId={historyClient?.id ?? null}
+        clientName={historyClient?.name ?? ""}
+      />
+
       <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
