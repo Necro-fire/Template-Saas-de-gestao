@@ -43,6 +43,7 @@ export function useStockAlerts() {
       .select("id")
       .eq("tipo", alert.tipo)
       .eq("categoria", alert.categoria)
+      .eq("filial_id", alert.filial_id || "1")
       .eq("tipo_acessorio", alert.tipo_acessorio || "")
       .eq("variacao_acessorio", alert.variacao_acessorio || "")
       .eq("material_acessorio", alert.material_acessorio || "");
