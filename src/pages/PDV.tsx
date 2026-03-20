@@ -104,7 +104,7 @@ export default function PDV() {
     const q = search.toLowerCase();
     return active.filter(p =>
       p.model.toLowerCase().includes(q) ||
-      p.code.toLowerCase().includes(q) ||
+      p.referencia.toLowerCase().includes(q) ||
       (p.barcode && p.barcode.toLowerCase().includes(q))
     );
   }, [search, products]);
