@@ -14,7 +14,7 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 export default function Dashboard() {
   const { data: products, loading: loadingProducts } = useProducts();
   const { data: alertConfigs } = useStockAlerts();
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, filiais } = useFilial();
   const { data: sales, loading: loadingSales } = useVendas();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
@@ -28,7 +28,7 @@ export default function Dashboard() {
   const salesTotalValue = activeSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   const activeProducts = products.filter(p => p.status !== "inativo");
-  const alerts = buildConfigAlerts(products, alertConfigs, selectedFilial);
+  const alerts = buildConfigAlerts(products, alertConfigs, selectedFilial, filiais);
   const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
 
   if (isLoading) {

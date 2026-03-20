@@ -16,6 +16,7 @@ interface EmpresaFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editingEmpresa?: DbEmpresa | null;
   currentCount: number;
+  nextFilialId?: string;
 }
 
 const emptyForm = {
@@ -40,7 +41,7 @@ const emptyForm = {
   ambiente: "homologacao",
 };
 
-export function EmpresaFormDialog({ open, onOpenChange, editingEmpresa, currentCount }: EmpresaFormDialogProps) {
+export function EmpresaFormDialog({ open, onOpenChange, editingEmpresa, currentCount, nextFilialId }: EmpresaFormDialogProps) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const isEditing = !!editingEmpresa?.id;
@@ -113,7 +114,10 @@ export function EmpresaFormDialog({ open, onOpenChange, editingEmpresa, currentC
         if (error) throw error;
         toast.success("Empresa atualizada!");
       } else {
-        const { error } = await (supabase as any).from("empresas").insert(payload);
+        const { error } = await (supabase as any).from("empresas").insert({
+          ...payload,
+          filial_id: nextFilialId || String(currentCount + 1),
+        });
         if (error) {
           if (error.message?.includes("empresas_cnpj_unique")) {
             toast.error("Já existe uma empresa com este CNPJ");

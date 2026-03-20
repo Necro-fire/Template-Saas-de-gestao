@@ -3,7 +3,7 @@ import { Search, Plus, Users, Pencil, Trash2, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { filiais, useFilial } from "@/contexts/FilialContext";
+import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useClients } from "@/hooks/useSupabaseData";
 import { ClientFormDialog } from "@/components/ClientFormDialog";
@@ -41,6 +41,7 @@ export default function Clientes() {
     );
   }, [clients, search]);
 
+  const { filiais } = useFilial();
   const getFilialName = (filialId: string) =>
     filiais.find((f) => f.id === filialId)?.name || filialId;
 

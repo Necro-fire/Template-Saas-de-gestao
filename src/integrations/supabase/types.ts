@@ -240,6 +240,7 @@ export type Database = {
           email: string
           endereco: string
           estado: string
+          filial_id: string | null
           filial_padrao: boolean
           id: string
           inscricao_estadual: string
@@ -265,6 +266,7 @@ export type Database = {
           email?: string
           endereco?: string
           estado?: string
+          filial_id?: string | null
           filial_padrao?: boolean
           id?: string
           inscricao_estadual?: string
@@ -290,6 +292,7 @@ export type Database = {
           email?: string
           endereco?: string
           estado?: string
+          filial_id?: string | null
           filial_padrao?: boolean
           id?: string
           inscricao_estadual?: string
@@ -369,6 +372,66 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      notas_fiscais: {
+        Row: {
+          chave_acesso: string
+          client_cnpj: string
+          client_name: string
+          created_at: string
+          data_emissao: string
+          empresa_id: string | null
+          filial_id: string
+          id: string
+          numero: number
+          status: string
+          valor_total: number
+          venda_id: string | null
+        }
+        Insert: {
+          chave_acesso?: string
+          client_cnpj?: string
+          client_name?: string
+          created_at?: string
+          data_emissao?: string
+          empresa_id?: string | null
+          filial_id?: string
+          id?: string
+          numero?: number
+          status?: string
+          valor_total?: number
+          venda_id?: string | null
+        }
+        Update: {
+          chave_acesso?: string
+          client_cnpj?: string
+          client_name?: string
+          created_at?: string
+          data_emissao?: string
+          empresa_id?: string | null
+          filial_id?: string
+          id?: string
+          numero?: number
+          status?: string
+          valor_total?: number
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {

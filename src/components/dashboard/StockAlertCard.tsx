@@ -6,7 +6,7 @@ import { type StockLevel } from "@/components/ProductFilters";
 import { type DbProduct } from "@/hooks/useSupabaseData";
 import { type AlertaEstoque } from "@/hooks/useStockAlerts";
 import { cn } from "@/lib/utils";
-import { type FilialId, filiais } from "@/contexts/FilialContext";
+import { type FilialId } from "@/contexts/FilialContext";
 
 interface StockAlert {
   message: string;
@@ -19,12 +19,13 @@ interface StockAlert {
 function computeAlertsForFilial(
   products: DbProduct[],
   alertConfigs: AlertaEstoque[],
-  filialId: string
+  filialId: string,
+  filialList: { id: string; name: string }[]
 ): StockAlert[] {
   const alerts: StockAlert[] = [];
   const active = products.filter(p => p.status !== "inativo" && p.filial_id === filialId);
   const filialAlertConfigs = alertConfigs.filter(c => c.filial_id === filialId);
-  const filialLabel = filiais.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
+  const filialLabel = filialList.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
 
   for (const config of filialAlertConfigs) {
     let matching: DbProduct[];
@@ -90,18 +91,18 @@ function computeAlertsForFilial(
 export function buildConfigAlerts(
   products: DbProduct[],
   alertConfigs: AlertaEstoque[],
-  selectedFilial: FilialId = "all"
+  selectedFilial: FilialId = "all",
+  filialList: { id: string; name: string }[] = []
 ): StockAlert[] {
   const alerts: StockAlert[] = [];
 
   if (selectedFilial === "all") {
-    // Compute alerts independently for each filial
     const filialIds = new Set(products.map(p => p.filial_id));
     for (const fid of filialIds) {
-      alerts.push(...computeAlertsForFilial(products, alertConfigs, fid));
+      alerts.push(...computeAlertsForFilial(products, alertConfigs, fid, filialList));
     }
   } else {
-    alerts.push(...computeAlertsForFilial(products, alertConfigs, selectedFilial));
+    alerts.push(...computeAlertsForFilial(products, alertConfigs, selectedFilial, filialList));
   }
 
   const order: Record<string, number> = { out_of_stock: 0, critical: 1, low: 2 };

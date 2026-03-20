@@ -5,7 +5,7 @@ import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-reac
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { filiais } from "@/contexts/FilialContext";
+import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { VendaDetailDialog } from "@/components/VendaDetailDialog";
@@ -58,6 +58,7 @@ export default function Vendas() {
 
   const totalRevenue = filtered.reduce((acc, s) => acc + Number(s.total), 0);
 
+  const { filiais } = useFilial();
   const getFilialName = (filialId: string) => filiais.find((f) => f.id === filialId)?.name || filialId;
 
   return (

@@ -25,6 +25,7 @@ export interface DbEmpresa {
   ambiente: string;
   ativa: boolean;
   filial_padrao: boolean;
+  filial_id: string;
   created_at: string;
 }
 

@@ -5,10 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { filiais } from "@/contexts/FilialContext";
+import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
-import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
 import { StockAlertConfigDialog } from "@/components/StockAlertConfigDialog";
@@ -29,7 +28,7 @@ function stockLevelBadge(level: StockLevel, stock: number) {
 }
 
 export default function Estoque() {
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, filiais } = useFilial();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products } = useProducts();
   const { data: tipos, refetch: refetchTipos } = useProductTypes();
