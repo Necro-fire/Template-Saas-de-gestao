@@ -26,7 +26,7 @@ function computeAlertsForFilial(
   const filialAlertConfigs = alertConfigs.filter(c => c.filial_id === filialId);
   const filialLabel = filiais.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
 
-  for (const config of alertConfigs) {
+  for (const config of filialAlertConfigs) {
     let matching: DbProduct[];
     let label: string;
     let navParams: string;

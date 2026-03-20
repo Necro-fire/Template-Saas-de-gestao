@@ -72,6 +72,7 @@ export function useStockAlerts() {
           variacao_acessorio: alert.variacao_acessorio || "",
           material_acessorio: alert.material_acessorio || "",
           quantidade_minima: alert.quantidade_minima,
+          filial_id: alert.filial_id || "1",
         });
       if (error) throw error;
     }
