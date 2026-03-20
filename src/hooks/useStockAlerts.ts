@@ -10,6 +10,7 @@ export interface AlertaEstoque {
   variacao_acessorio: string;
   material_acessorio: string;
   quantidade_minima: number;
+  filial_id: string;
   created_at: string;
 }
 
