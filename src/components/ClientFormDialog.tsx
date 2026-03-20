@@ -90,19 +90,19 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
     setSaving(true);
     try {
       const payload = {
-        responsible_name: form.responsible_name.trim(),
-        store_name: form.responsible_name.trim(),
+        responsible_name: form.responsible_name.trim().toUpperCase(),
+        store_name: form.responsible_name.trim().toUpperCase(),
         tipo_cliente: form.tipo_cliente,
         cnpj: form.cnpj.trim(),
-        inscricao_estadual: form.inscricao_estadual.trim(),
+        inscricao_estadual: form.inscricao_estadual.trim().toUpperCase(),
         phone: form.phone.trim(),
         whatsapp: form.phone.trim(),
-        email: form.email.trim(),
-        endereco: form.endereco.trim(),
-        city: form.cidade.trim(),
+        email: form.email.trim().toUpperCase(),
+        endereco: form.endereco.trim().toUpperCase(),
+        city: form.cidade.trim().toUpperCase(),
         state: form.estado,
         data_nascimento: form.data_nascimento || null,
-        observacoes: form.observacoes.trim(),
+        observacoes: form.observacoes.trim().toUpperCase(),
         filial_id: form.filial_id,
       };
 
