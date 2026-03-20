@@ -41,7 +41,7 @@ const emptyForm = {
   ambiente: "homologacao",
 };
 
-export function EmpresaFormDialog({ open, onOpenChange, editingEmpresa, currentCount }: EmpresaFormDialogProps) {
+export function EmpresaFormDialog({ open, onOpenChange, editingEmpresa, currentCount, nextFilialId }: EmpresaFormDialogProps) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const isEditing = !!editingEmpresa?.id;
