@@ -16,6 +16,7 @@ interface EmpresaFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editingEmpresa?: DbEmpresa | null;
   currentCount: number;
+  nextFilialId?: string;
 }
 
 const emptyForm = {
