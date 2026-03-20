@@ -167,7 +167,7 @@ export default function PDV() {
           : Number(product.retail_price);
         return {
           produto_id: product.id,
-          product_code: product.code,
+          product_code: product.referencia,
           product_model: product.model,
           quantity: count,
           unit_price: price,
