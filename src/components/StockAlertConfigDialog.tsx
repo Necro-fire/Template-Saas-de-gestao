@@ -53,6 +53,7 @@ export function StockAlertConfigDialog() {
         return;
       }
       try {
+        const filialId = selectedFilial === "all" ? "1" : selectedFilial;
         await upsert({
           tipo: "produto",
           categoria: formCategoria,
@@ -61,6 +62,7 @@ export function StockAlertConfigDialog() {
           variacao_acessorio: "",
           material_acessorio: "",
           quantidade_minima: min,
+          filial_id: filialId,
         });
         toast.success("Alerta configurado com sucesso");
         resetForm();
