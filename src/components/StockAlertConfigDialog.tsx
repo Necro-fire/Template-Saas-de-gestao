@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useStockAlerts, type AlertaEstoque } from "@/hooks/useStockAlerts";
+import { useFilial, filiais } from "@/contexts/FilialContext";
 import { ESTILOS } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
