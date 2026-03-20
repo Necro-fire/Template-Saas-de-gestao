@@ -19,12 +19,13 @@ interface StockAlert {
 function computeAlertsForFilial(
   products: DbProduct[],
   alertConfigs: AlertaEstoque[],
-  filialId: string
+  filialId: string,
+  filialList: { id: string; name: string }[]
 ): StockAlert[] {
   const alerts: StockAlert[] = [];
   const active = products.filter(p => p.status !== "inativo" && p.filial_id === filialId);
   const filialAlertConfigs = alertConfigs.filter(c => c.filial_id === filialId);
-  const filialLabel = filiais.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
+  const filialLabel = filialList.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
 
   for (const config of filialAlertConfigs) {
     let matching: DbProduct[];
