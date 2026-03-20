@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 export function StockAlertConfigDialog() {
   const { data: alerts, upsert, remove } = useStockAlerts();
+  const { selectedFilial } = useFilial();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"list" | "tipo" | "form">("list");
   const [formTipo, setFormTipo] = useState<"produto" | "acessorio">("produto");
