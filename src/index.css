@@ -113,9 +113,8 @@
   .tracking-tighter {
     letter-spacing: -0.02em;
   }
-}
 
-
-#lovable-badge {
-display: none !important;
+  #lovable-badge {
+  display: none !important;
+  }
 }
