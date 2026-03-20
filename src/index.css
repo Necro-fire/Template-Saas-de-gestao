@@ -118,3 +118,19 @@
   display: none !important;
   }
 }
+
+/* Global uppercase for all text inputs */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input:not([type]),
+textarea {
+  text-transform: uppercase;
+}
+input[type="text"]::placeholder,
+input[type="search"]::placeholder,
+input[type="email"]::placeholder,
+input:not([type])::placeholder,
+textarea::placeholder {
+  text-transform: none;
+}
