@@ -23,6 +23,7 @@ function computeAlertsForFilial(
 ): StockAlert[] {
   const alerts: StockAlert[] = [];
   const active = products.filter(p => p.status !== "inativo" && p.filial_id === filialId);
+  const filialAlertConfigs = alertConfigs.filter(c => c.filial_id === filialId);
   const filialLabel = filiais.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
 
   for (const config of alertConfigs) {
