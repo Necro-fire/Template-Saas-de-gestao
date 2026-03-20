@@ -6,6 +6,7 @@ import { type StockLevel } from "@/components/ProductFilters";
 import { type DbProduct } from "@/hooks/useSupabaseData";
 import { type AlertaEstoque } from "@/hooks/useStockAlerts";
 import { cn } from "@/lib/utils";
+import { type FilialId, filiais } from "@/contexts/FilialContext";
 
 interface StockAlert {
   message: string;
@@ -15,9 +16,14 @@ interface StockAlert {
   navigateTo: string;
 }
 
-export function buildConfigAlerts(products: DbProduct[], alertConfigs: AlertaEstoque[]): StockAlert[] {
+function computeAlertsForFilial(
+  products: DbProduct[],
+  alertConfigs: AlertaEstoque[],
+  filialId: string
+): StockAlert[] {
   const alerts: StockAlert[] = [];
-  const active = products.filter(p => p.status !== "inativo");
+  const active = products.filter(p => p.status !== "inativo" && p.filial_id === filialId);
+  const filialLabel = filiais.find(f => f.id === filialId)?.name || `Filial ${filialId}`;
 
   for (const config of alertConfigs) {
     let matching: DbProduct[];
@@ -70,11 +76,31 @@ export function buildConfigAlerts(products: DbProduct[], alertConfigs: AlertaEst
       }
 
       const msg = config.tipo === "produto"
-        ? `Alerta de estoque baixo na armação ${label.toLowerCase()}`
-        : `${label} está com estoque baixo`;
+        ? `[${filialLabel}] Armação ${label.toLowerCase()} com estoque baixo`
+        : `[${filialLabel}] ${label} com estoque baixo`;
 
       alerts.push({ message: msg, level, totalStock, minimo: config.quantidade_minima, navigateTo: `/estoque${navParams}` });
     }
+  }
+
+  return alerts;
+}
+
+export function buildConfigAlerts(
+  products: DbProduct[],
+  alertConfigs: AlertaEstoque[],
+  selectedFilial: FilialId = "all"
+): StockAlert[] {
+  const alerts: StockAlert[] = [];
+
+  if (selectedFilial === "all") {
+    // Compute alerts independently for each filial
+    const filialIds = new Set(products.map(p => p.filial_id));
+    for (const fid of filialIds) {
+      alerts.push(...computeAlertsForFilial(products, alertConfigs, fid));
+    }
+  } else {
+    alerts.push(...computeAlertsForFilial(products, alertConfigs, selectedFilial));
   }
 
   const order: Record<string, number> = { out_of_stock: 0, critical: 1, low: 2 };

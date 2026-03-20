@@ -2,6 +2,7 @@ import { Package, ShoppingCart, TrendingUp, Users } from "lucide-react";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
+import { useFilial } from "@/contexts/FilialContext";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { StockAlertCard, buildConfigAlerts } from "@/components/dashboard/StockAlertCard";
@@ -13,6 +14,7 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 export default function Dashboard() {
   const { data: products, loading: loadingProducts } = useProducts();
   const { data: alertConfigs } = useStockAlerts();
+  const { selectedFilial } = useFilial();
   const { data: sales, loading: loadingSales } = useVendas();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
@@ -26,7 +28,7 @@ export default function Dashboard() {
   const salesTotalValue = activeSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   const activeProducts = products.filter(p => p.status !== "inativo");
-  const alerts = buildConfigAlerts(products, alertConfigs);
+  const alerts = buildConfigAlerts(products, alertConfigs, selectedFilial);
   const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
 
   if (isLoading) {
