@@ -2,6 +2,7 @@ import { Package, ShoppingCart, TrendingUp, Users } from "lucide-react";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
+import { useFilial } from "@/contexts/FilialContext";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { StockAlertCard, buildConfigAlerts } from "@/components/dashboard/StockAlertCard";
