@@ -291,11 +291,11 @@ export default function PDV() {
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-muted-foreground/20 text-subhead font-bold">{product.code}</span>
+                        <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
                     </div>
                     <div className="mt-2">
-                      <p className="text-caption text-muted-foreground">{product.barcode || product.code}</p>
+                      <p className="text-caption text-muted-foreground">{product.referencia}</p>
                       <h3 className="text-ui font-medium truncate">{product.model}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
