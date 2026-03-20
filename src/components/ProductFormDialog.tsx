@@ -86,7 +86,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   useEffect(() => {
     if (product) {
       setIsAcessorio(product.is_acessorio || false);
-      setReferencia(product.referencia || product.code || "");
+      setReferencia(product.referencia || "");
       setName(product.model);
       setPrice(String(product.retail_price));
       setDetail(product.description || "");
