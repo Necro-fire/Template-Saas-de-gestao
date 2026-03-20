@@ -19,6 +19,7 @@ export type Database = {
           categoria: string
           cor: string | null
           created_at: string
+          filial_id: string
           id: string
           material_acessorio: string
           quantidade_minima: number
@@ -30,6 +31,7 @@ export type Database = {
           categoria: string
           cor?: string | null
           created_at?: string
+          filial_id?: string
           id?: string
           material_acessorio?: string
           quantidade_minima?: number
@@ -41,6 +43,7 @@ export type Database = {
           categoria?: string
           cor?: string | null
           created_at?: string
+          filial_id?: string
           id?: string
           material_acessorio?: string
           quantidade_minima?: number

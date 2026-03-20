@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useStockAlerts, type AlertaEstoque } from "@/hooks/useStockAlerts";
+import { useFilial, filiais } from "@/contexts/FilialContext";
 import { ESTILOS } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 
 export function StockAlertConfigDialog() {
   const { data: alerts, upsert, remove } = useStockAlerts();
+  const { selectedFilial } = useFilial();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"list" | "tipo" | "form">("list");
   const [formTipo, setFormTipo] = useState<"produto" | "acessorio">("produto");
@@ -51,6 +53,7 @@ export function StockAlertConfigDialog() {
         return;
       }
       try {
+        const filialId = selectedFilial === "all" ? "1" : selectedFilial;
         await upsert({
           tipo: "produto",
           categoria: formCategoria,
@@ -59,6 +62,7 @@ export function StockAlertConfigDialog() {
           variacao_acessorio: "",
           material_acessorio: "",
           quantidade_minima: min,
+          filial_id: filialId,
         });
         toast.success("Alerta configurado com sucesso");
         resetForm();
@@ -71,6 +75,7 @@ export function StockAlertConfigDialog() {
         return;
       }
       try {
+        const filialId = selectedFilial === "all" ? "1" : selectedFilial;
         await upsert({
           tipo: "acessorio",
           categoria: formCatAcessorio,
@@ -79,6 +84,7 @@ export function StockAlertConfigDialog() {
           variacao_acessorio: formVariacao || "",
           material_acessorio: formMaterial || "",
           quantidade_minima: min,
+          filial_id: filialId,
         });
         toast.success("Alerta configurado com sucesso");
         resetForm();
