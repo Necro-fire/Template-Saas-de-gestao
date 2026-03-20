@@ -791,6 +791,10 @@ export type Database = {
         Returns: boolean
       }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      reconcile_inventory_for_product: {
+        Args: { _filial_id: string; _produto_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

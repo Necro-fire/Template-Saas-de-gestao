@@ -213,14 +213,27 @@ export async function createVenda(
 ) {
   const total = items.reduce((acc, i) => acc + i.unit_price * i.quantity, 0) - discount;
 
-  // Check stock availability from estoque
+  // Force reconciliation before validating stock
   for (const item of items) {
-    const { data: estoque } = await (supabase as any)
+    const { error: reconcileError } = await (supabase as any).rpc("reconcile_inventory_for_product", {
+      _produto_id: item.produto_id,
+      _filial_id: filialId,
+    });
+
+    if (reconcileError) {
+      throw new Error(reconcileError.message);
+    }
+
+    const { data: estoque, error: estoqueError } = await (supabase as any)
       .from("estoque")
       .select("quantidade")
       .eq("produto_id", item.produto_id)
       .eq("filial_id", filialId)
       .maybeSingle();
+
+    if (estoqueError) {
+      throw new Error(estoqueError.message);
+    }
 
     const available = estoque?.quantidade ?? 0;
     if (available < item.quantity) {
