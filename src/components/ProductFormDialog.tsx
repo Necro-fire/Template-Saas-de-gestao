@@ -472,21 +472,15 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               )}
             </div>
             {isEditing && product && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-muted-foreground">Código interno</Label>
-                  <Input value={product.code} disabled className="mt-1.5 bg-muted" />
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Código de barras</Label>
-                  <Input value={product.barcode} disabled className="mt-1.5 bg-muted" />
-                </div>
+              <div>
+                <Label className="text-muted-foreground">Código de barras</Label>
+                <Input value={product.barcode} disabled className="mt-1.5 bg-muted" />
               </div>
             )}
             {!isEditing && (
               <div className="flex items-center gap-2 text-caption text-muted-foreground">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Código interno e código de barras serão gerados automaticamente</span>
+                <span>Código de barras será gerado automaticamente</span>
               </div>
             )}
           </fieldset>
