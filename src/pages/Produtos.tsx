@@ -118,13 +118,13 @@ export default function Produtos() {
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-muted-foreground/30 text-title font-bold">{product.code}</span>
+                      <span className="text-muted-foreground/30 text-title font-bold">{product.referencia}</span>
                     )}
                   </div>
                   <div className="mt-3 flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.referencia || product.code}</p>
-                      <p className="text-[10px] font-mono text-muted-foreground/60">{product.code} · {product.barcode}</p>
+                      <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.referencia}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground/60">{product.barcode}</p>
                       <h3 className="text-ui font-semibold truncate">{product.model}</h3>
                       {!(product as any).is_acessorio && (product.cor_armacao || product.color) && (
                         <p className="text-caption text-muted-foreground">

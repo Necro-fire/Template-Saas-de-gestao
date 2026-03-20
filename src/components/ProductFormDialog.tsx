@@ -86,7 +86,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   useEffect(() => {
     if (product) {
       setIsAcessorio(product.is_acessorio || false);
-      setReferencia(product.referencia || product.code || "");
+      setReferencia(product.referencia || "");
       setName(product.model);
       setPrice(String(product.retail_price));
       setDetail(product.description || "");
@@ -221,11 +221,26 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   };
 
   const handleSave = async () => {
-    if (!referencia.trim()) { toast.error("Informe a referência do produto"); return; }
+    if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
     if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
     if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
+
+    // Validate unique referencia per filial
+    const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
+    for (const fId of filials) {
+      const { data: existing } = await (supabase as any)
+        .from("produtos")
+        .select("id")
+        .eq("referencia", referencia.trim())
+        .eq("filial_id", fId)
+        .maybeSingle();
+      if (existing && (!isEditing || existing.id !== product?.id)) {
+        toast.error("Este código já está em uso");
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -370,8 +385,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
             toast.success(
               filials.length > 1
-                ? `Produto cadastrado na filial ${fId}! Código: ${codes.code}`
-                : `Produto cadastrado! Código: ${codes.code} | Código de barras: ${codes.barcode}`
+                ? `Produto cadastrado na filial ${fId}!`
+                : `Produto cadastrado! Código de barras: ${codes.barcode}`
             );
           }
         }
@@ -432,7 +447,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <fieldset className="space-y-3 rounded-lg border p-3">
             <legend className="text-sm font-semibold px-1">Identificação</legend>
             <div>
-              <Label htmlFor="referencia">Referência (código da peça) *</Label>
+              <Label htmlFor="referencia">Código da peça *</Label>
               <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
             </div>
             <div>
@@ -457,21 +472,15 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               )}
             </div>
             {isEditing && product && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-muted-foreground">Código interno</Label>
-                  <Input value={product.code} disabled className="mt-1.5 bg-muted" />
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Código de barras</Label>
-                  <Input value={product.barcode} disabled className="mt-1.5 bg-muted" />
-                </div>
+              <div>
+                <Label className="text-muted-foreground">Código de barras</Label>
+                <Input value={product.barcode} disabled className="mt-1.5 bg-muted" />
               </div>
             )}
             {!isEditing && (
               <div className="flex items-center gap-2 text-caption text-muted-foreground">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Código interno e código de barras serão gerados automaticamente</span>
+                <span>Código de barras será gerado automaticamente</span>
               </div>
             )}
           </fieldset>

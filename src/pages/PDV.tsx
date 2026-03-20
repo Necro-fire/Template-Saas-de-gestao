@@ -104,7 +104,7 @@ export default function PDV() {
     const q = search.toLowerCase();
     return active.filter(p =>
       p.model.toLowerCase().includes(q) ||
-      p.code.toLowerCase().includes(q) ||
+      p.referencia.toLowerCase().includes(q) ||
       (p.barcode && p.barcode.toLowerCase().includes(q))
     );
   }, [search, products]);
@@ -167,7 +167,7 @@ export default function PDV() {
           : Number(product.retail_price);
         return {
           produto_id: product.id,
-          product_code: product.code,
+          product_code: product.referencia,
           product_model: product.model,
           quantity: count,
           unit_price: price,
@@ -291,11 +291,11 @@ export default function PDV() {
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-muted-foreground/20 text-subhead font-bold">{product.code}</span>
+                        <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
                     </div>
                     <div className="mt-2">
-                      <p className="text-caption text-muted-foreground">{product.barcode || product.code}</p>
+                      <p className="text-caption text-muted-foreground">{product.referencia}</p>
                       <h3 className="text-ui font-medium truncate">{product.model}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
@@ -339,7 +339,7 @@ export default function PDV() {
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
                     <p className="text-ui font-medium truncate">{item.product.model}</p>
-                    <p className="text-caption text-muted-foreground">{item.product.barcode || item.product.code} · {item.product.color}</p>
+                    <p className="text-caption text-muted-foreground">{item.product.referencia} · {item.product.color}</p>
                   </div>
                   <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {Number(item.product.retail_price).toFixed(0)}</span>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-3 w-3" /></Button>

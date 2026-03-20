@@ -271,7 +271,7 @@ export default function Estoque() {
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <span className="text-caption text-muted-foreground font-mono w-16">{p.code}</span>
+                        <span className="text-caption text-muted-foreground font-mono w-20">{p.referencia}</span>
                         <div>
                           <p className="text-ui font-medium">{p.model}</p>
                           <div className="flex items-center gap-2">
