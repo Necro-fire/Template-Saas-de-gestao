@@ -26,7 +26,6 @@ export function FilialSelector({ onBeforeChange, hideAll }: FilialSelectorProps 
     <div className="px-4 pt-4 pb-0">
       <div className={cn(
         "grid bg-secondary/50 rounded-lg p-0.5 w-full",
-        `grid-cols-${options.length}`
       )} style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
         {options.map(opt => (
           <button
