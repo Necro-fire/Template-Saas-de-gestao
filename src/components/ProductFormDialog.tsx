@@ -221,11 +221,26 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   };
 
   const handleSave = async () => {
-    if (!referencia.trim()) { toast.error("Informe a referência do produto"); return; }
+    if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
     if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
     if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
+
+    // Validate unique referencia per filial
+    const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
+    for (const fId of filials) {
+      const { data: existing } = await (supabase as any)
+        .from("produtos")
+        .select("id")
+        .eq("referencia", referencia.trim())
+        .eq("filial_id", fId)
+        .maybeSingle();
+      if (existing && (!isEditing || existing.id !== product?.id)) {
+        toast.error("Este código já está em uso");
+        return;
+      }
+    }
 
     setSaving(true);
     try {
