@@ -6,7 +6,7 @@ import { type StockLevel } from "@/components/ProductFilters";
 import { type DbProduct } from "@/hooks/useSupabaseData";
 import { type AlertaEstoque } from "@/hooks/useStockAlerts";
 import { cn } from "@/lib/utils";
-import { type FilialId, filiais } from "@/contexts/FilialContext";
+import { type FilialId } from "@/contexts/FilialContext";
 
 interface StockAlert {
   message: string;

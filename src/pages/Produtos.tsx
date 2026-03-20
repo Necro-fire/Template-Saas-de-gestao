@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Plus, Package, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useFilial, filiais } from "@/contexts/FilialContext";
+import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
 import { useProductTypes } from "@/hooks/useProductTypes";

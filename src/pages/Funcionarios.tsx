@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFilial, filiais } from '@/contexts/FilialContext';
+import { useFilial } from '@/contexts/FilialContext';
 import { FilialSelector } from '@/components/FilialSelector';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
