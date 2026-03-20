@@ -385,8 +385,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
             toast.success(
               filials.length > 1
-                ? `Produto cadastrado na filial ${fId}! Código: ${codes.code}`
-                : `Produto cadastrado! Código: ${codes.code} | Código de barras: ${codes.barcode}`
+                ? `Produto cadastrado na filial ${fId}!`
+                : `Produto cadastrado! Código de barras: ${codes.barcode}`
             );
           }
         }

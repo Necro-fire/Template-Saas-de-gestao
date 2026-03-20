@@ -339,7 +339,7 @@ export default function PDV() {
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
                     <p className="text-ui font-medium truncate">{item.product.model}</p>
-                    <p className="text-caption text-muted-foreground">{item.product.barcode || item.product.code} · {item.product.color}</p>
+                    <p className="text-caption text-muted-foreground">{item.product.referencia} · {item.product.color}</p>
                   </div>
                   <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {Number(item.product.retail_price).toFixed(0)}</span>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-3 w-3" /></Button>
