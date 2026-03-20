@@ -46,7 +46,6 @@ export default function Empresas() {
   };
 
   const setDefault = async (emp: DbEmpresa) => {
-    // Remove default from all, then set this one
     await (supabase as any).from("empresas").update({ filial_padrao: false }).neq("id", "");
     const { error } = await (supabase as any).from("empresas").update({ filial_padrao: true }).eq("id", emp.id);
     if (error) toast.error("Erro ao definir padrão");
@@ -61,6 +60,10 @@ export default function Empresas() {
     };
     return map[v] || v;
   };
+
+  // Next available filial_id
+  const usedFilialIds = empresas.map(e => e.filial_id).filter(Boolean);
+  const nextFilialId = ["1", "2", "3"].find(id => !usedFilialIds.includes(id)) || "";
 
   return (
     <div className="p-4 space-y-4">
@@ -90,6 +93,9 @@ export default function Empresas() {
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
                     <p className="text-ui font-medium">{emp.razao_social}</p>
+                    {emp.filial_id && (
+                      <Badge variant="outline" className="text-caption">Filial {emp.filial_id}</Badge>
+                    )}
                     {emp.filial_padrao && (
                       <Badge variant="default" className="text-caption">Padrão</Badge>
                     )}
@@ -121,14 +127,14 @@ export default function Empresas() {
                     onClick={() => setDefault(emp)}
                     title={emp.filial_padrao ? "Filial padrão" : "Definir como padrão"}
                   >
-                    {emp.filial_padrao ? <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" /> : <StarOff className="h-3.5 w-3.5" />}
+                    {emp.filial_padrao ? <Star className="h-3.5 w-3.5 text-warning fill-warning" /> : <StarOff className="h-3.5 w-3.5" />}
                   </Button>
                   <Button
                     variant="ghost" size="icon" className="h-8 w-8"
                     onClick={() => toggleAtiva(emp)}
                     title={emp.ativa ? "Desativar" : "Ativar"}
                   >
-                    {emp.ativa ? <Power className="h-3.5 w-3.5 text-green-600" /> : <PowerOff className="h-3.5 w-3.5" />}
+                    {emp.ativa ? <Power className="h-3.5 w-3.5 text-success" /> : <PowerOff className="h-3.5 w-3.5" />}
                   </Button>
                   <Button
                     variant="ghost" size="icon" className="h-8 w-8"
@@ -164,6 +170,7 @@ export default function Empresas() {
         onOpenChange={(v) => { setShowForm(v); if (!v) setEditing(null); }}
         editingEmpresa={editing}
         currentCount={empresas.length}
+        nextFilialId={nextFilialId}
       />
 
       <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
