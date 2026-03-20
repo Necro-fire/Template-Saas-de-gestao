@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
+import { useProducts } from "@/hooks/useSupabaseData";
 import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
 import { StockAlertConfigDialog } from "@/components/StockAlertConfigDialog";
 import { supabase } from "@/integrations/supabase/client";
