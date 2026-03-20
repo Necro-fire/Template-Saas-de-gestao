@@ -114,7 +114,10 @@ export function EmpresaFormDialog({ open, onOpenChange, editingEmpresa, currentC
         if (error) throw error;
         toast.success("Empresa atualizada!");
       } else {
-        const { error } = await (supabase as any).from("empresas").insert(payload);
+        const { error } = await (supabase as any).from("empresas").insert({
+          ...payload,
+          filial_id: nextFilialId || String(currentCount + 1),
+        });
         if (error) {
           if (error.message?.includes("empresas_cnpj_unique")) {
             toast.error("Já existe uma empresa com este CNPJ");
