@@ -28,7 +28,7 @@ export default function Dashboard() {
   const salesTotalValue = activeSales.reduce((acc, s) => acc + Number(s.total), 0);
 
   const activeProducts = products.filter(p => p.status !== "inativo");
-  const alerts = buildConfigAlerts(products, alertConfigs);
+  const alerts = buildConfigAlerts(products, alertConfigs, selectedFilial);
   const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
 
   if (isLoading) {
