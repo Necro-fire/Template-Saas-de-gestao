@@ -181,8 +181,8 @@ export function StockAlertCard({ alerts, alertConfigsCount }: StockAlertCardProp
             <div
               key={i}
               className={cn(
-                "flex items-center justify-between py-2 px-3 rounded-md cursor-pointer transition-all duration-200",
-                "hover:ring-1 hover:ring-primary/30 hover:scale-[1.01] active:scale-[0.99]",
+                "flex items-center justify-between py-2 px-3 rounded-md cursor-pointer transition-colors duration-200",
+                "hover:ring-1 hover:ring-primary/30",
                 alertBgClass(alert.level)
               )}
               onClick={() => navigate(alert.navigateTo)}
