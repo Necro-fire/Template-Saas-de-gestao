@@ -181,7 +181,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
 
 export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const { data: tipos } = useProductTypes();
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, filiais } = useFilial();
   const filialLocked = selectedFilial !== "all";
   const [draft, setDraft] = useState<ProductFilterValues>({ ...filters });
   const [open, setOpen] = useState(false);

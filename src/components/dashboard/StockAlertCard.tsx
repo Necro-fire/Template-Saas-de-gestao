@@ -91,18 +91,18 @@ function computeAlertsForFilial(
 export function buildConfigAlerts(
   products: DbProduct[],
   alertConfigs: AlertaEstoque[],
-  selectedFilial: FilialId = "all"
+  selectedFilial: FilialId = "all",
+  filialList: { id: string; name: string }[] = []
 ): StockAlert[] {
   const alerts: StockAlert[] = [];
 
   if (selectedFilial === "all") {
-    // Compute alerts independently for each filial
     const filialIds = new Set(products.map(p => p.filial_id));
     for (const fid of filialIds) {
-      alerts.push(...computeAlertsForFilial(products, alertConfigs, fid));
+      alerts.push(...computeAlertsForFilial(products, alertConfigs, fid, filialList));
     }
   } else {
-    alerts.push(...computeAlertsForFilial(products, alertConfigs, selectedFilial));
+    alerts.push(...computeAlertsForFilial(products, alertConfigs, selectedFilial, filialList));
   }
 
   const order: Record<string, number> = { out_of_stock: 0, critical: 1, low: 2 };
