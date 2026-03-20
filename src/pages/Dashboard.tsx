@@ -14,6 +14,7 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 export default function Dashboard() {
   const { data: products, loading: loadingProducts } = useProducts();
   const { data: alertConfigs } = useStockAlerts();
+  const { selectedFilial } = useFilial();
   const { data: sales, loading: loadingSales } = useVendas();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
