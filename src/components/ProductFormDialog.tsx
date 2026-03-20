@@ -447,7 +447,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <fieldset className="space-y-3 rounded-lg border p-3">
             <legend className="text-sm font-semibold px-1">Identificação</legend>
             <div>
-              <Label htmlFor="referencia">Referência (código da peça) *</Label>
+              <Label htmlFor="referencia">Código da peça *</Label>
               <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
             </div>
             <div>
