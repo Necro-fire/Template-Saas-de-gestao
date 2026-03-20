@@ -16,7 +16,7 @@ export default function Produtos() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, filiais } = useFilial();
   const { filters, setFilters } = useProductFilters();
 
   const { data: products } = useProducts();

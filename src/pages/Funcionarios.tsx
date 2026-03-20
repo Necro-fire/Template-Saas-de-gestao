@@ -203,6 +203,7 @@ export default function Funcionarios() {
     setLoading(false);
   };
 
+  const { filiais } = useFilial();
   const getFilialName = (id: string) => filiais.find(f => f.id === id)?.name || id;
   const getRoleName = (func: Funcionario) => {
     if (!func.user_id) return null;

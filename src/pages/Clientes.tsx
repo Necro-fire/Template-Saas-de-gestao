@@ -41,6 +41,7 @@ export default function Clientes() {
     );
   }, [clients, search]);
 
+  const { filiais } = useFilial();
   const getFilialName = (filialId: string) =>
     filiais.find((f) => f.id === filialId)?.name || filialId;
 

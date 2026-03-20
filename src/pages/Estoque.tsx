@@ -27,7 +27,7 @@ function stockLevelBadge(level: StockLevel, stock: number) {
 }
 
 export default function Estoque() {
-  const { selectedFilial } = useFilial();
+  const { selectedFilial, filiais } = useFilial();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products } = useProducts();
   const { data: tipos, refetch: refetchTipos } = useProductTypes();

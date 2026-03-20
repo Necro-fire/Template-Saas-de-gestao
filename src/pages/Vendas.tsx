@@ -58,6 +58,7 @@ export default function Vendas() {
 
   const totalRevenue = filtered.reduce((acc, s) => acc + Number(s.total), 0);
 
+  const { filiais } = useFilial();
   const getFilialName = (filialId: string) => filiais.find((f) => f.id === filialId)?.name || filialId;
 
   return (
