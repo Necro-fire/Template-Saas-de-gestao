@@ -226,17 +226,18 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
-    // Validate unique referencia per filial
+    // Validate unique referencia + classificacao per filial
     const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
     for (const fId of filials) {
       const { data: existing } = await (supabase as any)
         .from("produtos")
         .select("id")
         .eq("referencia", referencia.trim())
+        .eq("classificacao", classificacao)
         .eq("filial_id", fId)
         .maybeSingle();
       if (existing && (!isEditing || existing.id !== product?.id)) {
-        toast.error("Este código já está em uso");
+        toast.error(`Este código com classificação ${classificacao} já está em uso nesta filial`);
         return;
       }
     }
