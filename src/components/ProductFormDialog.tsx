@@ -121,8 +121,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setIsAcessorio(false);
     setReferencia("");
     setName("");
-    setPrice("");
-    setCusto("");
+    setPrice(0);
+    setCusto(0);
     setDetail("");
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
