@@ -555,7 +555,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={materialHaste} onValueChange={setMaterialHaste}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {MATERIAIS_HASTE.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {[...MATERIAIS_HASTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
