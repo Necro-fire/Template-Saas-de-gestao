@@ -510,7 +510,7 @@ export default function Caixa() {
             </div>
             <div>
               <Label>Valor</Label>
-              <Input type="number" min="0.01" step="0.01" placeholder="0,00" value={movValor} onChange={e => setMovValor(e.target.value)} />
+              <CurrencyInput placeholder="0,00" value={movValor} onValueChange={setMovValor} />
             </div>
             <div>
               <Label>Forma de pagamento</Label>
