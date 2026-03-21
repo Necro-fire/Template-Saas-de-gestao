@@ -113,7 +113,6 @@ export default function Produtos() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filtered.map(product => {
-              const typeName = getTypeName((product as any).tipo_produto_id);
               return (
                 <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
                   {(canEdit || canDelete) && (
