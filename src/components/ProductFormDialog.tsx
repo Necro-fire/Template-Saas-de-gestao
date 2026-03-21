@@ -521,7 +521,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 <Select value={estilo} onValueChange={setEstilo}>
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o estilo" /></SelectTrigger>
                   <SelectContent>
-                    {ESTILOS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    {[...ESTILOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
