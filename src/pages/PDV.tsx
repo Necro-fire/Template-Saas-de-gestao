@@ -188,7 +188,7 @@ export default function PDV() {
         return {
           produto_id: product.id,
           product_code: product.referencia,
-          product_model: product.model,
+          product_model: product.referencia,
           quantity: count,
           unit_price: price,
           custo_unitario: (product as any).custo ?? 0,
