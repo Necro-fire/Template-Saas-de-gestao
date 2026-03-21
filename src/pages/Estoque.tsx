@@ -171,9 +171,7 @@ export default function Estoque() {
             {filtered.length > 0 ? (
               <div className="space-y-1">
                 {filtered.map(p => {
-                  const typeName = getTypeName(p.tipo_produto_id);
-                  const catMin = getCategoryMin(p, tipos);
-                  const level = getStockLevel(p.stock, catMin);
+                  const level = getStockLevel(p.stock, p.min_stock || 0);
                   const accCat = (p as any).categoria_acessorio || "";
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
