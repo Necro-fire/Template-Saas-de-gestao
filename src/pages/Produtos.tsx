@@ -102,6 +102,12 @@ export default function Produtos() {
           </div>
           <div className="flex gap-2">
             {canCreate && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAtacado(true)}>
+                <ShoppingCart className="h-4 w-4" />
+                Atacado
+              </Button>
+            )}
+            {canCreate && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
                 <Tag className="h-4 w-4" />
                 Tipos
