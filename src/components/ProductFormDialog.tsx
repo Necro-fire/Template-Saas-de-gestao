@@ -336,7 +336,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               code: codes.code,
               barcode: codes.barcode,
               referencia: referencia.trim(),
-              model: name.trim(),
+              model: referencia.trim(),
               retail_price: price,
               custo: custo || 0,
               description: detail.trim(),
