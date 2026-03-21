@@ -752,9 +752,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || (!!duplicateInfo && !isEditing)}>
             {saving && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-            {isEditing ? "Salvar" : duplicateInfo ? "Adicionar ao Estoque" : "Cadastrar"}
+            {isEditing ? "Salvar" : "Cadastrar"}
           </Button>
         </DialogFooter>
       </DialogContent>
