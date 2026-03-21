@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
 import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/useSupabaseData";
-import { useProductTypes } from "@/hooks/useProductTypes";
+
 import { generateProductHash } from "@/lib/productHash";
 import {
   CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
