@@ -157,7 +157,7 @@ export default function Produtos() {
                         {(product as any).estilo && <Badge variant="outline" className="text-caption">{(product as any).estilo}</Badge>}
                         {(product as any).categoria_idade && <Badge variant="outline" className="text-caption">{(product as any).categoria_idade}</Badge>}
                         {(product as any).genero && <Badge variant="outline" className="text-caption">{(product as any).genero}</Badge>}
-                        {typeName && <Badge variant="outline" className="text-caption">{typeName}</Badge>}
+                        
                         {(product as any).is_acessorio && <Badge variant="secondary" className="text-caption">Acessório</Badge>}
                       </div>
                       {selectedFilial === "all" && (
