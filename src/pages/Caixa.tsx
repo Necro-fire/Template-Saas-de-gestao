@@ -189,24 +189,30 @@ export default function Caixa() {
                 <Badge variant="outline" className="gap-1.5 bg-accent/10 text-accent-foreground border-accent/30">
                   <Unlock className="h-3 w-3" /> Caixa Aberto
                 </Badge>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setOpenDialog("movimento")}>
-                  <Plus className="h-3.5 w-3.5" /> Movimentação
-                </Button>
-                <Button size="sm" variant="destructive" className="gap-1.5" onClick={() => setOpenDialog("fechar")}>
-                  <Lock className="h-3.5 w-3.5" /> Fechar Caixa
-                </Button>
+                {canManage && (
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setOpenDialog("movimento")}>
+                    <Plus className="h-3.5 w-3.5" /> Movimentação
+                  </Button>
+                )}
+                {canManage && (
+                  <Button size="sm" variant="destructive" className="gap-1.5" onClick={() => setOpenDialog("fechar")}>
+                    <Lock className="h-3.5 w-3.5" /> Fechar Caixa
+                  </Button>
+                )}
               </>
             ) : (
               <>
                 <Badge variant="outline" className="gap-1.5 text-muted-foreground">
                   <Lock className="h-3 w-3" /> Caixa Fechado
                 </Badge>
-                <Button size="sm" className="gap-1.5" onClick={() => {
-                  if (selectedFilial === "all") { toast.error("Selecione uma filial para abrir o caixa."); return; }
-                  setOpenDialog("abrir");
-                }}>
-                  <Unlock className="h-3.5 w-3.5" /> Abrir Caixa
-                </Button>
+                {canManage && (
+                  <Button size="sm" className="gap-1.5" onClick={() => {
+                    if (selectedFilial === "all") { toast.error("Selecione uma filial para abrir o caixa."); return; }
+                    setOpenDialog("abrir");
+                  }}>
+                    <Unlock className="h-3.5 w-3.5" /> Abrir Caixa
+                  </Button>
+                )}
               </>
             )}
           </div>
