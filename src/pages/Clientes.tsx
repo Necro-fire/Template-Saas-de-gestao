@@ -109,7 +109,6 @@ export default function Clientes() {
   const cancelDelete = () => {
     setDeletingId(null);
     setDeleteStep("idle");
-    setIsAdvancingDeleteStep(false);
   };
 
   const handleNew = () => {
