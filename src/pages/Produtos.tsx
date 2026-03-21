@@ -99,14 +99,18 @@ export default function Produtos() {
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
-              <Tag className="h-4 w-4" />
-              Tipos
-            </Button>
-            <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
-              <Plus className="h-4 w-4" />
-              Novo Produto
-            </Button>
+            {canCreate && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
+                <Tag className="h-4 w-4" />
+                Tipos
+              </Button>
+            )}
+            {canCreate && (
+              <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+                <Plus className="h-4 w-4" />
+                Novo Produto
+              </Button>
+            )}
           </div>
         </div>
 
