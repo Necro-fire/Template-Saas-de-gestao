@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useFilial } from "@/contexts/FilialContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { toast } from "sonner";
 
