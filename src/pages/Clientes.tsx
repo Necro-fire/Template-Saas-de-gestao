@@ -28,7 +28,6 @@ export default function Clientes() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteStep, setDeleteStep] = useState<"idle" | "has-purchases" | "final" | "simple">("idle");
   const [checkingPurchases, setCheckingPurchases] = useState(false);
-  const [isAdvancingDeleteStep, setIsAdvancingDeleteStep] = useState(false);
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
