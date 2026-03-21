@@ -85,7 +85,7 @@ export default function Estoque() {
     }
   }, [searchParams]);
 
-  const filtered = useMemo(() => applyProductFilters(products, filters, tipos), [products, filters, tipos]);
+  const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
   const totalStock = filtered.reduce((acc, p) => acc + p.stock, 0);
   const counts = useMemo(() => {
