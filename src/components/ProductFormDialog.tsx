@@ -144,6 +144,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setTempleSize("");
     setTipoLente("");
     setNcm("");
+    setClassificacao("");
     setSubcategoriaAcessorio("");
     setCategoriaAcessorio("");
     setTipoAcessorio("");
