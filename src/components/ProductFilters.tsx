@@ -47,7 +47,7 @@ const emptyFilters: ProductFilterValues = {
   genero: "all",
   estilo: "all",
   corArmacao: "all",
-  material: "all",
+  
   materialAro: "all",
   materialHaste: "all",
   tipoLente: "all",
