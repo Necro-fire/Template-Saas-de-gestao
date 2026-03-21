@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const SKIP_UPPERCASE_TYPES = new Set(["password", "date", "datetime-local", "time", "number", "range", "color", "file", "hidden"]);
+const SKIP_UPPERCASE_TYPES = new Set(["password", "email", "date", "datetime-local", "time", "number", "range", "color", "file", "hidden"]);
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, onChange, ...props }, ref) => {
