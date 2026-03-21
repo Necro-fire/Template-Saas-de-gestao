@@ -26,6 +26,8 @@ export default function Clientes() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteStep, setDeleteStep] = useState<"idle" | "has-purchases" | "final">("idle");
+  const [checkingPurchases, setCheckingPurchases] = useState(false);
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
@@ -66,6 +68,27 @@ export default function Clientes() {
     setShowForm(true);
   };
 
+  const startDelete = async (clientId: string) => {
+    setDeletingId(clientId);
+    setCheckingPurchases(true);
+    try {
+      const { count } = await (supabase as any)
+        .from("vendas")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientId)
+        .neq("status", "cancelada");
+      if ((count ?? 0) > 0) {
+        setDeleteStep("has-purchases");
+      } else {
+        setDeleteStep("final");
+      }
+    } catch {
+      setDeleteStep("final");
+    } finally {
+      setCheckingPurchases(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deletingId) return;
     const { error } = await (supabase as any)
@@ -79,6 +102,12 @@ export default function Clientes() {
       refetch();
     }
     setDeletingId(null);
+    setDeleteStep("idle");
+  };
+
+  const cancelDelete = () => {
+    setDeletingId(null);
+    setDeleteStep("idle");
   };
 
   const handleNew = () => {
@@ -159,7 +188,8 @@ export default function Clientes() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
-                    onClick={() => setDeletingId(client.id)}
+                    onClick={() => startDelete(client.id)}
+                    disabled={checkingPurchases}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -196,17 +226,38 @@ export default function Clientes() {
         clientName={historyClient?.name ?? ""}
       />
 
-      <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
+      {/* Step 1: Client has purchases warning */}
+      <AlertDialog open={deleteStep === "has-purchases"} onOpenChange={(v) => !v && cancelDelete()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cliente com compras registradas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este cliente possui compras registradas. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => setDeleteStep("final")} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Step 2 (or single step): Final confirmation */}
+      <AlertDialog open={deleteStep === "final"} onOpenChange={(v) => !v && cancelDelete()}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O cliente será removido permanentemente.
+              Tem certeza que deseja remover este cliente? Essa ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+            <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

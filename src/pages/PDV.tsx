@@ -39,6 +39,7 @@ function nextCartId() {
 
 export default function PDV() {
   const [search, setSearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -345,21 +346,44 @@ export default function PDV() {
         </div>
 
         {/* Right - Cart */}
-        <div className="flex-[2] flex flex-col max-w-md">
+         <div className="flex-[2] flex flex-col max-w-md">
           <div className="p-4 pb-2 space-y-2 shrink-0">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-ui font-semibold">Sacola</h2>
               {hasAnyWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
             </div>
-            <Select value={selectedClient} onValueChange={setSelectedClient}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecionar cliente..." />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.store_name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Input
+              placeholder="Buscar cliente por CPF/CNPJ..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              className="h-9"
+            />
+            {(() => {
+              const q = clientSearch.replace(/\D/g, "");
+              const filteredClients = q.length > 0
+                ? clients.filter(c => c.cnpj.replace(/\D/g, "").includes(q))
+                : clients;
+              return (
+                <Select value={selectedClient} onValueChange={(v) => { setSelectedClient(v); setClientSearch(""); }}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecionar cliente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredClients.length > 0 ? (
+                      filteredClients.map(c => (
+                        <SelectItem key={c.id} value={c.id}>
+                          <span>{c.store_name}</span>
+                          {c.cnpj && <span className="ml-2 text-muted-foreground text-caption">· {c.cnpj}</span>}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-caption text-muted-foreground">Nenhum cliente encontrado</div>
+                    )}
+                  </SelectContent>
+                </Select>
+              );
+            })()}
           </div>
 
           <div className="flex-1 overflow-auto p-4 pt-2">
