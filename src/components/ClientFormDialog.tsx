@@ -91,7 +91,7 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
     try {
       const payload = {
         responsible_name: form.responsible_name.trim().toUpperCase(),
-        store_name: form.responsible_name.trim().toUpperCase(),
+        store_name: form.store_name.trim().toUpperCase() || form.responsible_name.trim().toUpperCase(),
         tipo_cliente: form.tipo_cliente,
         cnpj: form.cnpj.trim(),
         inscricao_estadual: form.inscricao_estadual.trim().toUpperCase(),

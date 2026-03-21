@@ -122,6 +122,9 @@ export default function Clientes() {
               >
                 <div className="min-w-0">
                   <p className="text-ui font-medium">{client.responsible_name}</p>
+                  {client.store_name && client.store_name !== client.responsible_name && (
+                    <p className="text-caption text-muted-foreground">Fantasia: {client.store_name}</p>
+                  )}
                   <p className="text-caption text-muted-foreground">
                     {(client as any).tipo_cliente === "pj" ? "PJ" : "PF"} · {client.cnpj} · {client.phone}
                   </p>
