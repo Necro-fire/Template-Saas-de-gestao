@@ -272,6 +272,7 @@ export async function createVenda(
     quantity: i.quantity,
     unit_price: i.unit_price,
     total: i.unit_price * i.quantity,
+    custo_unitario: i.custo_unitario ?? 0,
   }));
 
   const { error: itemsError } = await (supabase as any)
