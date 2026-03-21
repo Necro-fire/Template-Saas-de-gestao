@@ -193,12 +193,22 @@ export default function PDV() {
         };
       });
 
-      await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "");
+      const finalMethod = isSplitPayment
+        ? paymentEntries.map(e => e.method).join("/")
+        : paymentMethod;
+
+      const splits = isSplitPayment
+        ? paymentEntries.map(e => ({ method: e.method, amount: e.amount }))
+        : undefined;
+
+      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "", splits);
 
       toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
       setCart([]);
       setSelectedClient("");
       setPaymentMethod("");
+      setIsSplitPayment(false);
+      setPaymentEntries([]);
     } catch (err: any) {
       toast.error(err.message || "Erro ao finalizar venda");
     } finally {
