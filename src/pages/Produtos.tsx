@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Package, Pencil, Trash2, Tag, ShoppingCart } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
 import { Button } from "@/components/ui/button";
@@ -7,17 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
-import { useProductTypes } from "@/hooks/useProductTypes";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
-import { ProductTypesDialog } from "@/components/ProductTypesDialog";
-import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel } from "@/components/ProductFilters";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function Produtos() {
   const [showForm, setShowForm] = useState(false);
-  const [showTypes, setShowTypes] = useState(false);
   const [showAtacado, setShowAtacado] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
@@ -29,13 +26,8 @@ export default function Produtos() {
   const canDelete = hasPermission('produtos', 'delete');
 
   const { data: products } = useProducts();
-  const { data: tipos } = useProductTypes();
 
   const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
-  const getTypeName = (tipoProdutoId: string | null) => {
-    if (!tipoProdutoId) return null;
-    return tipos.find(t => t.id === tipoProdutoId)?.nome_tipo || null;
-  };
 
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
@@ -108,12 +100,6 @@ export default function Produtos() {
               </Button>
             )}
             {canCreate && (
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
-                <Tag className="h-4 w-4" />
-                Tipos
-              </Button>
-            )}
-            {canCreate && (
               <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
                 <Plus className="h-4 w-4" />
                 Novo Produto
@@ -127,7 +113,6 @@ export default function Produtos() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filtered.map(product => {
-              const typeName = getTypeName((product as any).tipo_produto_id);
               return (
                 <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
                   {(canEdit || canDelete) && (
@@ -172,7 +157,7 @@ export default function Produtos() {
                         {(product as any).estilo && <Badge variant="outline" className="text-caption">{(product as any).estilo}</Badge>}
                         {(product as any).categoria_idade && <Badge variant="outline" className="text-caption">{(product as any).categoria_idade}</Badge>}
                         {(product as any).genero && <Badge variant="outline" className="text-caption">{(product as any).genero}</Badge>}
-                        {typeName && <Badge variant="outline" className="text-caption">{typeName}</Badge>}
+                        
                         {(product as any).is_acessorio && <Badge variant="secondary" className="text-caption">Acessório</Badge>}
                       </div>
                       {selectedFilial === "all" && (
@@ -196,8 +181,7 @@ export default function Produtos() {
                       <div />
                     )}
                     {(() => {
-                      const catMin = getCategoryMin(product, tipos);
-                      const level = getStockLevel(product.stock, catMin);
+                      const level = getStockLevel(product.stock, 0);
                       return (
                         <Badge
                           variant={level === "out_of_stock" ? "destructive" : level === "critical" || level === "low" ? "outline" : "secondary"}
@@ -223,7 +207,6 @@ export default function Produtos() {
         )}
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
-        <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
         <AtacadoDialog open={showAtacado} onOpenChange={setShowAtacado} />
         
 

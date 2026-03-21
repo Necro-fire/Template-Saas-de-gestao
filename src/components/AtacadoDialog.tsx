@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFilial } from "@/contexts/FilialContext";
 import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
 import { useProducts } from "@/hooks/useSupabaseData";
-import { useProductTypes } from "@/hooks/useProductTypes";
+import { ESTILOS } from "@/data/productConstants";
 import { toast } from "sonner";
 
 interface AtacadoDialogProps {
@@ -32,7 +32,7 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const { selectedFilial } = useFilial();
   const { data: descontos } = useDescontosAtacado();
   const { data: products } = useProducts();
-  const { data: tipos } = useProductTypes();
+  
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,9 +45,9 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
     [products]
   );
 
-  const sortedTipos = useMemo(
-    () => [...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, "pt-BR")),
-    [tipos]
+  const sortedEstilos = useMemo(
+    () => [...ESTILOS].sort((a, b) => a.localeCompare(b, "pt-BR")),
+    []
   );
 
   const resetForm = () => {
@@ -187,8 +187,8 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                     <Select value={form.categoria} onValueChange={v => setForm(f => ({ ...f, categoria: v }))}>
                       <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
                       <SelectContent>
-                        {sortedTipos.map(t => (
-                          <SelectItem key={t.id} value={t.nome_tipo}>{t.nome_tipo}</SelectItem>
+                        {sortedEstilos.map(e => (
+                          <SelectItem key={e} value={e}>{e}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

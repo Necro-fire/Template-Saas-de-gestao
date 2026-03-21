@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useFilial } from "@/contexts/FilialContext";
-import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
@@ -22,7 +21,6 @@ export type StockLevel = "normal" | "low" | "critical" | "out_of_stock";
 export interface ProductFilterValues {
   search: string;
   tipoItem: string;
-  tipo: string;
   categoriaIdade: string;
   genero: string;
   estilo: string;
@@ -43,7 +41,6 @@ export interface ProductFilterValues {
 const emptyFilters: ProductFilterValues = {
   search: "",
   tipoItem: "all",
-  tipo: "all",
   categoriaIdade: "all",
   genero: "all",
   estilo: "all",
@@ -66,15 +63,6 @@ export function useProductFilters() {
   return { filters, setFilters };
 }
 
-/**
- * Get the category minimum for a product by looking up its tipo_produto_id in the tipos list.
- * Falls back to 0 if no category is assigned.
- */
-export function getCategoryMin(product: { tipo_produto_id: string | null }, tipos: TipoProduto[]): number {
-  if (!product.tipo_produto_id) return 0;
-  const tipo = tipos.find(t => t.id === product.tipo_produto_id);
-  return tipo?.estoque_minimo_alerta ?? 0;
-}
 
 /**
  * Stock level: out_of_stock if 0, normal otherwise.
@@ -97,11 +85,9 @@ export function applyProductFilters<T extends {
   retail_price: number; filial_id: string; status: string; is_acessorio: boolean;
   categoria_idade: string; genero: string; estilo: string; cor_armacao: string;
   material: string; material_aro: string; material_haste: string; tipo_lente: string;
-  tipo_produto_id: string | null;
 }>(
   products: T[],
   filters: ProductFilterValues,
-  tipos?: TipoProduto[]
 ): T[] {
   return products.filter(p => {
     if (p.status === "inativo") return false;
@@ -113,7 +99,7 @@ export function applyProductFilters<T extends {
 
     if (filters.tipoItem === "normal" && p.is_acessorio) return false;
     if (filters.tipoItem === "acessorio" && !p.is_acessorio) return false;
-    if (filters.tipo !== "all" && p.tipo_produto_id !== filters.tipo) return false;
+    
 
     if (filters.categoriaIdade !== "all" && p.categoria_idade !== filters.categoriaIdade) return false;
     if (filters.genero !== "all" && p.genero !== filters.genero) return false;
@@ -145,8 +131,7 @@ export function applyProductFilters<T extends {
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
 
     if (filters.stockStatus !== "all") {
-      const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 0);
-      const level = getStockLevel(p.stock, catMin);
+      const level = getStockLevel(p.stock, p.min_stock || 0);
       if (filters.stockStatus === "normal" && level !== "normal") return false;
       if (filters.stockStatus === "low" && level !== "low") return false;
       if (filters.stockStatus === "critical" && level !== "critical") return false;
@@ -181,7 +166,6 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
 }
 
 export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
-  const { data: tipos } = useProductTypes();
   const { selectedFilial, filiais } = useFilial();
   const filialLocked = selectedFilial !== "all";
   const [draft, setDraft] = useState<ProductFilterValues>({ ...filters });
@@ -190,7 +174,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
 
   const countActive = (f: ProductFilterValues) => {
     const keys: (keyof ProductFilterValues)[] = [
-      "tipoItem", "tipo", "categoriaIdade", "genero", "estilo", "corArmacao",
+      "tipoItem", "categoriaIdade", "genero", "estilo", "corArmacao",
       "materialAro", "materialHaste", "tipoLente",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
@@ -282,18 +266,6 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                 </Select>
               </div>
 
-              {tipos.length > 0 && (
-                <div className="space-y-1">
-                  <Label className="text-caption">Tipo de Produto</Label>
-                  <Select value={draft.tipo} onValueChange={(v) => setDraft({ ...draft, tipo: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {[...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, 'pt-BR')).map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
               {showFrameFilters && (
                 <>

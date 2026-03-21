@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { DbProduct } from "@/hooks/useSupabaseData";
 import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/useSupabaseData";
-import { useProductTypes } from "@/hooks/useProductTypes";
+
 import { generateProductHash } from "@/lib/productHash";
 import {
   CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
@@ -43,13 +43,13 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [quantidade, setQuantidade] = useState("1");
-  const [tipoProdutoId, setTipoProdutoId] = useState("");
+  
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: tipos } = useProductTypes();
+  
 
   // Frame-specific fields
   const [categoriaIdade, setCategoriaIdade] = useState("");
@@ -110,7 +110,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setVariacaoAcessorio((product as any).variacao_acessorio || "");
       setCorAcessorio((product as any).cor_acessorio || "");
       setMaterialAcessorio((product as any).material_acessorio || "");
-      setTipoProdutoId(product.tipo_produto_id || "");
+      
       setNcm((product as any).ncm || "");
       setClassificacao((product as any).classificacao || "");
       setImagePreview(product.image_url || null);
@@ -129,7 +129,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setDetail("");
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
-    setTipoProdutoId("");
+    
     setImageFile(null);
     setImagePreview(null);
     setCategoriaIdade("");
@@ -290,7 +290,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           description: detail.trim(),
           image_url: imageUrl,
           filial_id: filial,
-          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
           is_acessorio: isAcessorio,
           categoria_idade: isAcessorio ? "" : categoriaIdade,
           genero: isAcessorio ? "" : genero,
@@ -352,7 +351,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               image_url: imageUrl,
               filial_id: fId,
               stock: qty,
-              tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
+              
               is_acessorio: isAcessorio,
               categoria_idade: isAcessorio ? "" : categoriaIdade,
               genero: isAcessorio ? "" : genero,
@@ -491,21 +490,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             )}
           </fieldset>
 
-          {/* Tipo de Produto */}
-          {tipos.length > 0 && (
-            <div>
-              <Label>Tipo de Produto</Label>
-              <Select value={tipoProdutoId} onValueChange={setTipoProdutoId}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem tipo</SelectItem>
-                  {[...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, 'pt-BR')).map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* FRAME-SPECIFIC FIELDS */}
           {!isAcessorio && (

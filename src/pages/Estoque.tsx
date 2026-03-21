@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Package, ArrowDown, Settings2, Pencil, Check, X } from "lucide-react";
+import { Package, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts } from "@/hooks/useSupabaseData";
-import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
-import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin, type StockLevel } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, type StockLevel } from "@/components/ProductFilters";
 import { StockAlertConfigDialog } from "@/components/StockAlertConfigDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,10 +31,7 @@ export default function Estoque() {
   const { selectedFilial, filiais } = useFilial();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products } = useProducts();
-  const { data: tipos, refetch: refetchTipos } = useProductTypes();
   const { filters, setFilters } = useProductFilters();
-  const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
-  const [editTipoValue, setEditTipoValue] = useState("");
   const { hasPermission } = useAuth();
   const canEdit = hasPermission('estoque', 'edit');
 
@@ -51,13 +47,6 @@ export default function Estoque() {
 
     let changed = false;
 
-    if (tipoParam && tipos.length > 0) {
-      const match = tipos.find(t => t.id === tipoParam);
-      if (match) {
-        setFilters(prev => ({ ...prev, tipo: tipoParam }));
-        changed = true;
-      }
-    }
 
     if (estiloParam) {
       setFilters(prev => ({ ...prev, estilo: estiloParam, tipoItem: "normal" }));
@@ -87,7 +76,6 @@ export default function Estoque() {
     }
 
     if (changed) {
-      searchParams.delete("tipo");
       searchParams.delete("estilo");
       searchParams.delete("catAcessorio");
       searchParams.delete("tipoAcessorio");
@@ -95,45 +83,22 @@ export default function Estoque() {
       searchParams.delete("subcategoria");
       setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams, tipos]);
+  }, [searchParams]);
 
-  const filtered = useMemo(() => applyProductFilters(products, filters, tipos), [products, filters, tipos]);
+  const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
   const totalStock = filtered.reduce((acc, p) => acc + p.stock, 0);
   const counts = useMemo(() => {
     let low = 0, critical = 0, out = 0;
     filtered.forEach(p => {
-      const level = getStockLevel(p.stock, getCategoryMin(p, tipos));
+      const level = getStockLevel(p.stock, p.min_stock || 0);
       if (level === "low") low++;
       else if (level === "critical") critical++;
       else if (level === "out_of_stock") out++;
     });
     return { low, critical, out };
-  }, [filtered, tipos]);
+  }, [filtered]);
 
-  const getTypeName = (id: string | null) => {
-    if (!id) return null;
-    return tipos.find(t => t.id === id)?.nome_tipo || null;
-  };
-
-  const handleSaveTipoMin = async (tipoId: string) => {
-    const newMin = parseInt(editTipoValue, 10);
-    if (isNaN(newMin) || newMin < 0) {
-      toast.error("Valor inválido");
-      return;
-    }
-    const { error } = await (supabase as any)
-      .from("tipos_produto")
-      .update({ estoque_minimo_alerta: newMin })
-      .eq("id", tipoId);
-    if (error) {
-      toast.error("Erro ao salvar: " + error.message);
-    } else {
-      toast.success("Mínimo de alerta atualizado");
-      refetchTipos();
-    }
-    setEditingTipoId(null);
-  };
 
   return (
     <div>
@@ -196,69 +161,6 @@ export default function Estoque() {
           </Card>
         </div>
 
-        {/* Category config */}
-        {tipos.length > 0 && (
-          <Card className="shadow-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-ui font-semibold flex items-center gap-2">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
-                Configuração por Categoria
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-1">
-                {tipos.map(tipo => {
-                  const isEditing = editingTipoId === tipo.id;
-                  const productCount = products.filter(p => p.tipo_produto_id === tipo.id && p.status !== "inativo").length;
-                  return (
-                    <div key={tipo.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
-                      <div>
-                        <p className="text-ui font-medium">{tipo.nome_tipo}</p>
-                        <p className="text-caption text-muted-foreground">{productCount} produto{productCount !== 1 ? "s" : ""}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isEditing ? (
-                          <>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={editTipoValue}
-                              onChange={(e) => setEditTipoValue(e.target.value)}
-                              className="h-7 w-16 text-sm text-center tabular-nums"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleSaveTipoMin(tipo.id);
-                                if (e.key === "Escape") setEditingTipoId(null);
-                              }}
-                            />
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSaveTipoMin(tipo.id)}>
-                              <Check className="h-3.5 w-3.5 text-success" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingTipoId(null)}>
-                              <X className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-caption text-muted-foreground tabular-nums">mín. alerta: {tipo.estoque_minimo_alerta}</span>
-                            {canEdit && (
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                setEditingTipoId(tipo.id);
-                                setEditTipoValue(String(tipo.estoque_minimo_alerta));
-                              }}>
-                                <Pencil className="h-3 w-3 text-muted-foreground" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Inventory list */}
         <Card className="shadow-card">
@@ -269,9 +171,7 @@ export default function Estoque() {
             {filtered.length > 0 ? (
               <div className="space-y-1">
                 {filtered.map(p => {
-                  const typeName = getTypeName(p.tipo_produto_id);
-                  const catMin = getCategoryMin(p, tipos);
-                  const level = getStockLevel(p.stock, catMin);
+                  const level = getStockLevel(p.stock, p.min_stock || 0);
                   const accCat = (p as any).categoria_acessorio || "";
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
@@ -283,7 +183,7 @@ export default function Estoque() {
                               {p.is_acessorio && accCat ? accCat : p.color}
                               {p.material_aro ? ` · ${p.material_aro}` : ""}
                             </p>
-                            {typeName && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{typeName}</Badge>}
+                            
                             {p.is_acessorio && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-accent text-accent-foreground">Acessório</Badge>}
                           </div>
                         </div>
@@ -293,7 +193,7 @@ export default function Estoque() {
                           <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                         )}
                         {stockLevelBadge(level, p.stock)}
-                        <span className="text-caption text-muted-foreground tabular-nums min-w-[60px] text-right">mín: {catMin}</span>
+                        <span className="text-caption text-muted-foreground tabular-nums min-w-[60px] text-right">mín: {p.min_stock || 0}</span>
                       </div>
                     </div>
                   );
