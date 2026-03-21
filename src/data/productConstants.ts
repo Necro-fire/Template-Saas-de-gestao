@@ -17,8 +17,8 @@ export const CORES_SOLIDAS = [
 ] as const;
 
 export const CORES_DEGRADE = [
-  "Degradê Preto", "Degradê Marrom", "Degradê Rosa",
-  "Degradê Amarelo", "Degradê Cinza", "Degradê Verde", "Degradê Azul",
+  "Degradê Amarelo", "Degradê Azul", "Degradê Cinza", "Degradê Marrom",
+  "Degradê Preto", "Degradê Rosa", "Degradê Verde",
 ] as const;
 
 export const TODAS_CORES = [...CORES_SOLIDAS, ...CORES_DEGRADE] as const;
