@@ -17,8 +17,8 @@ import { useProductTypes } from "@/hooks/useProductTypes";
 import { generateProductHash } from "@/lib/productHash";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
-  MATERIAIS, TIPOS_LENTE,
-  MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE,
+  MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
+  MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE as MEDIDAS_HASTE_RANGE,
 } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
@@ -546,7 +546,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={materialAro} onValueChange={setMaterialAro}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {MATERIAIS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {MATERIAIS_ARO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -555,7 +555,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={materialHaste} onValueChange={setMaterialHaste}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {MATERIAIS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {MATERIAIS_HASTE.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -579,8 +579,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Input type="number" min={MEDIDAS_PONTE.min} max={MEDIDAS_PONTE.max} value={bridgeSize} onChange={(e) => setBridgeSize(e.target.value)} className="mt-1.5" />
                   </div>
                   <div>
-                    <Label>Comprimento da Haste ({MEDIDAS_HASTE.min}-{MEDIDAS_HASTE.max})</Label>
-                    <Input type="number" min={MEDIDAS_HASTE.min} max={MEDIDAS_HASTE.max} value={templeSize} onChange={(e) => setTempleSize(e.target.value)} className="mt-1.5" />
+                    <Label>Comprimento da Haste ({MEDIDAS_HASTE_RANGE.min}-{MEDIDAS_HASTE_RANGE.max})</Label>
+                    <Input type="number" min={MEDIDAS_HASTE_RANGE.min} max={MEDIDAS_HASTE_RANGE.max} value={templeSize} onChange={(e) => setTempleSize(e.target.value)} className="mt-1.5" />
                   </div>
                 </div>
               </fieldset>

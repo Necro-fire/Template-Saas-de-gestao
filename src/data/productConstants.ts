@@ -21,9 +21,16 @@ export const CORES_DEGRADE = [
 
 export const TODAS_CORES = [...CORES_SOLIDAS, ...CORES_DEGRADE] as const;
 
-export const MATERIAIS = [
-  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal",
+export const MATERIAIS_ARO = [
+  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal", "Silicone",
 ] as const;
+
+export const MATERIAIS_HASTE = [
+  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal", "Silicone", "Gliter",
+] as const;
+
+// Legacy alias
+export const MATERIAIS = MATERIAIS_ARO;
 
 export const TIPOS_LENTE = [
   "Lente Degradê Marrom", "Lente Degradê Preta",
