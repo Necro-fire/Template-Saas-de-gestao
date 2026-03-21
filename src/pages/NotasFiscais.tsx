@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useFilial } from "@/contexts/FilialContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { toast } from "sonner";
 
@@ -18,6 +19,8 @@ const statusMap: Record<string, { label: string; variant: "default" | "destructi
 
 export default function NotasFiscais() {
   const { selectedFilial } = useFilial();
+  const { hasPermission } = useAuth();
+  const canManage = hasPermission('fiscal', 'manage');
   const { data: notas, updateStatus } = useNotasFiscais();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -90,12 +93,12 @@ export default function NotasFiscais() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toast.info("DANFE será gerado")} title="DANFE">
                       <Download className="h-3 w-3" />
                     </Button>
-                    {nf.status === "pendente" && (
+                    {canManage && nf.status === "pendente" && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toast.info("Reenviando para SEFAZ...")} title="Reenviar">
                         <Send className="h-3 w-3" />
                       </Button>
                     )}
-                    {nf.status === "autorizada" && (
+                    {canManage && nf.status === "autorizada" && (
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleCancel(nf.id)} title="Cancelar">
                         <X className="h-3 w-3" />
                       </Button>
