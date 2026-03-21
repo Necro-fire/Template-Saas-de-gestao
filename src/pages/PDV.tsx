@@ -385,18 +385,15 @@ export default function PDV() {
           </div>
 
           <div className="p-4 border-t space-y-3 shrink-0">
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Forma de pagamento..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">Pix</SelectItem>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="cartao">Cartão</SelectItem>
-                <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="prazo">Prazo</SelectItem>
-              </SelectContent>
-            </Select>
+            <SplitPaymentPanel
+              total={subtotal}
+              isSplit={isSplitPayment}
+              onSplitChange={setIsSplitPayment}
+              singleMethod={paymentMethod}
+              onSingleMethodChange={setPaymentMethod}
+              entries={paymentEntries}
+              onEntriesChange={setPaymentEntries}
+            />
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
