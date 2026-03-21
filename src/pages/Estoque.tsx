@@ -99,29 +99,6 @@ export default function Estoque() {
     return { low, critical, out };
   }, [filtered]);
 
-  const getTypeName = (id: string | null) => {
-    if (!id) return null;
-    return tipos.find(t => t.id === id)?.nome_tipo || null;
-  };
-
-  const handleSaveTipoMin = async (tipoId: string) => {
-    const newMin = parseInt(editTipoValue, 10);
-    if (isNaN(newMin) || newMin < 0) {
-      toast.error("Valor inválido");
-      return;
-    }
-    const { error } = await (supabase as any)
-      .from("tipos_produto")
-      .update({ estoque_minimo_alerta: newMin })
-      .eq("id", tipoId);
-    if (error) {
-      toast.error("Erro ao salvar: " + error.message);
-    } else {
-      toast.success("Mínimo de alerta atualizado");
-      refetchTipos();
-    }
-    setEditingTipoId(null);
-  };
 
   return (
     <div>
