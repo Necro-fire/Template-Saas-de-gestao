@@ -38,6 +38,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [custo, setCusto] = useState("");
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [quantidade, setQuantidade] = useState("1");
