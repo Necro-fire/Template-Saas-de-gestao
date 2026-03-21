@@ -709,11 +709,11 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="product-price">Preço (R$) *</Label>
-              <Input id="product-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
+              <CurrencyInput id="product-price" value={price} onValueChange={setPrice} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="product-custo">Custo (R$)</Label>
-              <Input id="product-custo" type="number" min="0" step="0.01" value={custo} onChange={(e) => setCusto(e.target.value)} placeholder="0,00" className="mt-1.5" />
+              <CurrencyInput id="product-custo" value={custo} onValueChange={setCusto} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
               <Label>{isEditing ? "Quantidade em estoque" : "Quantidade a adicionar"}</Label>
