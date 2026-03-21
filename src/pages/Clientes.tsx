@@ -92,15 +92,22 @@ export default function Clientes() {
 
   const handleDelete = async () => {
     if (!deletingId) return;
-    const { error } = await (supabase as any)
-      .from("clientes")
-      .delete()
-      .eq("id", deletingId);
-    if (error) {
-      toast.error("Erro ao excluir cliente");
-    } else {
+    try {
+      // Desvincular vendas do cliente antes de excluir
+      await (supabase as any)
+        .from("vendas")
+        .update({ client_id: null })
+        .eq("client_id", deletingId);
+
+      const { error } = await (supabase as any)
+        .from("clientes")
+        .delete()
+        .eq("id", deletingId);
+      if (error) throw error;
       toast.success("Cliente excluído");
       refetch();
+    } catch {
+      toast.error("Erro ao excluir cliente");
     }
     setDeletingId(null);
     setDeleteStep("idle");
