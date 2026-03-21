@@ -108,11 +108,11 @@ export default function Caixa() {
     if (!user || !caixaAberto) return;
     setSubmitting(true);
     try {
-      const valorInf = parseFloat(valorFechamento) || 0;
+      const valorInf = valorFechamento;
       await fecharCaixa(caixaAberto.id, valorInf, summary.saldo, user.id, userName, obsFechamento);
       toast.success("Caixa fechado com sucesso!");
       setOpenDialog(null);
-      setValorFechamento("");
+      setValorFechamento(0);
       setObsFechamento("");
     } catch (e: any) {
       toast.error(e.message);
