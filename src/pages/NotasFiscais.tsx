@@ -93,12 +93,12 @@ export default function NotasFiscais() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toast.info("DANFE será gerado")} title="DANFE">
                       <Download className="h-3 w-3" />
                     </Button>
-                    {nf.status === "pendente" && (
+                    {canManage && nf.status === "pendente" && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toast.info("Reenviando para SEFAZ...")} title="Reenviar">
                         <Send className="h-3 w-3" />
                       </Button>
                     )}
-                    {nf.status === "autorizada" && (
+                    {canManage && nf.status === "autorizada" && (
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleCancel(nf.id)} title="Cancelar">
                         <X className="h-3 w-3" />
                       </Button>
