@@ -328,7 +328,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                     label="Categoria"
                     value={draft.catAcessorio}
                     onValueChange={(v) => setDraft({ ...draft, catAcessorio: v, tipoAcessorio: "all", corAcessorio: "all" })}
-                    options={ACESSORIOS_CATEGORIAS.map(c => c.nome)}
+                    options={[...ACESSORIOS_CATEGORIAS].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => c.nome)}
                     allLabel="Todas"
                   />
                   {tiposAcFiltro.length > 0 && (
