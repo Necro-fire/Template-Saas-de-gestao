@@ -167,31 +167,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setDuplicateInfo(null);
       return;
     }
-    const hash = generateProductHash({
-      referencia: referencia.trim(),
-      classificacao,
-      categoriaIdade,
-      genero,
-      estilo,
-      corArmacao,
-      materialAro,
-      materialHaste,
-      lensSize: Number(lensSize) || 0,
-      alturaLente: Number(alturaLente) || 0,
-      bridgeSize: Number(bridgeSize) || 0,
-      templeSize: Number(templeSize) || 0,
-      tipoLente,
-      isAcessorio,
-      subcategoriaAcessorio: buildSubcategoria(),
-    });
 
     const checkDuplicate = async () => {
       const filials = filial === "all" ? ["1", "2", "3"] : [filial];
       for (const fId of filials) {
-        const existing = await findProductByHash(hash, fId);
-        if (existing) {
-          setDuplicateInfo(`Produto "${existing.model}" já existe na filial ${fId}. A quantidade será adicionada ao estoque existente.`);
-          return;
+        // Check if same code + same classification exists
+        if (classificacao) {
+          const { data: exactMatch } = await (supabase as any)
+            .from("produtos")
+            .select("id, referencia, classificacao")
+            .eq("referencia", referencia.trim())
+            .eq("classificacao", classificacao)
+            .eq("filial_id", fId)
+            .maybeSingle();
+          if (exactMatch) {
+            setDuplicateInfo(`Este produto já está cadastrado no sistema. (Código "${referencia.trim()}" com classificação ${classificacao} na filial ${fId})`);
+            return;
+          }
         }
       }
       setDuplicateInfo(null);
@@ -199,7 +191,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
     const timeout = setTimeout(checkDuplicate, 500);
     return () => clearTimeout(timeout);
-  }, [referencia, classificacao, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
+  }, [referencia, classificacao, filial, isEditing]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
