@@ -1,9 +1,12 @@
 import { Briefcase, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilial } from "@/contexts/FilialContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { FilialSelector } from "@/components/FilialSelector";
 
 export default function Malas() {
+  const { hasPermission } = useAuth();
+  const canManage = hasPermission('malas', 'manage');
   return (
     <div>
       <FilialSelector />
