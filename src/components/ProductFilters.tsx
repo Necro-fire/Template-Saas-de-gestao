@@ -26,7 +26,6 @@ export interface ProductFilterValues {
   genero: string;
   estilo: string;
   corArmacao: string;
-  material: string;
   materialAro: string;
   materialHaste: string;
   tipoLente: string;
@@ -48,7 +47,7 @@ const emptyFilters: ProductFilterValues = {
   genero: "all",
   estilo: "all",
   corArmacao: "all",
-  material: "all",
+  
   materialAro: "all",
   materialHaste: "all",
   tipoLente: "all",
@@ -119,7 +118,7 @@ export function applyProductFilters<T extends {
     if (filters.genero !== "all" && p.genero !== filters.genero) return false;
     if (filters.estilo !== "all" && p.estilo !== filters.estilo) return false;
     if (filters.corArmacao !== "all" && p.cor_armacao !== filters.corArmacao) return false;
-    if (filters.material !== "all" && p.material !== filters.material) return false;
+    
     if (filters.materialAro !== "all" && p.material_aro !== filters.materialAro) return false;
     if (filters.materialHaste !== "all" && p.material_haste !== filters.materialHaste) return false;
     if (filters.tipoLente !== "all" && p.tipo_lente !== filters.tipoLente) return false;
@@ -190,7 +189,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const countActive = (f: ProductFilterValues) => {
     const keys: (keyof ProductFilterValues)[] = [
       "tipoItem", "tipo", "categoriaIdade", "genero", "estilo", "corArmacao",
-      "material", "materialAro", "materialHaste", "tipoLente",
+      "materialAro", "materialHaste", "tipoLente",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
     ];
@@ -314,8 +313,6 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                     <FilterSelect label="Material Haste" value={draft.materialHaste}
                       onValueChange={(v) => setDraft({ ...draft, materialHaste: v })} options={MATERIAIS_HASTE} />
                   </div>
-                  <FilterSelect label="Material" value={draft.material}
-                    onValueChange={(v) => setDraft({ ...draft, material: v })} options={[...new Set([...MATERIAIS_ARO, ...MATERIAIS_HASTE])] as any} />
                   <FilterSelect label="Tipo de Lente" value={draft.tipoLente}
                     onValueChange={(v) => setDraft({ ...draft, tipoLente: v })} options={TIPOS_LENTE} />
                 </>

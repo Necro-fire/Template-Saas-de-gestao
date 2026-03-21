@@ -137,7 +137,7 @@ export default function Produtos() {
                       {!(product as any).is_acessorio && (product.cor_armacao || product.color) && (
                         <p className="text-caption text-muted-foreground">
                           {product.cor_armacao || product.color}
-                          {(product.material_aro || product.material) && ` · ${product.material_aro || product.material}`}
+                          {product.material_aro && ` · ${product.material_aro}`}
                         </p>
                       )}
                       {(product as any).is_acessorio && (product as any).subcategoria_acessorio && (

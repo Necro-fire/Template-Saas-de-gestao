@@ -287,7 +287,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           color: isAcessorio ? corAcessorio : corArmacao,
           material_aro: isAcessorio ? "" : materialAro,
           material_haste: isAcessorio ? "" : materialHaste,
-          material: isAcessorio ? "" : materialAro,
           lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
           altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
           bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
@@ -348,7 +347,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               color: isAcessorio ? corAcessorio : corArmacao,
               material_aro: isAcessorio ? "" : materialAro,
               material_haste: isAcessorio ? "" : materialHaste,
-              material: isAcessorio ? "" : materialAro,
+              
               lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
               altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
               bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
