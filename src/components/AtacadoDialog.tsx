@@ -45,9 +45,9 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
     [products]
   );
 
-  const sortedTipos = useMemo(
-    () => [...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, "pt-BR")),
-    [tipos]
+  const sortedEstilos = useMemo(
+    () => [...ESTILOS].sort((a, b) => a.localeCompare(b, "pt-BR")),
+    []
   );
 
   const resetForm = () => {
