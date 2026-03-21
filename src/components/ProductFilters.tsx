@@ -174,7 +174,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
 
   const countActive = (f: ProductFilterValues) => {
     const keys: (keyof ProductFilterValues)[] = [
-      "tipoItem", "tipo", "categoriaIdade", "genero", "estilo", "corArmacao",
+      "tipoItem", "categoriaIdade", "genero", "estilo", "corArmacao",
       "materialAro", "materialHaste", "tipoLente",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
