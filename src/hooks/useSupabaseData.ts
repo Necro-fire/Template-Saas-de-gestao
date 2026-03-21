@@ -223,6 +223,17 @@ export async function createVenda(
   userName?: string,
   paymentSplits?: PaymentSplit[]
 ) {
+  // Verify caixa is open
+  const { data: caixaAberto, error: caixaCheckError } = await (supabase as any)
+    .from("caixas")
+    .select("id")
+    .eq("filial_id", filialId)
+    .eq("status", "aberto")
+    .maybeSingle();
+
+  if (caixaCheckError) throw new Error(caixaCheckError.message);
+  if (!caixaAberto) throw new Error("O caixa precisa estar aberto para realizar vendas.");
+
   const total = items.reduce((acc, i) => acc + i.unit_price * i.quantity, 0) - discount;
 
   // Force reconciliation before validating stock
@@ -287,14 +298,7 @@ export async function createVenda(
 
   if (itemsError) throw new Error(itemsError.message);
 
-  // Auto-register sale in open caixa if one exists
-  const { data: caixaAberto } = await (supabase as any)
-    .from("caixas")
-    .select("id")
-    .eq("filial_id", filialId)
-    .eq("status", "aberto")
-    .maybeSingle();
-
+  // Use already-validated caixaAberto from above
   if (caixaAberto && userId) {
     if (paymentSplits && paymentSplits.length > 0) {
       // Register one caixa entry per split
