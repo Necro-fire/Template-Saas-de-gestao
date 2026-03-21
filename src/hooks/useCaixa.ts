@@ -128,10 +128,19 @@ export async function addMovimentacao(
 }
 
 export async function removeCaixaHistorico(caixaId: string) {
-  const { error } = await (supabase as any)
+  // First delete all movimentações
+  const { error: movError } = await (supabase as any)
     .from("caixa_movimentacoes")
     .delete()
     .eq("caixa_id", caixaId);
 
-  if (error) throw new Error(error.message);
+  if (movError) throw new Error(movError.message);
+
+  // Then delete the caixa record itself
+  const { error: caixaError } = await (supabase as any)
+    .from("caixas")
+    .delete()
+    .eq("id", caixaId);
+
+  if (caixaError) throw new Error(caixaError.message);
 }
