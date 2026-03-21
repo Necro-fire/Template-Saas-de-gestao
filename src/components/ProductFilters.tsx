@@ -99,7 +99,7 @@ export function applyProductFilters<T extends {
 
     if (filters.tipoItem === "normal" && p.is_acessorio) return false;
     if (filters.tipoItem === "acessorio" && !p.is_acessorio) return false;
-    if (filters.tipo !== "all" && p.tipo_produto_id !== filters.tipo) return false;
+    
 
     if (filters.categoriaIdade !== "all" && p.categoria_idade !== filters.categoriaIdade) return false;
     if (filters.genero !== "all" && p.genero !== filters.genero) return false;
