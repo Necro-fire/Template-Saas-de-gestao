@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Package, Pencil, Trash2, Tag, ShoppingCart } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, type DbProduct } from "@/hooks/useSupabaseData";
-import { useProductTypes } from "@/hooks/useProductTypes";
 import { ProductFormDialog } from "@/components/ProductFormDialog";
-import { ProductTypesDialog } from "@/components/ProductTypesDialog";
-import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel, getCategoryMin } from "@/components/ProductFilters";
+import { ProductFilters, useProductFilters, applyProductFilters, getStockLevel } from "@/components/ProductFilters";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
