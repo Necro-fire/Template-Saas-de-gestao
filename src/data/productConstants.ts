@@ -35,21 +35,21 @@ export const MATERIAIS_HASTE = [
 export const MATERIAIS = MATERIAIS_ARO;
 
 export const TIPOS_LENTE = [
-  "Receituário",
-  "Preto Total",
-  "Preto Degradê",
-  "Marrom Total",
-  "Marrom Degradê",
-  "Night Drive (Amarela)",
-  "Rosa",
   "Azul",
-  "Espelhado Laranja",
+  "Colorido",
   "Espelhado Amarelo",
   "Espelhado Azul",
+  "Espelhado Laranja",
   "Espelhado Prata",
   "G15 (Verde)",
   "G15 (Verde Degradê)",
-  "Colorido",
+  "Marrom Degradê",
+  "Marrom Total",
+  "Night Drive (Amarela)",
+  "Preto Degradê",
+  "Preto Total",
+  "Receituário",
+  "Rosa",
 ] as const;
 
 export const MEDIDAS_LENTE = { min: 40, max: 64 } as const;
