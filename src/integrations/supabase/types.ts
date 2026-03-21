@@ -721,6 +721,7 @@ export type Database = {
       }
       venda_items: {
         Row: {
+          custo_unitario: number
           id: string
           product_code: string
           product_model: string
@@ -731,6 +732,7 @@ export type Database = {
           venda_id: string
         }
         Insert: {
+          custo_unitario?: number
           id?: string
           product_code?: string
           product_model?: string
@@ -741,6 +743,7 @@ export type Database = {
           venda_id: string
         }
         Update: {
+          custo_unitario?: number
           id?: string
           product_code?: string
           product_model?: string

@@ -87,6 +87,7 @@ export interface DbVendaItem {
   quantity: number;
   unit_price: number;
   total: number;
+  custo_unitario: number;
 }
 
 export interface DbEstoque {
