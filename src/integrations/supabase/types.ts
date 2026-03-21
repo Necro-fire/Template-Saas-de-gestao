@@ -163,6 +163,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          bairro: string
           city: string
           cnpj: string
           created_at: string
@@ -183,6 +184,7 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          bairro?: string
           city?: string
           cnpj?: string
           created_at?: string
@@ -203,6 +205,7 @@ export type Database = {
           whatsapp?: string
         }
         Update: {
+          bairro?: string
           city?: string
           cnpj?: string
           created_at?: string
