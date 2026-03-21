@@ -49,7 +49,9 @@ export default function Funcionarios() {
   const [viewingFunc, setViewingFunc] = useState<Funcionario | null>(null);
   const [deletingFunc, setDeletingFunc] = useState<Funcionario | null>(null);
   const { selectedFilial } = useFilial();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission } = useAuth();
+  const canCreate = hasPermission('funcionarios', 'create');
+  const canEdit = hasPermission('funcionarios', 'edit');
 
   // Form state
   const [nome, setNome] = useState('');
