@@ -10,8 +10,10 @@ export const ESTILOS = [
 ] as const;
 
 export const CORES_SOLIDAS = [
-  "Branco", "Cinza", "Preto", "Transparente", "Verde", "Vermelho",
-  "Azul", "Marrom", "Rosa", "Bege", "Roxo", "Vinho", "Tartaruga", "Oncinha",
+  "Amarelo", "Azul", "Bege", "Branco", "Champanhe", "Cinza", "Dourado",
+  "Grafite", "Laranja", "Lilás", "Marrom", "Oncinha", "Prata", "Preto",
+  "Rosa", "Rose Gold", "Roxo", "Tartaruga", "Transparente", "Verde",
+  "Vermelho", "Vinho",
 ] as const;
 
 export const CORES_DEGRADE = [
