@@ -148,7 +148,22 @@ export default function PDV() {
   const finalizeSale = async () => {
     if (!selectedClient) { toast.error("Selecione um cliente"); return; }
     if (cart.length === 0) { toast.error("Adicione produtos"); return; }
-    if (!paymentMethod) { toast.error("Selecione forma de pagamento"); return; }
+
+    if (isSplitPayment) {
+      if (paymentEntries.length === 0) { toast.error("Adicione ao menos uma forma de pagamento"); return; }
+      const totalPaid = paymentEntries.reduce((s, e) => s + e.amount, 0);
+      const diff = Math.abs(totalPaid - subtotal);
+      if (diff > 0.01) {
+        if (totalPaid < subtotal) {
+          toast.error("Não é possível finalizar: valor pago é inferior ao total da compra.");
+        } else {
+          toast.error("Não é possível finalizar: valor pago excede o total da compra.");
+        }
+        return;
+      }
+    } else {
+      if (!paymentMethod) { toast.error("Selecione forma de pagamento"); return; }
+    }
 
     const client = clients.find(c => c.id === selectedClient);
     const filialId = selectedFilial === "all" ? "1" : selectedFilial;
