@@ -223,7 +223,7 @@ export default function Funcionarios() {
             <h1 className="text-title font-semibold tracking-tighter">Funcionários</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} funcionários</p>
           </div>
-          {isAdmin && (
+          {canCreate && (
             <Button size="sm" className="gap-1.5" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               Novo Funcionário
