@@ -592,7 +592,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    {TIPOS_LENTE.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
