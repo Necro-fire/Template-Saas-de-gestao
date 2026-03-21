@@ -401,9 +401,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         <div className="space-y-4">
           {/* Duplicate Detection Banner */}
           {duplicateInfo && (
-            <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-              <p className="text-caption text-warning">{duplicateInfo}</p>
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <p className="text-caption text-destructive">{duplicateInfo}</p>
             </div>
           )}
 
