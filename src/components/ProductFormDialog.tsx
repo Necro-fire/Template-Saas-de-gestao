@@ -329,12 +329,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         const filials = filial === "all" ? ["1", "2", "3"] : [filial];
 
         for (const fId of filials) {
-          const existing = await findProductByHash(hash, fId);
-
-          if (existing) {
-            await upsertEstoque(existing.id, fId, qty);
-            toast.success(`Produto "${existing.model}" já existe na filial ${fId}. +${qty} unidades adicionadas ao estoque!`);
-          } else {
             const codes = await generateProductCodes();
 
             const baseData = {
@@ -384,7 +378,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 ? `Produto cadastrado na filial ${fId}!`
                 : `Produto cadastrado! Código de barras: ${codes.barcode}`
             );
-          }
         }
       }
 
