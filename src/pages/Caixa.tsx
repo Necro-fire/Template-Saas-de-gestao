@@ -95,10 +95,10 @@ export default function Caixa() {
     if (!user || selectedFilial === "all") return;
     setSubmitting(true);
     try {
-      await abrirCaixa(selectedFilial, parseFloat(valorAbertura) || 0, user.id, userName);
+      await abrirCaixa(selectedFilial, valorAbertura, user.id, userName);
       toast.success("Caixa aberto com sucesso!");
       setOpenDialog(null);
-      setValorAbertura("");
+      setValorAbertura(0);
     } catch (e: any) {
       toast.error(e.message);
     } finally { setSubmitting(false); }
