@@ -163,6 +163,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
   label: string; value: string; onValueChange: (v: string) => void;
   options: readonly string[] | string[]; allLabel?: string;
 }) {
+  const sorted = [...options].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   return (
     <div className="space-y-1">
       <Label className="text-caption">{label}</Label>
@@ -172,7 +173,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">{allLabel}</SelectItem>
-          {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          {sorted.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
