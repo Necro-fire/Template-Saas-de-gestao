@@ -49,7 +49,8 @@ export default function PDV() {
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
-  const { user, profile } = useAuth();
+  const { user, profile, hasPermission } = useAuth();
+  const canSell = hasPermission('pdv', 'sell');
   const searchRef = useRef<HTMLInputElement>(null);
   const [pendingFilial, setPendingFilial] = useState<string | null>(null);
 
