@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Plus, Users, Pencil, Trash2, History } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
