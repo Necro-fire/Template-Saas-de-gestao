@@ -358,7 +358,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               hash_produto: hash,
               ncm,
               ...accessoryFields,
-              ...wholesaleData,
             };
 
             const { data: newProduct, error } = await (supabase as any).from("produtos").insert(baseData).select().single();
