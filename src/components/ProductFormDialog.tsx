@@ -49,7 +49,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [saving, setSaving] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: tipos } = useProductTypes();
+  
 
   // Frame-specific fields
   const [categoriaIdade, setCategoriaIdade] = useState("");
