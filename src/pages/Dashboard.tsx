@@ -28,6 +28,15 @@ export default function Dashboard() {
   const activeSales = filteredSales.filter(s => s.status !== "cancelada");
   const salesTotalValue = activeSales.reduce((acc, s) => acc + Number(s.total), 0);
 
+  // Calculate profit from venda_items linked to active sales
+  const activeSaleIds = new Set(activeSales.map(s => s.id));
+  const activeItems = vendaItems.filter(vi => activeSaleIds.has(vi.venda_id));
+  const totalProfit = activeItems.reduce((acc, vi) => {
+    const custo = Number(vi.custo_unitario) || 0;
+    return acc + (Number(vi.unit_price) - custo) * vi.quantity;
+  }, 0);
+  const avgProfitPerSale = activeSales.length > 0 ? totalProfit / activeSales.length : 0;
+
   const activeProducts = products.filter(p => p.status !== "inativo");
   const alerts = buildConfigAlerts(products, alertConfigs, selectedFilial, filiais);
   const totalStock = activeProducts.reduce((acc, p) => acc + p.stock, 0);
