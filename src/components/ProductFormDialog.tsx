@@ -17,7 +17,7 @@ import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { generateProductHash } from "@/lib/productHash";
 import {
-  CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
+  CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
   MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE as MEDIDAS_HASTE_RANGE,
 } from "@/data/productConstants";
