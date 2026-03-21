@@ -252,6 +252,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       const hash = generateProductHash({
         referencia: referencia.trim(),
+        classificacao,
         categoriaIdade,
         genero,
         estilo,
