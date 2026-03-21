@@ -277,8 +277,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         const baseData = {
           referencia: referencia.trim(),
           model: name.trim(),
-          retail_price: Number(price),
-          custo: Number(custo) || 0,
+          retail_price: price,
+          custo: custo || 0,
           description: detail.trim(),
           image_url: imageUrl,
           filial_id: filial,
