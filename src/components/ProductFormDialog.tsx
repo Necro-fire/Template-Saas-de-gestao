@@ -240,9 +240,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         imageUrl = await uploadImage(imageFile);
       }
 
-      const wholesaleData = wholesaleEnabled
-        ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
-        : { wholesale_price: 0, wholesale_min_qty: 0 };
 
       const subcatComputed = buildSubcategoria();
 
