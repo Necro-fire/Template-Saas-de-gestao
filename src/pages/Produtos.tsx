@@ -26,13 +26,8 @@ export default function Produtos() {
   const canDelete = hasPermission('produtos', 'delete');
 
   const { data: products } = useProducts();
-  const { data: tipos } = useProductTypes();
 
   const getFilialName = (filialId: string) => filiais.find(f => f.id === filialId)?.name || filialId;
-  const getTypeName = (tipoProdutoId: string | null) => {
-    if (!tipoProdutoId) return null;
-    return tipos.find(t => t.id === tipoProdutoId)?.nome_tipo || null;
-  };
 
   const filtered = useMemo(() => applyProductFilters(products, filters), [products, filters]);
 
