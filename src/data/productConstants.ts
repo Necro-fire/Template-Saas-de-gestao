@@ -5,8 +5,8 @@ export const CATEGORIAS_IDADE = ["Adulto", "Infantil"] as const;
 export const GENEROS = ["Masculino", "Feminino", "Unissex"] as const;
 
 export const ESTILOS = [
-  "Gatinho", "Quadrado", "Aviador", "Redondo", "Retrô",
-  "Esportivo", "Fio de Nylon", "Parafusada (Parafuso)", "Parafusada (Bucha)",
+  "Aviador", "Esportivo", "Fio de Nylon", "Gatinho", "Parafusada (Bucha)",
+  "Parafusada (Parafuso)", "Quadrado", "Redondo", "Retrô",
 ] as const;
 
 export const CORES_SOLIDAS = [
