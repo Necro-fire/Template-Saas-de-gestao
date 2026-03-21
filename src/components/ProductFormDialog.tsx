@@ -579,8 +579,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Input type="number" min={MEDIDAS_PONTE.min} max={MEDIDAS_PONTE.max} value={bridgeSize} onChange={(e) => setBridgeSize(e.target.value)} className="mt-1.5" />
                   </div>
                   <div>
-                    <Label>Comprimento da Haste ({MEDIDAS_HASTE.min}-{MEDIDAS_HASTE.max})</Label>
-                    <Input type="number" min={MEDIDAS_HASTE.min} max={MEDIDAS_HASTE.max} value={templeSize} onChange={(e) => setTempleSize(e.target.value)} className="mt-1.5" />
+                    <Label>Comprimento da Haste ({MEDIDAS_HASTE_RANGE.min}-{MEDIDAS_HASTE_RANGE.max})</Label>
+                    <Input type="number" min={MEDIDAS_HASTE_RANGE.min} max={MEDIDAS_HASTE_RANGE.max} value={templeSize} onChange={(e) => setTempleSize(e.target.value)} className="mt-1.5" />
                   </div>
                 </div>
               </fieldset>
