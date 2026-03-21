@@ -118,7 +118,7 @@ export function applyProductFilters<T extends {
     if (filters.genero !== "all" && p.genero !== filters.genero) return false;
     if (filters.estilo !== "all" && p.estilo !== filters.estilo) return false;
     if (filters.corArmacao !== "all" && p.cor_armacao !== filters.corArmacao) return false;
-    if (filters.material !== "all" && p.material !== filters.material) return false;
+    
     if (filters.materialAro !== "all" && p.material_aro !== filters.materialAro) return false;
     if (filters.materialHaste !== "all" && p.material_haste !== filters.materialHaste) return false;
     if (filters.tipoLente !== "all" && p.tipo_lente !== filters.tipoLente) return false;
