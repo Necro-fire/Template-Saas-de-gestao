@@ -16,6 +16,7 @@ import { useProducts, useClients, createVenda, type DbProduct } from "@/hooks/us
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBlocker } from "react-router-dom";
 import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
+import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
 import {
   AlertDialog,
   AlertDialogAction,
