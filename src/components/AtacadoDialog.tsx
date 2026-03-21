@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFilial } from "@/contexts/FilialContext";
 import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
 import { useProducts } from "@/hooks/useSupabaseData";
-import { useProductTypes } from "@/hooks/useProductTypes";
+import { ESTILOS } from "@/data/productConstants";
 import { toast } from "sonner";
 
 interface AtacadoDialogProps {
