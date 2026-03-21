@@ -241,12 +241,14 @@ export default function Estoque() {
                         ) : (
                           <>
                             <span className="text-caption text-muted-foreground tabular-nums">mín. alerta: {tipo.estoque_minimo_alerta}</span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                              setEditingTipoId(tipo.id);
-                              setEditTipoValue(String(tipo.estoque_minimo_alerta));
-                            }}>
-                              <Pencil className="h-3 w-3 text-muted-foreground" />
-                            </Button>
+                            {canEdit && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                setEditingTipoId(tipo.id);
+                                setEditTipoValue(String(tipo.estoque_minimo_alerta));
+                              }}>
+                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            )}
                           </>
                         )}
                       </div>

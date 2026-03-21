@@ -450,17 +450,19 @@ export default function Caixa() {
                               >
                                 Ver
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs text-destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCaixaParaRemoverHistorico(c);
-                                }}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              {canManage && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCaixaParaRemoverHistorico(c);
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>

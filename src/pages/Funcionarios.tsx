@@ -266,15 +266,15 @@ export default function Funcionarios() {
                     <Badge variant={func.status === 'active' ? 'secondary' : 'outline'} className="text-caption">
                       {func.status === 'active' ? 'Ativo' : 'Inativo'}
                     </Badge>
-                    {isAdmin && (
-                      <>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </>
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     )}
                   </div>
                 </div>

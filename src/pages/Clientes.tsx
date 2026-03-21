@@ -228,10 +228,12 @@ export default function Clientes() {
             <Users className="h-12 w-12 mb-3 opacity-30" />
             <p className="text-ui font-medium">Nenhum cliente cadastrado</p>
             <p className="text-caption mt-1">Cadastre seu primeiro cliente para começar</p>
-            <Button size="sm" className="mt-4 gap-1.5" onClick={handleNew}>
-              <Plus className="h-4 w-4" />
-              Adicionar Cliente
-            </Button>
+            {canCreate && (
+              <Button size="sm" className="mt-4 gap-1.5" onClick={handleNew}>
+                <Plus className="h-4 w-4" />
+                Adicionar Cliente
+              </Button>
+            )}
           </div>
         )}
       </div>

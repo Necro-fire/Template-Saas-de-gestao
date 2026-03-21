@@ -411,7 +411,7 @@ export default function PDV() {
               <Button variant="outline" className="flex-1 h-10" onClick={() => setCart([])}>
                 Cancelar
               </Button>
-              <Button className="flex-1 h-10" onClick={finalizeSale} disabled={submitting}>
+              <Button className="flex-1 h-10" onClick={finalizeSale} disabled={submitting || !canSell} title={!canSell ? "Sem permissão para vender" : undefined}>
                 {submitting ? "Processando..." : "Finalizar (F2)"}
               </Button>
             </div>

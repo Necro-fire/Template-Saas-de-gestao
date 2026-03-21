@@ -16,10 +16,12 @@ export default function Malas() {
             <h1 className="text-title font-semibold tracking-tighter">Malas</h1>
             <p className="text-ui text-muted-foreground">Controle de malas dos representantes</p>
           </div>
-          <Button size="sm" className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Nova Mala
-          </Button>
+          {canManage && (
+            <Button size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              Nova Mala
+            </Button>
+          )}
         </div>
 
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
