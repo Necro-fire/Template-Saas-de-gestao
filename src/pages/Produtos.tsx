@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Plus, Package, Pencil, Trash2, Tag } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, Tag, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { AtacadoDialog } from "@/components/AtacadoDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFilial } from "@/contexts/FilialContext";
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 export default function Produtos() {
   const [showForm, setShowForm] = useState(false);
   const [showTypes, setShowTypes] = useState(false);
+  const [showAtacado, setShowAtacado] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
   const { selectedFilial, filiais } = useFilial();
@@ -99,6 +101,12 @@ export default function Produtos() {
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
           <div className="flex gap-2">
+            {canCreate && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAtacado(true)}>
+                <ShoppingCart className="h-4 w-4" />
+                Atacado
+              </Button>
+            )}
             {canCreate && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
                 <Tag className="h-4 w-4" />
@@ -216,6 +224,7 @@ export default function Produtos() {
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
         <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
+        <AtacadoDialog open={showAtacado} onOpenChange={setShowAtacado} />
         
 
         <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>

@@ -227,6 +227,53 @@ export type Database = {
         }
         Relationships: []
       }
+      descontos_atacado: {
+        Row: {
+          categoria: string
+          created_at: string
+          filial_id: string
+          id: string
+          produto_id: string | null
+          quantidade_minima: number
+          status: string
+          tipo_desconto: string
+          tipo_valor: string
+          valor_desconto: number
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          filial_id?: string
+          id?: string
+          produto_id?: string | null
+          quantidade_minima?: number
+          status?: string
+          tipo_desconto?: string
+          tipo_valor?: string
+          valor_desconto?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          filial_id?: string
+          id?: string
+          produto_id?: string | null
+          quantidade_minima?: number
+          status?: string
+          tipo_desconto?: string
+          tipo_valor?: string
+          valor_desconto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "descontos_atacado_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ambiente: string
