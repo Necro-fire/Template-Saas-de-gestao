@@ -58,3 +58,39 @@ export const ESTADOS_BR = [
   "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
   "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"
 ] as const;
+
+/**
+ * Format an integer (cents) as Brazilian currency string: "1.234,56"
+ * Input is the raw cents value (e.g. 12345 → "123,45")
+ */
+export function formatCentsToDisplay(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  const intPart = Math.floor(abs / 100).toString();
+  const decPart = (abs % 100).toString().padStart(2, "0");
+  // Add thousand separators
+  const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}${withSep},${decPart}`;
+}
+
+/**
+ * Mask a raw input string as Brazilian currency.
+ * Strips non-digits, treats as cents, and formats.
+ * Returns formatted string like "1.234,56"
+ */
+export function maskCurrency(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "0,00";
+  const cents = parseInt(digits, 10);
+  return formatCentsToDisplay(cents);
+}
+
+/**
+ * Parse a masked currency string back to a number (float).
+ * "1.234,56" → 1234.56
+ */
+export function parseCurrency(masked: string): number {
+  const digits = masked.replace(/\D/g, "");
+  if (!digits) return 0;
+  return parseInt(digits, 10) / 100;
+}

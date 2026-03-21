@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImagePlus, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { NumericStepper } from "@/components/ui/numeric-stepper";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,8 +38,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [isAcessorio, setIsAcessorio] = useState(false);
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [custo, setCusto] = useState("");
+  const [price, setPrice] = useState<number>(0);
+  const [custo, setCusto] = useState<number>(0);
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [quantidade, setQuantidade] = useState("1");
@@ -86,8 +87,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setIsAcessorio(product.is_acessorio || false);
       setReferencia(product.referencia || "");
       setName(product.model);
-      setPrice(String(product.retail_price));
-      setCusto(product.custo ? String(product.custo) : "");
+      setPrice(Number(product.retail_price) || 0);
+      setCusto(Number(product.custo) || 0);
       setDetail(product.description || "");
       setFilial(filialLocked ? selectedFilial : product.filial_id);
       setQuantidade(String(product.stock));
@@ -121,8 +122,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setIsAcessorio(false);
     setReferencia("");
     setName("");
-    setPrice("");
-    setCusto("");
+    setPrice(0);
+    setCusto(0);
     setDetail("");
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
@@ -217,7 +218,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const handleSave = async () => {
     if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
     if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
-    if (!price || Number(price) <= 0) { toast.error("Informe um preço válido"); return; }
+    if (!price || price <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
@@ -277,8 +278,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         const baseData = {
           referencia: referencia.trim(),
           model: name.trim(),
-          retail_price: Number(price),
-          custo: Number(custo) || 0,
+          retail_price: price,
+          custo: custo || 0,
           description: detail.trim(),
           image_url: imageUrl,
           filial_id: filial,
@@ -337,8 +338,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               barcode: codes.barcode,
               referencia: referencia.trim(),
               model: name.trim(),
-              retail_price: Number(price),
-              custo: Number(custo) || 0,
+              retail_price: price,
+              custo: custo || 0,
               description: detail.trim(),
               image_url: imageUrl,
               filial_id: fId,
@@ -709,11 +710,11 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="product-price">Preço (R$) *</Label>
-              <Input id="product-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
+              <CurrencyInput id="product-price" value={price} onValueChange={setPrice} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
               <Label htmlFor="product-custo">Custo (R$)</Label>
-              <Input id="product-custo" type="number" min="0" step="0.01" value={custo} onChange={(e) => setCusto(e.target.value)} placeholder="0,00" className="mt-1.5" />
+              <CurrencyInput id="product-custo" value={custo} onValueChange={setCusto} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
               <Label>{isEditing ? "Quantidade em estoque" : "Quantidade a adicionar"}</Label>

@@ -3,6 +3,7 @@ import { Wallet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Lock, Unlock, Cloc
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,11 +39,11 @@ export default function Caixa() {
 
   const [selectedCaixa, setSelectedCaixa] = useState<DbCaixa | null>(null);
   const [openDialog, setOpenDialog] = useState<"abrir" | "fechar" | "movimento" | null>(null);
-  const [valorAbertura, setValorAbertura] = useState("");
-  const [valorFechamento, setValorFechamento] = useState("");
+  const [valorAbertura, setValorAbertura] = useState<number>(0);
+  const [valorFechamento, setValorFechamento] = useState<number>(0);
   const [obsFechamento, setObsFechamento] = useState("");
   const [movTipo, setMovTipo] = useState<"sangria" | "reforco" | "despesa">("sangria");
-  const [movValor, setMovValor] = useState("");
+  const [movValor, setMovValor] = useState<number>(0);
   const [movForma, setMovForma] = useState("dinheiro");
   const [movDesc, setMovDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -94,10 +95,10 @@ export default function Caixa() {
     if (!user || selectedFilial === "all") return;
     setSubmitting(true);
     try {
-      await abrirCaixa(selectedFilial, parseFloat(valorAbertura) || 0, user.id, userName);
+      await abrirCaixa(selectedFilial, valorAbertura, user.id, userName);
       toast.success("Caixa aberto com sucesso!");
       setOpenDialog(null);
-      setValorAbertura("");
+      setValorAbertura(0);
     } catch (e: any) {
       toast.error(e.message);
     } finally { setSubmitting(false); }
@@ -107,11 +108,11 @@ export default function Caixa() {
     if (!user || !caixaAberto) return;
     setSubmitting(true);
     try {
-      const valorInf = parseFloat(valorFechamento) || 0;
+      const valorInf = valorFechamento;
       await fecharCaixa(caixaAberto.id, valorInf, summary.saldo, user.id, userName, obsFechamento);
       toast.success("Caixa fechado com sucesso!");
       setOpenDialog(null);
-      setValorFechamento("");
+      setValorFechamento(0);
       setObsFechamento("");
     } catch (e: any) {
       toast.error(e.message);
@@ -120,7 +121,7 @@ export default function Caixa() {
 
   async function handleAddMov() {
     if (!user || !caixaAberto) return;
-    const valor = parseFloat(movValor);
+    const valor = movValor;
     if (!valor || valor <= 0) { toast.error("Informe um valor válido."); return; }
     if (!movDesc.trim()) { toast.error("Informe uma descrição/justificativa."); return; }
     setSubmitting(true);
@@ -128,7 +129,7 @@ export default function Caixa() {
       await addMovimentacao(caixaAberto.id, movTipo, valor, movForma, movDesc.trim(), user.id, userName);
       toast.success("Movimentação registrada!");
       setOpenDialog(null);
-      setMovValor("");
+      setMovValor(0);
       setMovDesc("");
     } catch (e: any) {
       toast.error(e.message);
@@ -427,7 +428,7 @@ export default function Caixa() {
           <div className="space-y-3">
             <div>
               <Label>Valor de abertura (troco)</Label>
-              <Input type="number" min="0" step="0.01" placeholder="0,00" value={valorAbertura} onChange={e => setValorAbertura(e.target.value)} />
+              <CurrencyInput placeholder="0,00" value={valorAbertura} onValueChange={setValorAbertura} />
             </div>
             <p className="text-xs text-muted-foreground">Filial: {filialLabel} | Responsável: {userName}</p>
           </div>
@@ -465,15 +466,15 @@ export default function Caixa() {
             </div>
             <div>
               <Label>Valor contado em dinheiro</Label>
-              <Input type="number" min="0" step="0.01" placeholder="0,00" value={valorFechamento} onChange={e => setValorFechamento(e.target.value)} />
+              <CurrencyInput placeholder="0,00" value={valorFechamento} onValueChange={setValorFechamento} />
             </div>
-            {valorFechamento && (
-              <div className={`p-3 rounded-md border-l-4 ${parseFloat(valorFechamento) - summary.saldo === 0 ? "border-l-accent bg-accent/5" : "border-l-destructive bg-destructive/5"}`}>
+            {valorFechamento > 0 && (
+              <div className={`p-3 rounded-md border-l-4 ${valorFechamento - summary.saldo === 0 ? "border-l-accent bg-accent/5" : "border-l-destructive bg-destructive/5"}`}>
                 <p className="text-sm font-semibold">
-                  Diferença: {formatCurrency((parseFloat(valorFechamento) || 0) - summary.saldo)}
+                  Diferença: {formatCurrency(valorFechamento - summary.saldo)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {(parseFloat(valorFechamento) || 0) - summary.saldo === 0 ? "Caixa batendo ✓" : (parseFloat(valorFechamento) || 0) > summary.saldo ? "Sobra no caixa" : "Quebra no caixa"}
+                  {valorFechamento - summary.saldo === 0 ? "Caixa batendo ✓" : valorFechamento > summary.saldo ? "Sobra no caixa" : "Quebra no caixa"}
                 </p>
               </div>
             )}
@@ -484,7 +485,7 @@ export default function Caixa() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleFecharCaixa} disabled={submitting || !valorFechamento}>{submitting ? "Fechando..." : "Confirmar Fechamento"}</Button>
+            <Button variant="destructive" onClick={handleFecharCaixa} disabled={submitting || valorFechamento <= 0}>{submitting ? "Fechando..." : "Confirmar Fechamento"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -509,7 +510,7 @@ export default function Caixa() {
             </div>
             <div>
               <Label>Valor</Label>
-              <Input type="number" min="0.01" step="0.01" placeholder="0,00" value={movValor} onChange={e => setMovValor(e.target.value)} />
+              <CurrencyInput placeholder="0,00" value={movValor} onValueChange={setMovValor} />
             </div>
             <div>
               <Label>Forma de pagamento</Label>

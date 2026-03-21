@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Filter, X, Search, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -393,10 +394,10 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
               <div className="space-y-1">
                 <Label className="text-caption">Faixa de Preço (R$)</Label>
                 <div className="flex gap-2">
-                  <Input type="number" min="0" placeholder="Mín" value={draft.priceMin}
-                    onChange={(e) => { setDraft({ ...draft, priceMin: e.target.value }); setPriceError(""); }} className="h-8 text-sm" />
-                  <Input type="number" min="0" placeholder="Máx" value={draft.priceMax}
-                    onChange={(e) => { setDraft({ ...draft, priceMax: e.target.value }); setPriceError(""); }} className="h-8 text-sm" />
+                  <CurrencyInput placeholder="Mín" value={draft.priceMin ? Number(draft.priceMin) : 0}
+                    onValueChange={(v) => { setDraft({ ...draft, priceMin: v > 0 ? String(v) : "" }); setPriceError(""); }} className="h-8 text-sm" />
+                  <CurrencyInput placeholder="Máx" value={draft.priceMax ? Number(draft.priceMax) : 0}
+                    onValueChange={(v) => { setDraft({ ...draft, priceMax: v > 0 ? String(v) : "" }); setPriceError(""); }} className="h-8 text-sm" />
                 </div>
                 {priceError && <p className="text-[11px] text-destructive">{priceError}</p>}
               </div>
