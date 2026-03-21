@@ -12,7 +12,7 @@ import { useFilial } from "@/contexts/FilialContext";
 import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
-  MATERIAIS, TIPOS_LENTE,
+  MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
 } from "@/data/productConstants";
 import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
 
