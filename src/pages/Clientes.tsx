@@ -28,7 +28,6 @@ export default function Clientes() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteStep, setDeleteStep] = useState<"idle" | "has-purchases" | "final" | "simple">("idle");
   const [checkingPurchases, setCheckingPurchases] = useState(false);
-  const [isAdvancingDeleteStep, setIsAdvancingDeleteStep] = useState(false);
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
@@ -72,7 +71,6 @@ export default function Clientes() {
 
   const startDelete = async (clientId: string) => {
     setDeletingId(clientId);
-    setIsAdvancingDeleteStep(false);
     setCheckingPurchases(true);
     try {
       const { count } = await (supabase as any)
@@ -106,13 +104,11 @@ export default function Clientes() {
     }
     setDeletingId(null);
     setDeleteStep("idle");
-    setIsAdvancingDeleteStep(false);
   };
 
   const cancelDelete = () => {
     setDeletingId(null);
     setDeleteStep("idle");
-    setIsAdvancingDeleteStep(false);
   };
 
   const handleNew = () => {
@@ -241,15 +237,7 @@ export default function Clientes() {
       {/* Step 1: Client has purchases warning */}
       <AlertDialog
         open={deleteStep === "has-purchases"}
-        onOpenChange={(v) => {
-          if (!v) {
-            if (isAdvancingDeleteStep) {
-              setIsAdvancingDeleteStep(false);
-              return;
-            }
-            cancelDelete();
-          }
-        }}
+        onOpenChange={() => {}}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -261,8 +249,8 @@ export default function Clientes() {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                setIsAdvancingDeleteStep(true);
+              onClick={(e) => {
+                e.preventDefault();
                 setDeleteStep("final");
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -274,7 +262,7 @@ export default function Clientes() {
       </AlertDialog>
 
       {/* Step 2: Final confirmation when client has purchases */}
-      <AlertDialog open={deleteStep === "final"} onOpenChange={(v) => !v && cancelDelete()}>
+      <AlertDialog open={deleteStep === "final"} onOpenChange={() => {}}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
@@ -284,7 +272,13 @@ export default function Clientes() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -292,7 +286,7 @@ export default function Clientes() {
       </AlertDialog>
 
       {/* Simple confirmation when client has no purchases */}
-      <AlertDialog open={deleteStep === "simple"} onOpenChange={(v) => !v && cancelDelete()}>
+      <AlertDialog open={deleteStep === "simple"} onOpenChange={() => {}}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
@@ -302,7 +296,13 @@ export default function Clientes() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -590,9 +590,7 @@ export default function Caixa() {
 
       <AlertDialog
         open={!!caixaParaRemoverHistorico}
-        onOpenChange={(open) => {
-          if (!open && !removingHistory) setCaixaParaRemoverHistorico(null);
-        }}
+        onOpenChange={() => {}}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -602,9 +600,17 @@ export default function Caixa() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removingHistory}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={removingHistory}
+              onClick={() => setCaixaParaRemoverHistorico(null)}
+            >
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleRemoveCaixaHistory}
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveCaixaHistory();
+              }}
               disabled={removingHistory}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
