@@ -336,7 +336,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                       label="Tipo"
                       value={draft.tipoAcessorio}
                       onValueChange={(v) => setDraft({ ...draft, tipoAcessorio: v })}
-                      options={tiposAcFiltro.map(t => t.nome)}
+                      options={tiposAcFiltro.map(t => t.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'))}
                     />
                   )}
                   <div className="space-y-1">
