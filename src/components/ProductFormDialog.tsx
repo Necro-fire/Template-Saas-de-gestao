@@ -217,7 +217,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
   const handleSave = async () => {
     if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
-    if (!name.trim()) { toast.error("Informe o nome do produto"); return; }
     if (!price || price <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
@@ -277,7 +276,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       if (isEditing) {
         const baseData = {
           referencia: referencia.trim(),
-          model: name.trim(),
+          model: referencia.trim(),
           retail_price: price,
           custo: custo || 0,
           description: detail.trim(),
@@ -337,7 +336,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               code: codes.code,
               barcode: codes.barcode,
               referencia: referencia.trim(),
-              model: name.trim(),
+              model: referencia.trim(),
               retail_price: price,
               custo: custo || 0,
               description: detail.trim(),
@@ -442,10 +441,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
             </div>
             <div>
-              <Label htmlFor="product-name">Nome do produto *</Label>
-              <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
-            </div>
-            <div>
               <Label htmlFor="ncm">Código NCM *</Label>
               <Input
                 id="ncm"
@@ -486,7 +481,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sem tipo</SelectItem>
-                  {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+                  {[...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, 'pt-BR')).map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -504,7 +499,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={categoriaIdade} onValueChange={setCategoriaIdade}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {CATEGORIAS_IDADE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {[...CATEGORIAS_IDADE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -513,7 +508,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={genero} onValueChange={setGenero}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {GENEROS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        {[...GENEROS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -526,7 +521,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 <Select value={estilo} onValueChange={setEstilo}>
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o estilo" /></SelectTrigger>
                   <SelectContent>
-                    {ESTILOS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    {[...ESTILOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -537,7 +532,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 <Select value={corArmacao} onValueChange={setCorArmacao}>
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
                   <SelectContent>
-                    {TODAS_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {[...TODAS_CORES].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -551,7 +546,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={materialAro} onValueChange={setMaterialAro}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {MATERIAIS_ARO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {[...MATERIAIS_ARO].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -560,7 +555,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={materialHaste} onValueChange={setMaterialHaste}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {MATERIAIS_HASTE.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {[...MATERIAIS_HASTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -597,7 +592,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    {TIPOS_LENTE.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -624,7 +619,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 >
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
                   <SelectContent>
-                    {ACESSORIOS_CATEGORIAS.map(c => (
+                    {[...ACESSORIOS_CATEGORIAS].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => (
                       <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>
                     ))}
                   </SelectContent>

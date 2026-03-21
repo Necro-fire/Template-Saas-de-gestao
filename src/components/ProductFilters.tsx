@@ -108,7 +108,7 @@ export function applyProductFilters<T extends {
 
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      if (!p.model.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !p.color.toLowerCase().includes(q)) return false;
+      if (!(p as any).referencia?.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !p.color.toLowerCase().includes(q)) return false;
     }
 
     if (filters.tipoItem === "normal" && p.is_acessorio) return false;
@@ -163,6 +163,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
   label: string; value: string; onValueChange: (v: string) => void;
   options: readonly string[] | string[]; allLabel?: string;
 }) {
+  const sorted = [...options].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   return (
     <div className="space-y-1">
       <Label className="text-caption">{label}</Label>
@@ -172,7 +173,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">{allLabel}</SelectItem>
-          {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          {sorted.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
@@ -288,7 +289,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                     <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {tipos.map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
+                      {[...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, 'pt-BR')).map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -327,7 +328,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                     label="Categoria"
                     value={draft.catAcessorio}
                     onValueChange={(v) => setDraft({ ...draft, catAcessorio: v, tipoAcessorio: "all", corAcessorio: "all" })}
-                    options={ACESSORIOS_CATEGORIAS.map(c => c.nome)}
+                    options={[...ACESSORIOS_CATEGORIAS].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => c.nome)}
                     allLabel="Todas"
                   />
                   {tiposAcFiltro.length > 0 && (
@@ -335,7 +336,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                       label="Tipo"
                       value={draft.tipoAcessorio}
                       onValueChange={(v) => setDraft({ ...draft, tipoAcessorio: v })}
-                      options={tiposAcFiltro.map(t => t.nome)}
+                      options={tiposAcFiltro.map(t => t.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'))}
                     />
                   )}
                   <div className="space-y-1">

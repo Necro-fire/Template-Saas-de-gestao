@@ -109,7 +109,6 @@ export default function PDV() {
     if (!search) return active;
     const q = search.toLowerCase();
     return active.filter(p =>
-      p.model.toLowerCase().includes(q) ||
       p.referencia.toLowerCase().includes(q) ||
       (p.barcode && p.barcode.toLowerCase().includes(q))
     );
@@ -124,7 +123,7 @@ export default function PDV() {
       }
       const newQty = qtyInCart + 1;
       if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
-        toast.success(`Atacado aplicado para ${product.model}!`, { duration: 3000 });
+        toast.success(`Atacado aplicado para ${product.referencia}!`, { duration: 3000 });
       }
       return [...prev, { cartId: nextCartId(), product }];
     });
@@ -140,7 +139,7 @@ export default function PDV() {
     if (exactMatch) {
       addToCart(exactMatch);
       setSearch("");
-      toast.success(`${exactMatch.model} adicionado`);
+      toast.success(`${exactMatch.referencia} adicionado`);
     }
   }, [products, addToCart]);
 
@@ -189,7 +188,7 @@ export default function PDV() {
         return {
           produto_id: product.id,
           product_code: product.referencia,
-          product_model: product.model,
+          product_model: product.referencia,
           quantity: count,
           unit_price: price,
           custo_unitario: (product as any).custo ?? 0,
@@ -250,7 +249,7 @@ export default function PDV() {
         if (cart.length > 0) {
           const last = cart[cart.length - 1];
           removeFromCart(last.cartId);
-          toast.info(`${last.product.model} removido`);
+          toast.info(`${last.product.referencia} removido`);
         }
       } else if (e.key === "Escape") {
         e.preventDefault();
@@ -321,14 +320,13 @@ export default function PDV() {
                   <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
                     <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden">
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
+                        <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
                     </div>
                     <div className="mt-2">
-                      <p className="text-caption text-muted-foreground">{product.referencia}</p>
-                      <h3 className="text-ui font-medium truncate">{product.model}</h3>
+                      <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
@@ -367,8 +365,8 @@ export default function PDV() {
               {cart.map(item => (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
-                    <p className="text-ui font-medium truncate">{item.product.model}</p>
-                    <p className="text-caption text-muted-foreground">{item.product.referencia} · {item.product.color}</p>
+                    <p className="text-ui font-medium truncate">{item.product.referencia}</p>
+                    <p className="text-caption text-muted-foreground">{item.product.color}</p>
                   </div>
                   <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {Number(item.product.retail_price).toFixed(0)}</span>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-3 w-3" /></Button>

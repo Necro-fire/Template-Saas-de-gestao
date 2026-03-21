@@ -230,7 +230,7 @@ export function StockAlertConfigDialog() {
                       <SelectValue placeholder="Selecione o estilo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ESTILOS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                      {[...ESTILOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -261,7 +261,7 @@ export function StockAlertConfigDialog() {
                   }}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {ACESSORIOS_CATEGORIAS.map(c => <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>)}
+                      {[...ACESSORIOS_CATEGORIAS].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

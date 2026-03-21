@@ -5,8 +5,8 @@ export const CATEGORIAS_IDADE = ["Adulto", "Infantil"] as const;
 export const GENEROS = ["Masculino", "Feminino", "Unissex"] as const;
 
 export const ESTILOS = [
-  "Gatinho", "Quadrado", "Aviador", "Redondo", "Retrô",
-  "Esportivo", "Fio de Nylon", "Parafusada (Parafuso)", "Parafusada (Bucha)",
+  "Aviador", "Esportivo", "Fio de Nylon", "Gatinho", "Parafusada (Bucha)",
+  "Parafusada (Parafuso)", "Quadrado", "Redondo", "Retrô",
 ] as const;
 
 export const CORES_SOLIDAS = [
@@ -17,39 +17,39 @@ export const CORES_SOLIDAS = [
 ] as const;
 
 export const CORES_DEGRADE = [
-  "Degradê Preto", "Degradê Marrom", "Degradê Rosa",
-  "Degradê Amarelo", "Degradê Cinza", "Degradê Verde", "Degradê Azul",
+  "Degradê Amarelo", "Degradê Azul", "Degradê Cinza", "Degradê Marrom",
+  "Degradê Preto", "Degradê Rosa", "Degradê Verde",
 ] as const;
 
 export const TODAS_CORES = [...CORES_SOLIDAS, ...CORES_DEGRADE] as const;
 
 export const MATERIAIS_ARO = [
-  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal", "Silicone",
+  "Acetato", "Alumínio", "Metal", "Nylon", "Silicone", "Titanium", "TR90",
 ] as const;
 
 export const MATERIAIS_HASTE = [
-  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal", "Silicone", "Gliter",
+  "Acetato", "Alumínio", "Gliter", "Metal", "Nylon", "Silicone", "Titanium", "TR90",
 ] as const;
 
 // Legacy alias
 export const MATERIAIS = MATERIAIS_ARO;
 
 export const TIPOS_LENTE = [
-  "Receituário",
-  "Preto Total",
-  "Preto Degradê",
-  "Marrom Total",
-  "Marrom Degradê",
-  "Night Drive (Amarela)",
-  "Rosa",
   "Azul",
-  "Espelhado Laranja",
+  "Colorido",
   "Espelhado Amarelo",
   "Espelhado Azul",
+  "Espelhado Laranja",
   "Espelhado Prata",
   "G15 (Verde)",
   "G15 (Verde Degradê)",
-  "Colorido",
+  "Marrom Degradê",
+  "Marrom Total",
+  "Night Drive (Amarela)",
+  "Preto Degradê",
+  "Preto Total",
+  "Receituário",
+  "Rosa",
 ] as const;
 
 export const MEDIDAS_LENTE = { min: 40, max: 64 } as const;
