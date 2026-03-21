@@ -198,8 +198,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                   {items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <p className="font-medium text-sm">{item.product_model}</p>
-                        <p className="text-xs text-muted-foreground">{item.product_code}</p>
+                        <p className="font-medium text-sm">{item.product_code}</p>
                       </TableCell>
                       <TableCell className="text-center tabular-nums">{item.quantity}</TableCell>
                       <TableCell className="text-right tabular-nums">R$ {Number(item.unit_price).toFixed(2)}</TableCell>

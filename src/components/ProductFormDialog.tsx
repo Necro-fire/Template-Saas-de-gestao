@@ -441,10 +441,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
             </div>
             <div>
-              <Label htmlFor="product-name">Nome do produto *</Label>
-              <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Armação Ray-Ban RB5154" className="mt-1.5" />
-            </div>
-            <div>
               <Label htmlFor="ncm">Código NCM *</Label>
               <Input
                 id="ncm"

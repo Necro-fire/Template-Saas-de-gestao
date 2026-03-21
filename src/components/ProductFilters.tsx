@@ -108,7 +108,7 @@ export function applyProductFilters<T extends {
 
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      if (!p.model.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !p.color.toLowerCase().includes(q)) return false;
+      if (!(p as any).referencia?.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !p.color.toLowerCase().includes(q)) return false;
     }
 
     if (filters.tipoItem === "normal" && p.is_acessorio) return false;

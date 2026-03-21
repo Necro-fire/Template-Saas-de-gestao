@@ -225,7 +225,7 @@ export default function Produtos() {
                 {deleteCheck === null
                   ? "Verificando dependências..."
                   : deleteCheck.canDelete
-                    ? `O produto "${deletingProduct?.model}" (${deletingProduct?.code}) será removido permanentemente.`
+                    ? `O produto "${deletingProduct?.referencia}" será removido permanentemente.`
                     : deleteCheck.reason}
               </AlertDialogDescription>
             </AlertDialogHeader>
