@@ -199,7 +199,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
     const timeout = setTimeout(checkDuplicate, 500);
     return () => clearTimeout(timeout);
-  }, [referencia, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
+  }, [referencia, classificacao, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
