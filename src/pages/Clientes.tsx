@@ -26,8 +26,9 @@ export default function Clientes() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteStep, setDeleteStep] = useState<"idle" | "has-purchases" | "final">("idle");
+  const [deleteStep, setDeleteStep] = useState<"idle" | "has-purchases" | "final" | "simple">("idle");
   const [checkingPurchases, setCheckingPurchases] = useState(false);
+  const [isAdvancingDeleteStep, setIsAdvancingDeleteStep] = useState(false);
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
@@ -59,6 +60,7 @@ export default function Clientes() {
       email: client.email,
       cep: "",
       endereco: client.endereco || "",
+      bairro: (client as any).bairro || "",
       cidade: client.city || "",
       estado: client.state || "",
       data_nascimento: client.data_nascimento || "",
@@ -70,6 +72,7 @@ export default function Clientes() {
 
   const startDelete = async (clientId: string) => {
     setDeletingId(clientId);
+    setIsAdvancingDeleteStep(false);
     setCheckingPurchases(true);
     try {
       const { count } = await (supabase as any)
@@ -80,10 +83,10 @@ export default function Clientes() {
       if ((count ?? 0) > 0) {
         setDeleteStep("has-purchases");
       } else {
-        setDeleteStep("final");
+        setDeleteStep("simple");
       }
     } catch {
-      setDeleteStep("final");
+      setDeleteStep("simple");
     } finally {
       setCheckingPurchases(false);
     }
@@ -103,11 +106,13 @@ export default function Clientes() {
     }
     setDeletingId(null);
     setDeleteStep("idle");
+    setIsAdvancingDeleteStep(false);
   };
 
   const cancelDelete = () => {
     setDeletingId(null);
     setDeleteStep("idle");
+    setIsAdvancingDeleteStep(false);
   };
 
   const handleNew = () => {
@@ -159,6 +164,13 @@ export default function Clientes() {
                   </p>
                   {client.email && (
                     <p className="text-caption text-muted-foreground">{client.email}</p>
+                  )}
+                  {(client.endereco || (client as any).bairro || client.city || client.state) && (
+                    <p className="text-caption text-muted-foreground">
+                      {[client.endereco, (client as any).bairro, client.city, client.state]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -227,7 +239,18 @@ export default function Clientes() {
       />
 
       {/* Step 1: Client has purchases warning */}
-      <AlertDialog open={deleteStep === "has-purchases"} onOpenChange={(v) => !v && cancelDelete()}>
+      <AlertDialog
+        open={deleteStep === "has-purchases"}
+        onOpenChange={(v) => {
+          if (!v) {
+            if (isAdvancingDeleteStep) {
+              setIsAdvancingDeleteStep(false);
+              return;
+            }
+            cancelDelete();
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cliente com compras registradas</AlertDialogTitle>
@@ -237,20 +260,44 @@ export default function Clientes() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => setDeleteStep("final")} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => {
+                setIsAdvancingDeleteStep(true);
+                setDeleteStep("final");
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Continuar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Step 2 (or single step): Final confirmation */}
+      {/* Step 2: Final confirmation when client has purchases */}
       <AlertDialog open={deleteStep === "final"} onOpenChange={(v) => !v && cancelDelete()}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja remover este cliente? Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Simple confirmation when client has no purchases */}
+      <AlertDialog open={deleteStep === "simple"} onOpenChange={(v) => !v && cancelDelete()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja remover este cliente?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
