@@ -4,6 +4,7 @@
  */
 export function generateProductHash(data: {
   referencia: string;
+  classificacao: string;
   categoriaIdade: string;
   genero: string;
   estilo: string;
@@ -19,11 +20,13 @@ export function generateProductHash(data: {
   subcategoriaAcessorio: string;
 }): string {
   const ref = data.referencia || "NA";
+  const cls = data.classificacao || "NA";
   if (data.isAcessorio) {
-    return `${ref}-ACC-${data.subcategoriaAcessorio || "NA"}`.toUpperCase();
+    return `${ref}-${cls}-ACC-${data.subcategoriaAcessorio || "NA"}`.toUpperCase();
   }
   return [
     ref,
+    cls,
     data.corArmacao || "NA",
     data.genero || "NA",
     data.estilo || "NA",

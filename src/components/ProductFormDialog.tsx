@@ -17,7 +17,7 @@ import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { generateProductHash } from "@/lib/productHash";
 import {
-  CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
+  CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
   MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE as MEDIDAS_HASTE_RANGE,
 } from "@/data/productConstants";
@@ -64,6 +64,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [templeSize, setTempleSize] = useState("");
   const [tipoLente, setTipoLente] = useState("");
   const [ncm, setNcm] = useState("");
+  const [classificacao, setClassificacao] = useState("");
 
   // Accessory fields (new hierarchical)
   const [subcategoriaAcessorio, setSubcategoriaAcessorio] = useState(""); // legacy compat
@@ -111,6 +112,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setMaterialAcessorio((product as any).material_acessorio || "");
       setTipoProdutoId(product.tipo_produto_id || "");
       setNcm((product as any).ncm || "");
+      setClassificacao((product as any).classificacao || "");
       setImagePreview(product.image_url || null);
       setDuplicateInfo(null);
     } else {
@@ -142,6 +144,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setTempleSize("");
     setTipoLente("");
     setNcm("");
+    setClassificacao("");
     setSubcategoriaAcessorio("");
     setCategoriaAcessorio("");
     setTipoAcessorio("");
@@ -166,6 +169,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     }
     const hash = generateProductHash({
       referencia: referencia.trim(),
+      classificacao,
       categoriaIdade,
       genero,
       estilo,
@@ -195,7 +199,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
     const timeout = setTimeout(checkDuplicate, 500);
     return () => clearTimeout(timeout);
-  }, [referencia, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
+  }, [referencia, classificacao, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -217,21 +221,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
   const handleSave = async () => {
     if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
+    if (!classificacao) { toast.error("Selecione a classificação (C1-C10)"); return; }
     if (!price || price <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
-    // Validate unique referencia per filial
+    // Validate unique referencia + classificacao per filial
     const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
     for (const fId of filials) {
       const { data: existing } = await (supabase as any)
         .from("produtos")
         .select("id")
         .eq("referencia", referencia.trim())
+        .eq("classificacao", classificacao)
         .eq("filial_id", fId)
         .maybeSingle();
       if (existing && (!isEditing || existing.id !== product?.id)) {
-        toast.error("Este código já está em uso");
+        toast.error(`Este código com classificação ${classificacao} já está em uso nesta filial`);
         return;
       }
     }
@@ -248,6 +254,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       const hash = generateProductHash({
         referencia: referencia.trim(),
+        classificacao,
         categoriaIdade,
         genero,
         estilo,
@@ -277,6 +284,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         const baseData = {
           referencia: referencia.trim(),
           model: referencia.trim(),
+          classificacao,
           retail_price: price,
           custo: custo || 0,
           description: detail.trim(),
@@ -337,6 +345,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               barcode: codes.barcode,
               referencia: referencia.trim(),
               model: referencia.trim(),
+              classificacao,
               retail_price: price,
               custo: custo || 0,
               description: detail.trim(),
@@ -436,9 +445,20 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           {/* 1. Identificação */}
           <fieldset className="space-y-3 rounded-lg border p-3">
             <legend className="text-sm font-semibold px-1">Identificação</legend>
-            <div>
-              <Label htmlFor="referencia">Código da peça *</Label>
-              <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="referencia">Código da peça *</Label>
+                <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Classificação *</Label>
+                <Select value={classificacao} onValueChange={setClassificacao}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {CLASSIFICACOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
               <Label htmlFor="ncm">Código NCM *</Label>
@@ -714,7 +734,13 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             <div>
               <Label>{isEditing ? "Quantidade em estoque" : "Quantidade a adicionar"}</Label>
               <div className="mt-1.5">
-                <Input value="1" disabled className="w-20 text-center font-semibold tabular-nums" />
+                <Input
+                  type="number"
+                  min={1}
+                  value={quantidade}
+                  onChange={(e) => setQuantidade(e.target.value)}
+                  className="w-20 text-center font-semibold tabular-nums"
+                />
               </div>
             </div>
           </div>
