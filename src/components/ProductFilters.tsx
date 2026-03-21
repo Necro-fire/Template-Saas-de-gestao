@@ -26,7 +26,6 @@ export interface ProductFilterValues {
   genero: string;
   estilo: string;
   corArmacao: string;
-  material: string;
   materialAro: string;
   materialHaste: string;
   tipoLente: string;
