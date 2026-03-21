@@ -161,69 +161,6 @@ export default function Estoque() {
           </Card>
         </div>
 
-        {/* Category config */}
-        {tipos.length > 0 && (
-          <Card className="shadow-card">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-ui font-semibold flex items-center gap-2">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
-                Configuração por Categoria
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-1">
-                {tipos.map(tipo => {
-                  const isEditing = editingTipoId === tipo.id;
-                  const productCount = products.filter(p => p.tipo_produto_id === tipo.id && p.status !== "inativo").length;
-                  return (
-                    <div key={tipo.id} className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors">
-                      <div>
-                        <p className="text-ui font-medium">{tipo.nome_tipo}</p>
-                        <p className="text-caption text-muted-foreground">{productCount} produto{productCount !== 1 ? "s" : ""}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isEditing ? (
-                          <>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={editTipoValue}
-                              onChange={(e) => setEditTipoValue(e.target.value)}
-                              className="h-7 w-16 text-sm text-center tabular-nums"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleSaveTipoMin(tipo.id);
-                                if (e.key === "Escape") setEditingTipoId(null);
-                              }}
-                            />
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSaveTipoMin(tipo.id)}>
-                              <Check className="h-3.5 w-3.5 text-success" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingTipoId(null)}>
-                              <X className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-caption text-muted-foreground tabular-nums">mín. alerta: {tipo.estoque_minimo_alerta}</span>
-                            {canEdit && (
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                setEditingTipoId(tipo.id);
-                                setEditTipoValue(String(tipo.estoque_minimo_alerta));
-                              }}>
-                                <Pencil className="h-3 w-3 text-muted-foreground" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Inventory list */}
         <Card className="shadow-card">
