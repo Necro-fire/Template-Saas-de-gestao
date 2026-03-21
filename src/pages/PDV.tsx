@@ -139,7 +139,7 @@ export default function PDV() {
     if (exactMatch) {
       addToCart(exactMatch);
       setSearch("");
-      toast.success(`${exactMatch.model} adicionado`);
+      toast.success(`${exactMatch.referencia} adicionado`);
     }
   }, [products, addToCart]);
 
