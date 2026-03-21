@@ -47,13 +47,6 @@ export default function Estoque() {
 
     let changed = false;
 
-    if (tipoParam && tipos.length > 0) {
-      const match = tipos.find(t => t.id === tipoParam);
-      if (match) {
-        setFilters(prev => ({ ...prev, tipo: tipoParam }));
-        changed = true;
-      }
-    }
 
     if (estiloParam) {
       setFilters(prev => ({ ...prev, estilo: estiloParam, tipoItem: "normal" }));
