@@ -39,8 +39,8 @@ export default function Caixa() {
 
   const [selectedCaixa, setSelectedCaixa] = useState<DbCaixa | null>(null);
   const [openDialog, setOpenDialog] = useState<"abrir" | "fechar" | "movimento" | null>(null);
-  const [valorAbertura, setValorAbertura] = useState("");
-  const [valorFechamento, setValorFechamento] = useState("");
+  const [valorAbertura, setValorAbertura] = useState<number>(0);
+  const [valorFechamento, setValorFechamento] = useState<number>(0);
   const [obsFechamento, setObsFechamento] = useState("");
   const [movTipo, setMovTipo] = useState<"sangria" | "reforco" | "despesa">("sangria");
   const [movValor, setMovValor] = useState("");
