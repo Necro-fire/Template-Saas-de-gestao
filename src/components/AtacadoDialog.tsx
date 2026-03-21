@@ -187,8 +187,8 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                     <Select value={form.categoria} onValueChange={v => setForm(f => ({ ...f, categoria: v }))}>
                       <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
                       <SelectContent>
-                        {sortedTipos.map(t => (
-                          <SelectItem key={t.id} value={t.nome_tipo}>{t.nome_tipo}</SelectItem>
+                        {sortedEstilos.map(e => (
+                          <SelectItem key={e} value={e}>{e}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

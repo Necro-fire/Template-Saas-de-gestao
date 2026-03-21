@@ -193,7 +193,7 @@ export default function Estoque() {
                           <Badge variant="outline" className="text-caption">{filiais.find(f => f.id === p.filial_id)?.name}</Badge>
                         )}
                         {stockLevelBadge(level, p.stock)}
-                        <span className="text-caption text-muted-foreground tabular-nums min-w-[60px] text-right">mín: {catMin}</span>
+                        <span className="text-caption text-muted-foreground tabular-nums min-w-[60px] text-right">mín: {p.min_stock || 0}</span>
                       </div>
                     </div>
                   );
