@@ -64,7 +64,7 @@ export default function Dashboard() {
         </div>
 
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <MetricCard
             title="Vendas no Período"
             value={`R$ ${salesTotalValue.toFixed(2)}`}
@@ -80,18 +80,25 @@ export default function Dashboard() {
             accentColor="success"
           />
           <MetricCard
+            title="Lucro Total"
+            value={`R$ ${totalProfit.toFixed(2)}`}
+            subtitle={activeSales.length > 0 ? `${activeSales.length} vendas` : "Sem dados no período"}
+            icon={DollarSign}
+            accentColor="success"
+          />
+          <MetricCard
+            title="Lucro por Venda"
+            value={`R$ ${avgProfitPerSale.toFixed(2)}`}
+            subtitle={activeSales.length > 0 ? "média" : "Sem dados no período"}
+            icon={DollarSign}
+            accentColor="warning"
+          />
+          <MetricCard
             title="Total em Estoque"
             value={String(totalStock)}
             subtitle={`${activeProducts.length} produtos`}
             icon={Package}
             accentColor="warning"
-          />
-          <MetricCard
-            title="Clientes no Período"
-            value={String(filteredClients.filter(c => c.status === "active").length)}
-            subtitle={filteredClients.length > 0 ? "ativos" : "Sem dados no período"}
-            icon={Users}
-            accentColor="primary"
           />
         </div>
 
