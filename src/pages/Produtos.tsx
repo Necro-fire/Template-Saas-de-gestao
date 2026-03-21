@@ -181,8 +181,7 @@ export default function Produtos() {
                       <div />
                     )}
                     {(() => {
-                      const catMin = getCategoryMin(product, tipos);
-                      const level = getStockLevel(product.stock, catMin);
+                      const level = getStockLevel(product.stock, 0);
                       return (
                         <Badge
                           variant={level === "out_of_stock" ? "destructive" : level === "critical" || level === "low" ? "outline" : "secondary"}
