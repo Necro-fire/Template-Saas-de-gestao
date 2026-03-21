@@ -126,3 +126,12 @@ export async function addMovimentacao(
   });
   if (error) throw new Error(error.message);
 }
+
+export async function removeCaixaHistorico(caixaId: string) {
+  const { error } = await (supabase as any)
+    .from("caixa_movimentacoes")
+    .delete()
+    .eq("caixa_id", caixaId);
+
+  if (error) throw new Error(error.message);
+}

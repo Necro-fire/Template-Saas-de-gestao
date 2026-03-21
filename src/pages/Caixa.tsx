@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Wallet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Lock, Unlock, Clock, DollarSign, CreditCard, Banknote, QrCode, X } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Lock, Unlock, Clock, DollarSign, CreditCard, Banknote, QrCode, X, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useFilial } from "@/contexts/FilialContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
-import { useCaixas, useMovimentacoes, abrirCaixa, fecharCaixa, addMovimentacao, type DbCaixa } from "@/hooks/useCaixa";
+import { useCaixas, useMovimentacoes, abrirCaixa, fecharCaixa, addMovimentacao, removeCaixaHistorico, type DbCaixa } from "@/hooks/useCaixa";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -48,6 +58,8 @@ export default function Caixa() {
   const [movDesc, setMovDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState("ativo");
+  const [caixaParaRemoverHistorico, setCaixaParaRemoverHistorico] = useState<DbCaixa | null>(null);
+  const [removingHistory, setRemovingHistory] = useState(false);
 
   // Find open caixa for current filial
   const caixaAberto = useMemo(() => {
@@ -134,6 +146,25 @@ export default function Caixa() {
     } catch (e: any) {
       toast.error(e.message);
     } finally { setSubmitting(false); }
+  }
+
+  async function handleRemoveCaixaHistory() {
+    if (!caixaParaRemoverHistorico) return;
+
+    setRemovingHistory(true);
+    try {
+      await removeCaixaHistorico(caixaParaRemoverHistorico.id);
+      toast.success("Histórico do caixa removido com sucesso!");
+
+      if (selectedCaixa?.id === caixaParaRemoverHistorico.id) {
+        setSelectedCaixa(null);
+      }
+      setCaixaParaRemoverHistorico(null);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao remover histórico do caixa");
+    } finally {
+      setRemovingHistory(false);
+    }
   }
 
   const tipoLabel: Record<string, string> = { venda: "Venda", sangria: "Sangria", reforco: "Reforço", despesa: "Despesa" };
@@ -399,7 +430,31 @@ export default function Caixa() {
                           </TableCell>
                           <TableCell className="text-xs">{c.usuario_abertura_nome}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
+                            <div className="flex items-center gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedCaixa(c);
+                                  setTab("ativo");
+                                }}
+                              >
+                                Ver
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCaixaParaRemoverHistorico(c);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -532,6 +587,32 @@ export default function Caixa() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!caixaParaRemoverHistorico}
+        onOpenChange={(open) => {
+          if (!open && !removingHistory) setCaixaParaRemoverHistorico(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover histórico do caixa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o histórico deste caixa? Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removingHistory}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveCaixaHistory}
+              disabled={removingHistory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removingHistory ? "Removendo..." : "Remover histórico"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
