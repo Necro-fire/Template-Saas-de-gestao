@@ -142,15 +142,23 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3 space-y-2">
-        {!collapsed && profile && (
+        {!collapsed && (
           <div className="flex items-center gap-2 rounded-md bg-secondary p-2">
-            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-              {profile.nome.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-caption font-medium truncate">{profile.nome}</p>
-              <p className="text-[10px] text-muted-foreground capitalize">{profile.tipo}</p>
-            </div>
+            {profile ? (
+              <>
+                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                  {profile.nome.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-caption font-medium truncate">{profile.nome}</p>
+                  <p className="text-[10px] text-muted-foreground capitalize">{profile.tipo}</p>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 min-w-0">
+                <p className="text-caption font-medium">Usuário</p>
+              </div>
+            )}
             <button
               onClick={signOut}
               className="text-muted-foreground hover:text-destructive transition-colors"
