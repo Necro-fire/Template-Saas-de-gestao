@@ -338,6 +338,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               referencia: referencia.trim(),
               model: name.trim(),
               retail_price: Number(price),
+              custo: Number(custo) || 0,
               description: detail.trim(),
               image_url: imageUrl,
               filial_id: fId,
