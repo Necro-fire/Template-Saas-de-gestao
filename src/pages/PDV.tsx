@@ -42,6 +42,8 @@ export default function PDV() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [isSplitPayment, setIsSplitPayment] = useState(false);
+  const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
