@@ -32,6 +32,10 @@ export default function Clientes() {
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('clientes', 'create');
+  const canEdit = hasPermission('clientes', 'edit');
+  const canDelete = hasPermission('clientes', 'delete');
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
