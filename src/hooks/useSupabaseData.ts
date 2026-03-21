@@ -207,7 +207,7 @@ export async function upsertEstoque(produtoId: string, filialId: string, quantid
 }
 
 export async function createVenda(
-  items: { produto_id: string; product_code: string; product_model: string; quantity: number; unit_price: number }[],
+  items: { produto_id: string; product_code: string; product_model: string; quantity: number; unit_price: number; custo_unitario?: number }[],
   clientId: string | null,
   clientName: string,
   paymentMethod: string,
