@@ -43,7 +43,7 @@ export default function Caixa() {
   const [valorFechamento, setValorFechamento] = useState<number>(0);
   const [obsFechamento, setObsFechamento] = useState("");
   const [movTipo, setMovTipo] = useState<"sangria" | "reforco" | "despesa">("sangria");
-  const [movValor, setMovValor] = useState("");
+  const [movValor, setMovValor] = useState<number>(0);
   const [movForma, setMovForma] = useState("dinheiro");
   const [movDesc, setMovDesc] = useState("");
   const [submitting, setSubmitting] = useState(false);
