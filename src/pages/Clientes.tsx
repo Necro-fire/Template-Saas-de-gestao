@@ -137,10 +137,12 @@ export default function Clientes() {
             <h1 className="text-title font-semibold tracking-tighter">Clientes</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} clientes</p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={handleNew}>
-            <Plus className="h-4 w-4" />
-            Novo Cliente
-          </Button>
+          {canCreate && (
+            <Button size="sm" className="gap-1.5" onClick={handleNew}>
+              <Plus className="h-4 w-4" />
+              Novo Cliente
+            </Button>
+          )}
         </div>
 
         {clients.length > 0 && (
