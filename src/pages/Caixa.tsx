@@ -466,7 +466,7 @@ export default function Caixa() {
             </div>
             <div>
               <Label>Valor contado em dinheiro</Label>
-              <Input type="number" min="0" step="0.01" placeholder="0,00" value={valorFechamento} onChange={e => setValorFechamento(e.target.value)} />
+              <CurrencyInput placeholder="0,00" value={valorFechamento} onValueChange={setValorFechamento} />
             </div>
             {valorFechamento && (
               <div className={`p-3 rounded-md border-l-4 ${parseFloat(valorFechamento) - summary.saldo === 0 ? "border-l-accent bg-accent/5" : "border-l-destructive bg-destructive/5"}`}>
