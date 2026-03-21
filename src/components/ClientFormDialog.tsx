@@ -22,6 +22,7 @@ interface ClientData {
   email: string;
   cep: string;
   endereco: string;
+  bairro: string;
   cidade: string;
   estado: string;
   data_nascimento: string;
@@ -39,6 +40,7 @@ const emptyClient: ClientData = {
   email: "",
   cep: "",
   endereco: "",
+  bairro: "",
   cidade: "",
   estado: "",
   data_nascimento: "",
@@ -99,6 +101,7 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
         whatsapp: form.phone.trim(),
         email: form.email.trim().toUpperCase(),
         endereco: form.endereco.trim().toUpperCase(),
+        bairro: form.bairro.trim().toUpperCase(),
         city: form.cidade.trim().toUpperCase(),
         state: form.estado,
         data_nascimento: form.data_nascimento || null,
@@ -192,7 +195,11 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Bairro</Label>
+              <Input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} className="mt-1.5" />
+            </div>
             <div>
               <Label>Cidade</Label>
               <Input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} className="mt-1.5" />
