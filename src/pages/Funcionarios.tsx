@@ -49,7 +49,9 @@ export default function Funcionarios() {
   const [viewingFunc, setViewingFunc] = useState<Funcionario | null>(null);
   const [deletingFunc, setDeletingFunc] = useState<Funcionario | null>(null);
   const { selectedFilial } = useFilial();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasPermission } = useAuth();
+  const canCreate = hasPermission('funcionarios', 'create');
+  const canEdit = hasPermission('funcionarios', 'edit');
 
   // Form state
   const [nome, setNome] = useState('');
@@ -221,7 +223,7 @@ export default function Funcionarios() {
             <h1 className="text-title font-semibold tracking-tighter">Funcionários</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} funcionários</p>
           </div>
-          {isAdmin && (
+          {canCreate && (
             <Button size="sm" className="gap-1.5" onClick={openCreate}>
               <Plus className="h-4 w-4" />
               Novo Funcionário
@@ -264,15 +266,15 @@ export default function Funcionarios() {
                     <Badge variant={func.status === 'active' ? 'secondary' : 'outline'} className="text-caption">
                       {func.status === 'active' ? 'Ativo' : 'Inativo'}
                     </Badge>
-                    {isAdmin && (
-                      <>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </>
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     )}
                   </div>
                 </div>

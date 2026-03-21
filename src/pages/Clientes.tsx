@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Plus, Users, Pencil, Trash2, History } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,10 @@ export default function Clientes() {
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('clientes', 'create');
+  const canEdit = hasPermission('clientes', 'edit');
+  const canDelete = hasPermission('clientes', 'delete');
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -132,10 +137,12 @@ export default function Clientes() {
             <h1 className="text-title font-semibold tracking-tighter">Clientes</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} clientes</p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={handleNew}>
-            <Plus className="h-4 w-4" />
-            Novo Cliente
-          </Button>
+          {canCreate && (
+            <Button size="sm" className="gap-1.5" onClick={handleNew}>
+              <Plus className="h-4 w-4" />
+              Novo Cliente
+            </Button>
+          )}
         </div>
 
         {clients.length > 0 && (
@@ -191,23 +198,27 @@ export default function Clientes() {
                   >
                     <History className="h-3.5 w-3.5" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleEdit(client)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
-                    onClick={() => startDelete(client.id)}
-                    disabled={checkingPurchases}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleEdit(client)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                      onClick={() => startDelete(client.id)}
+                      disabled={checkingPurchases}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -217,10 +228,12 @@ export default function Clientes() {
             <Users className="h-12 w-12 mb-3 opacity-30" />
             <p className="text-ui font-medium">Nenhum cliente cadastrado</p>
             <p className="text-caption mt-1">Cadastre seu primeiro cliente para começar</p>
-            <Button size="sm" className="mt-4 gap-1.5" onClick={handleNew}>
-              <Plus className="h-4 w-4" />
-              Adicionar Cliente
-            </Button>
+            {canCreate && (
+              <Button size="sm" className="mt-4 gap-1.5" onClick={handleNew}>
+                <Plus className="h-4 w-4" />
+                Adicionar Cliente
+              </Button>
+            )}
           </div>
         )}
       </div>

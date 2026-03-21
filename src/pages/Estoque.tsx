@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Package, ArrowDown, Settings2, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,8 @@ export default function Estoque() {
   const { filters, setFilters } = useProductFilters();
   const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [editTipoValue, setEditTipoValue] = useState("");
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('estoque', 'edit');
 
   // Pre-apply filters from URL params
   useEffect(() => {
@@ -143,7 +146,7 @@ export default function Estoque() {
 
         <div className="flex flex-wrap gap-2">
           {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
-          <StockAlertConfigDialog />
+          {canEdit && <StockAlertConfigDialog />}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -238,12 +241,14 @@ export default function Estoque() {
                         ) : (
                           <>
                             <span className="text-caption text-muted-foreground tabular-nums">mín. alerta: {tipo.estoque_minimo_alerta}</span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                              setEditingTipoId(tipo.id);
-                              setEditTipoValue(String(tipo.estoque_minimo_alerta));
-                            }}>
-                              <Pencil className="h-3 w-3 text-muted-foreground" />
-                            </Button>
+                            {canEdit && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                setEditingTipoId(tipo.id);
+                                setEditTipoValue(String(tipo.estoque_minimo_alerta));
+                              }}>
+                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            )}
                           </>
                         )}
                       </div>

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Package, Pencil, Trash2, Tag } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFilial } from "@/contexts/FilialContext";
@@ -20,6 +21,10 @@ export default function Produtos() {
   const [deletingProduct, setDeletingProduct] = useState<DbProduct | null>(null);
   const { selectedFilial, filiais } = useFilial();
   const { filters, setFilters } = useProductFilters();
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('produtos', 'create');
+  const canEdit = hasPermission('produtos', 'edit');
+  const canDelete = hasPermission('produtos', 'delete');
 
   const { data: products } = useProducts();
   const { data: tipos } = useProductTypes();
@@ -94,14 +99,18 @@ export default function Produtos() {
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
-              <Tag className="h-4 w-4" />
-              Tipos
-            </Button>
-            <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
-              <Plus className="h-4 w-4" />
-              Novo Produto
-            </Button>
+            {canCreate && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
+                <Tag className="h-4 w-4" />
+                Tipos
+              </Button>
+            )}
+            {canCreate && (
+              <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+                <Plus className="h-4 w-4" />
+                Novo Produto
+              </Button>
+            )}
           </div>
         </div>
 
@@ -113,14 +122,20 @@ export default function Produtos() {
               const typeName = getTypeName((product as any).tipo_produto_id);
               return (
                 <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
-                  <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => checkAndDelete(product)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  {(canEdit || canDelete) && (
+                    <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {canEdit && (
+                        <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => handleEdit(product)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => checkAndDelete(product)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
 
                   <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
                     {product.image_url ? (
