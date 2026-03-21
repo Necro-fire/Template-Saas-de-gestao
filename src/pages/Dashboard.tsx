@@ -1,6 +1,6 @@
-import { Package, ShoppingCart, TrendingUp, Users } from "lucide-react";
+import { Package, ShoppingCart, TrendingUp, Users, DollarSign } from "lucide-react";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
+import { useProducts, useClients, useVendas, useVendaItems } from "@/hooks/useSupabaseData";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useFilial } from "@/contexts/FilialContext";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
