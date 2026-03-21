@@ -351,7 +351,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               image_url: imageUrl,
               filial_id: fId,
               stock: qty,
-              tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
+              
               is_acessorio: isAcessorio,
               categoria_idade: isAcessorio ? "" : categoriaIdade,
               genero: isAcessorio ? "" : genero,
