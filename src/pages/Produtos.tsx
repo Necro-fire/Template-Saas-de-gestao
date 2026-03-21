@@ -198,6 +198,7 @@ export default function Produtos() {
         )}
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
+        <ProductTypesDialog open={showTypes} onOpenChange={setShowTypes} />
         
 
         <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>

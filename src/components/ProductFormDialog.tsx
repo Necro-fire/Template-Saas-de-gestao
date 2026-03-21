@@ -721,26 +721,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             <Textarea id="product-detail" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Descrição ou observações" className="mt-1.5 min-h-[60px]" />
           </div>
 
-          {/* Wholesale Section */}
-          <div className="rounded-lg border p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="wholesale-toggle" className="font-medium">Configuração de Atacado</Label>
-              <Switch id="wholesale-toggle" checked={wholesaleEnabled} onCheckedChange={setWholesaleEnabled} />
-            </div>
-            {wholesaleEnabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="wholesale-min">Qtd mínima *</Label>
-                  <Input id="wholesale-min" type="number" min="2" value={wholesaleMinQty} onChange={(e) => setWholesaleMinQty(e.target.value)} placeholder="Ex: 10" className="mt-1.5" />
-                </div>
-                <div>
-                  <Label htmlFor="wholesale-price">Preço atacado (R$) *</Label>
-                  <Input id="wholesale-price" type="number" min="0" step="0.01" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Filial */}
           <div>
             <Label>Filial *</Label>
