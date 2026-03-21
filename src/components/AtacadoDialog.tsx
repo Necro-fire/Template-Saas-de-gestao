@@ -32,7 +32,7 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const { selectedFilial } = useFilial();
   const { data: descontos } = useDescontosAtacado();
   const { data: products } = useProducts();
-  const { data: tipos } = useProductTypes();
+  
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<string | null>(null);
