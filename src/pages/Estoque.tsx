@@ -76,7 +76,6 @@ export default function Estoque() {
     }
 
     if (changed) {
-      searchParams.delete("tipo");
       searchParams.delete("estilo");
       searchParams.delete("catAcessorio");
       searchParams.delete("tipoAcessorio");
@@ -84,7 +83,7 @@ export default function Estoque() {
       searchParams.delete("subcategoria");
       setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams, tipos]);
+  }, [searchParams]);
 
   const filtered = useMemo(() => applyProductFilters(products, filters, tipos), [products, filters, tipos]);
 
