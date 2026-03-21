@@ -310,12 +310,12 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                     onValueChange={(v) => setDraft({ ...draft, corArmacao: v })} options={TODAS_CORES} allLabel="Todas" />
                   <div className="grid grid-cols-2 gap-3">
                     <FilterSelect label="Material Aro" value={draft.materialAro}
-                      onValueChange={(v) => setDraft({ ...draft, materialAro: v })} options={MATERIAIS} />
+                      onValueChange={(v) => setDraft({ ...draft, materialAro: v })} options={MATERIAIS_ARO} />
                     <FilterSelect label="Material Haste" value={draft.materialHaste}
-                      onValueChange={(v) => setDraft({ ...draft, materialHaste: v })} options={MATERIAIS} />
+                      onValueChange={(v) => setDraft({ ...draft, materialHaste: v })} options={MATERIAIS_HASTE} />
                   </div>
                   <FilterSelect label="Material" value={draft.material}
-                    onValueChange={(v) => setDraft({ ...draft, material: v })} options={MATERIAIS} />
+                    onValueChange={(v) => setDraft({ ...draft, material: v })} options={[...new Set([...MATERIAIS_ARO, ...MATERIAIS_HASTE])] as any} />
                   <FilterSelect label="Tipo de Lente" value={draft.tipoLente}
                     onValueChange={(v) => setDraft({ ...draft, tipoLente: v })} options={TIPOS_LENTE} />
                 </>
