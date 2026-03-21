@@ -298,7 +298,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           ncm,
           stock: qty,
           ...accessoryFields,
-          ...wholesaleData,
         };
 
         const { error } = await (supabase as any).from("produtos").update(baseData).eq("id", product!.id);
