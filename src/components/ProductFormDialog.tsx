@@ -124,9 +124,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
     setTipoProdutoId("");
-    setWholesaleEnabled(false);
-    setWholesalePrice("");
-    setWholesaleMinQty("");
     setImageFile(null);
     setImagePreview(null);
     setCategoriaIdade("");
