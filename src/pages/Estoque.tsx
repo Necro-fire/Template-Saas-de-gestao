@@ -31,10 +31,7 @@ export default function Estoque() {
   const { selectedFilial, filiais } = useFilial();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: products } = useProducts();
-  const { data: tipos, refetch: refetchTipos } = useProductTypes();
   const { filters, setFilters } = useProductFilters();
-  const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
-  const [editTipoValue, setEditTipoValue] = useState("");
   const { hasPermission } = useAuth();
   const canEdit = hasPermission('estoque', 'edit');
 
