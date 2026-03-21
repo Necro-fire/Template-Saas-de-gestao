@@ -26,6 +26,8 @@ export default function Clientes() {
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteStep, setDeleteStep] = useState<"idle" | "has-purchases" | "final">("idle");
+  const [checkingPurchases, setCheckingPurchases] = useState(false);
   const [historyClient, setHistoryClient] = useState<{ id: string; name: string } | null>(null);
   const { selectedFilial } = useFilial();
   const { data: clients, refetch } = useClients();
@@ -66,6 +68,27 @@ export default function Clientes() {
     setShowForm(true);
   };
 
+  const startDelete = async (clientId: string) => {
+    setDeletingId(clientId);
+    setCheckingPurchases(true);
+    try {
+      const { count } = await (supabase as any)
+        .from("vendas")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientId)
+        .neq("status", "cancelada");
+      if ((count ?? 0) > 0) {
+        setDeleteStep("has-purchases");
+      } else {
+        setDeleteStep("final");
+      }
+    } catch {
+      setDeleteStep("final");
+    } finally {
+      setCheckingPurchases(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deletingId) return;
     const { error } = await (supabase as any)
@@ -79,6 +102,12 @@ export default function Clientes() {
       refetch();
     }
     setDeletingId(null);
+    setDeleteStep("idle");
+  };
+
+  const cancelDelete = () => {
+    setDeletingId(null);
+    setDeleteStep("idle");
   };
 
   const handleNew = () => {
