@@ -146,9 +146,8 @@ export default function Produtos() {
                   </div>
                   <div className="mt-3 flex justify-between items-start gap-2">
                     <div className="min-w-0">
-                      <p className="text-caption text-muted-foreground uppercase tracking-wider">{product.referencia}</p>
+                      <h3 className="text-ui font-semibold truncate">{product.referencia}</h3>
                       <p className="text-[10px] font-mono text-muted-foreground/60">{product.barcode}</p>
-                      <h3 className="text-ui font-semibold truncate">{product.model}</h3>
                       {!(product as any).is_acessorio && (product.cor_armacao || product.color) && (
                         <p className="text-caption text-muted-foreground">
                           {product.cor_armacao || product.color}
