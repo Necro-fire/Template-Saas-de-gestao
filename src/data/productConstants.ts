@@ -28,7 +28,7 @@ export const MATERIAIS_ARO = [
 ] as const;
 
 export const MATERIAIS_HASTE = [
-  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal", "Silicone", "Gliter",
+  "Acetato", "Alumínio", "Gliter", "Metal", "Nylon", "Silicone", "Titanium", "TR90",
 ] as const;
 
 // Legacy alias
