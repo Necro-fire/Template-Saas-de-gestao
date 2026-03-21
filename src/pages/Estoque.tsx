@@ -91,13 +91,13 @@ export default function Estoque() {
   const counts = useMemo(() => {
     let low = 0, critical = 0, out = 0;
     filtered.forEach(p => {
-      const level = getStockLevel(p.stock, getCategoryMin(p, tipos));
+      const level = getStockLevel(p.stock, p.min_stock || 0);
       if (level === "low") low++;
       else if (level === "critical") critical++;
       else if (level === "out_of_stock") out++;
     });
     return { low, critical, out };
-  }, [filtered, tipos]);
+  }, [filtered]);
 
   const getTypeName = (id: string | null) => {
     if (!id) return null;
