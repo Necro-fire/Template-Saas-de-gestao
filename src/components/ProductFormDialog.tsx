@@ -44,9 +44,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [tipoProdutoId, setTipoProdutoId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [wholesaleEnabled, setWholesaleEnabled] = useState(false);
-  const [wholesalePrice, setWholesalePrice] = useState("");
-  const [wholesaleMinQty, setWholesaleMinQty] = useState("");
   const [saving, setSaving] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,9 +108,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setMaterialAcessorio((product as any).material_acessorio || "");
       setTipoProdutoId(product.tipo_produto_id || "");
       setNcm((product as any).ncm || "");
-      setWholesaleEnabled(product.wholesale_price > 0);
-      setWholesalePrice(product.wholesale_price ? String(product.wholesale_price) : "");
-      setWholesaleMinQty(product.wholesale_min_qty ? String(product.wholesale_min_qty) : "");
       setImagePreview(product.image_url || null);
       setDuplicateInfo(null);
     } else {
@@ -130,9 +124,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
     setTipoProdutoId("");
-    setWholesaleEnabled(false);
-    setWholesalePrice("");
-    setWholesaleMinQty("");
     setImageFile(null);
     setImagePreview(null);
     setCategoriaIdade("");
@@ -249,9 +240,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         imageUrl = await uploadImage(imageFile);
       }
 
-      const wholesaleData = wholesaleEnabled
-        ? { wholesale_price: Number(wholesalePrice) || 0, wholesale_min_qty: Number(wholesaleMinQty) || 0 }
-        : { wholesale_price: 0, wholesale_min_qty: 0 };
 
       const subcatComputed = buildSubcategoria();
 
@@ -310,7 +298,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           ncm,
           stock: qty,
           ...accessoryFields,
-          ...wholesaleData,
         };
 
         const { error } = await (supabase as any).from("produtos").update(baseData).eq("id", product!.id);
@@ -371,7 +358,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               hash_produto: hash,
               ncm,
               ...accessoryFields,
-              ...wholesaleData,
             };
 
             const { data: newProduct, error } = await (supabase as any).from("produtos").insert(baseData).select().single();
@@ -733,26 +719,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           <div>
             <Label htmlFor="product-detail">Detalhe (opcional)</Label>
             <Textarea id="product-detail" value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Descrição ou observações" className="mt-1.5 min-h-[60px]" />
-          </div>
-
-          {/* Wholesale Section */}
-          <div className="rounded-lg border p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="wholesale-toggle" className="font-medium">Configuração de Atacado</Label>
-              <Switch id="wholesale-toggle" checked={wholesaleEnabled} onCheckedChange={setWholesaleEnabled} />
-            </div>
-            {wholesaleEnabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="wholesale-min">Qtd mínima *</Label>
-                  <Input id="wholesale-min" type="number" min="2" value={wholesaleMinQty} onChange={(e) => setWholesaleMinQty(e.target.value)} placeholder="Ex: 10" className="mt-1.5" />
-                </div>
-                <div>
-                  <Label htmlFor="wholesale-price">Preço atacado (R$) *</Label>
-                  <Input id="wholesale-price" type="number" min="0" step="0.01" value={wholesalePrice} onChange={(e) => setWholesalePrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Filial */}
