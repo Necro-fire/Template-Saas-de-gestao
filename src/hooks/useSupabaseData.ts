@@ -46,6 +46,7 @@ export interface DbClient {
   cnpj: string;
   city: string;
   state: string;
+  bairro: string;
   phone: string;
   whatsapp: string;
   email: string;
