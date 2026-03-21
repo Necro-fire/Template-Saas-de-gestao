@@ -104,7 +104,6 @@ export default function Clientes() {
     }
     setDeletingId(null);
     setDeleteStep("idle");
-    setIsAdvancingDeleteStep(false);
   };
 
   const cancelDelete = () => {
