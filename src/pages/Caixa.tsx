@@ -468,13 +468,13 @@ export default function Caixa() {
               <Label>Valor contado em dinheiro</Label>
               <CurrencyInput placeholder="0,00" value={valorFechamento} onValueChange={setValorFechamento} />
             </div>
-            {valorFechamento && (
-              <div className={`p-3 rounded-md border-l-4 ${parseFloat(valorFechamento) - summary.saldo === 0 ? "border-l-accent bg-accent/5" : "border-l-destructive bg-destructive/5"}`}>
+            {valorFechamento > 0 && (
+              <div className={`p-3 rounded-md border-l-4 ${valorFechamento - summary.saldo === 0 ? "border-l-accent bg-accent/5" : "border-l-destructive bg-destructive/5"}`}>
                 <p className="text-sm font-semibold">
-                  Diferença: {formatCurrency((parseFloat(valorFechamento) || 0) - summary.saldo)}
+                  Diferença: {formatCurrency(valorFechamento - summary.saldo)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {(parseFloat(valorFechamento) || 0) - summary.saldo === 0 ? "Caixa batendo ✓" : (parseFloat(valorFechamento) || 0) > summary.saldo ? "Sobra no caixa" : "Quebra no caixa"}
+                  {valorFechamento - summary.saldo === 0 ? "Caixa batendo ✓" : valorFechamento > summary.saldo ? "Sobra no caixa" : "Quebra no caixa"}
                 </p>
               </div>
             )}
