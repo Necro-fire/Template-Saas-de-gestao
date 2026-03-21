@@ -249,7 +249,7 @@ export default function PDV() {
         if (cart.length > 0) {
           const last = cart[cart.length - 1];
           removeFromCart(last.cartId);
-          toast.info(`${last.product.model} removido`);
+          toast.info(`${last.product.referencia} removido`);
         }
       } else if (e.key === "Escape") {
         e.preventDefault();
