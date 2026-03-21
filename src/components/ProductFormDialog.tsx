@@ -110,7 +110,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setVariacaoAcessorio((product as any).variacao_acessorio || "");
       setCorAcessorio((product as any).cor_acessorio || "");
       setMaterialAcessorio((product as any).material_acessorio || "");
-      setTipoProdutoId(product.tipo_produto_id || "");
+      
       setNcm((product as any).ncm || "");
       setClassificacao((product as any).classificacao || "");
       setImagePreview(product.image_url || null);
