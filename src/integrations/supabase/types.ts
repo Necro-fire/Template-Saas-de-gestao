@@ -468,6 +468,7 @@ export type Database = {
           categoria_acessorio: string
           categoria_idade: string
           category: string
+          classificacao: string
           code: string
           color: string
           cor_acessorio: string
@@ -510,6 +511,7 @@ export type Database = {
           categoria_acessorio?: string
           categoria_idade?: string
           category?: string
+          classificacao?: string
           code: string
           color?: string
           cor_acessorio?: string
@@ -552,6 +554,7 @@ export type Database = {
           categoria_acessorio?: string
           categoria_idade?: string
           category?: string
+          classificacao?: string
           code?: string
           color?: string
           cor_acessorio?: string
