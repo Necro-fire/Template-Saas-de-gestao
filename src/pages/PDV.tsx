@@ -39,6 +39,7 @@ function nextCartId() {
 
 export default function PDV() {
   const [search, setSearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
