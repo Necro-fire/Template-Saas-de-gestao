@@ -470,6 +470,7 @@ export type Database = {
           cor_acessorio: string
           cor_armacao: string
           created_at: string
+          custo: number
           description: string
           estilo: string
           filial_id: string
@@ -511,6 +512,7 @@ export type Database = {
           cor_acessorio?: string
           cor_armacao?: string
           created_at?: string
+          custo?: number
           description?: string
           estilo?: string
           filial_id?: string
@@ -552,6 +554,7 @@ export type Database = {
           cor_acessorio?: string
           cor_armacao?: string
           created_at?: string
+          custo?: number
           description?: string
           estilo?: string
           filial_id?: string
