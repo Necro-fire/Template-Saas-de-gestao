@@ -87,6 +87,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setReferencia(product.referencia || "");
       setName(product.model);
       setPrice(String(product.retail_price));
+      setCusto(product.custo ? String(product.custo) : "");
       setDetail(product.description || "");
       setFilial(filialLocked ? selectedFilial : product.filial_id);
       setQuantidade(String(product.stock));
