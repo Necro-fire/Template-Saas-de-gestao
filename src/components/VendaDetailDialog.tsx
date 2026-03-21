@@ -224,7 +224,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
           )}
 
           {/* Cancel button */}
-          {!isCancelled && (
+          {!isCancelled && hasPermission('vendas', 'create') && (
             <>
               <Separator />
               <Button
