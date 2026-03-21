@@ -38,6 +38,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [custo, setCusto] = useState("");
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [quantidade, setQuantidade] = useState("1");
@@ -86,6 +87,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setReferencia(product.referencia || "");
       setName(product.model);
       setPrice(String(product.retail_price));
+      setCusto(product.custo ? String(product.custo) : "");
       setDetail(product.description || "");
       setFilial(filialLocked ? selectedFilial : product.filial_id);
       setQuantidade(String(product.stock));
@@ -120,6 +122,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setReferencia("");
     setName("");
     setPrice("");
+    setCusto("");
     setDetail("");
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
@@ -275,6 +278,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           referencia: referencia.trim(),
           model: name.trim(),
           retail_price: Number(price),
+          custo: Number(custo) || 0,
           description: detail.trim(),
           image_url: imageUrl,
           filial_id: filial,
@@ -334,6 +338,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               referencia: referencia.trim(),
               model: name.trim(),
               retail_price: Number(price),
+              custo: Number(custo) || 0,
               description: detail.trim(),
               image_url: imageUrl,
               filial_id: fId,
@@ -700,11 +705,15 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </fieldset>
           )}
 
-          {/* Preço e Quantidade */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Preço, Custo e Quantidade */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="product-price">Preço (R$) *</Label>
               <Input id="product-price" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0,00" className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="product-custo">Custo (R$)</Label>
+              <Input id="product-custo" type="number" min="0" step="0.01" value={custo} onChange={(e) => setCusto(e.target.value)} placeholder="0,00" className="mt-1.5" />
             </div>
             <div>
               <Label>{isEditing ? "Quantidade em estoque" : "Quantidade a adicionar"}</Label>

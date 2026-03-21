@@ -1,6 +1,6 @@
-import { Package, ShoppingCart, TrendingUp, Users } from "lucide-react";
+import { Package, ShoppingCart, TrendingUp, Users, DollarSign } from "lucide-react";
 import { FilialSelector } from "@/components/FilialSelector";
-import { useProducts, useClients, useVendas } from "@/hooks/useSupabaseData";
+import { useProducts, useClients, useVendas, useVendaItems } from "@/hooks/useSupabaseData";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useFilial } from "@/contexts/FilialContext";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const { data: alertConfigs } = useStockAlerts();
   const { selectedFilial, filiais } = useFilial();
   const { data: sales, loading: loadingSales } = useVendas();
+  const { data: vendaItems } = useVendaItems();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
 
@@ -26,6 +27,15 @@ export default function Dashboard() {
 
   const activeSales = filteredSales.filter(s => s.status !== "cancelada");
   const salesTotalValue = activeSales.reduce((acc, s) => acc + Number(s.total), 0);
+
+  // Calculate profit from venda_items linked to active sales
+  const activeSaleIds = new Set(activeSales.map(s => s.id));
+  const activeItems = vendaItems.filter(vi => activeSaleIds.has(vi.venda_id));
+  const totalProfit = activeItems.reduce((acc, vi) => {
+    const custo = Number(vi.custo_unitario) || 0;
+    return acc + (Number(vi.unit_price) - custo) * vi.quantity;
+  }, 0);
+  const avgProfitPerSale = activeSales.length > 0 ? totalProfit / activeSales.length : 0;
 
   const activeProducts = products.filter(p => p.status !== "inativo");
   const alerts = buildConfigAlerts(products, alertConfigs, selectedFilial, filiais);
@@ -54,7 +64,7 @@ export default function Dashboard() {
         </div>
 
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <MetricCard
             title="Vendas no Período"
             value={`R$ ${salesTotalValue.toFixed(2)}`}
@@ -70,18 +80,25 @@ export default function Dashboard() {
             accentColor="success"
           />
           <MetricCard
+            title="Lucro Total"
+            value={`R$ ${totalProfit.toFixed(2)}`}
+            subtitle={activeSales.length > 0 ? `${activeSales.length} vendas` : "Sem dados no período"}
+            icon={DollarSign}
+            accentColor="success"
+          />
+          <MetricCard
+            title="Lucro por Venda"
+            value={`R$ ${avgProfitPerSale.toFixed(2)}`}
+            subtitle={activeSales.length > 0 ? "média" : "Sem dados no período"}
+            icon={DollarSign}
+            accentColor="warning"
+          />
+          <MetricCard
             title="Total em Estoque"
             value={String(totalStock)}
             subtitle={`${activeProducts.length} produtos`}
             icon={Package}
             accentColor="warning"
-          />
-          <MetricCard
-            title="Clientes no Período"
-            value={String(filteredClients.filter(c => c.status === "active").length)}
-            subtitle={filteredClients.length > 0 ? "ativos" : "Sem dados no período"}
-            icon={Users}
-            accentColor="primary"
           />
         </div>
 

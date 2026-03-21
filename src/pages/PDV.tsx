@@ -171,6 +171,7 @@ export default function PDV() {
           product_model: product.model,
           quantity: count,
           unit_price: price,
+          custo_unitario: (product as any).custo ?? 0,
         };
       });
 

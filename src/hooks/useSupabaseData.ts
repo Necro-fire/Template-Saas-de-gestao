@@ -36,6 +36,7 @@ export interface DbProduct {
   is_acessorio: boolean;
   tipo_produto_id: string | null;
   hash_produto: string;
+  custo: number;
 }
 
 export interface DbClient {
@@ -86,6 +87,7 @@ export interface DbVendaItem {
   quantity: number;
   unit_price: number;
   total: number;
+  custo_unitario: number;
 }
 
 export interface DbEstoque {
@@ -141,6 +143,10 @@ export function useVendas() {
 
 export function useEstoque() {
   return useRealtimeTable<DbEstoque>("estoque");
+}
+
+export function useVendaItems() {
+  return useRealtimeTable<DbVendaItem>("venda_items", false);
 }
 
 export async function generateProductCodes(): Promise<{ code: string; barcode: string }> {
@@ -201,7 +207,7 @@ export async function upsertEstoque(produtoId: string, filialId: string, quantid
 }
 
 export async function createVenda(
-  items: { produto_id: string; product_code: string; product_model: string; quantity: number; unit_price: number }[],
+  items: { produto_id: string; product_code: string; product_model: string; quantity: number; unit_price: number; custo_unitario?: number }[],
   clientId: string | null,
   clientName: string,
   paymentMethod: string,
@@ -266,6 +272,7 @@ export async function createVenda(
     quantity: i.quantity,
     unit_price: i.unit_price,
     total: i.unit_price * i.quantity,
+    custo_unitario: i.custo_unitario ?? 0,
   }));
 
   const { error: itemsError } = await (supabase as any)
