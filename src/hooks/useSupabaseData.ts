@@ -298,14 +298,7 @@ export async function createVenda(
 
   if (itemsError) throw new Error(itemsError.message);
 
-  // Auto-register sale in open caixa if one exists
-  const { data: caixaAberto } = await (supabase as any)
-    .from("caixas")
-    .select("id")
-    .eq("filial_id", filialId)
-    .eq("status", "aberto")
-    .maybeSingle();
-
+  // Use already-validated caixaAberto from above
   if (caixaAberto && userId) {
     if (paymentSplits && paymentSplits.length > 0) {
       // Register one caixa entry per split
