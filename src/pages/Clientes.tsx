@@ -71,7 +71,6 @@ export default function Clientes() {
 
   const startDelete = async (clientId: string) => {
     setDeletingId(clientId);
-    setIsAdvancingDeleteStep(false);
     setCheckingPurchases(true);
     try {
       const { count } = await (supabase as any)
