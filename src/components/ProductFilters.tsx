@@ -85,11 +85,9 @@ export function applyProductFilters<T extends {
   retail_price: number; filial_id: string; status: string; is_acessorio: boolean;
   categoria_idade: string; genero: string; estilo: string; cor_armacao: string;
   material: string; material_aro: string; material_haste: string; tipo_lente: string;
-  tipo_produto_id: string | null;
 }>(
   products: T[],
   filters: ProductFilterValues,
-  tipos?: TipoProduto[]
 ): T[] {
   return products.filter(p => {
     if (p.status === "inativo") return false;
