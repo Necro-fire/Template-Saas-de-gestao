@@ -24,7 +24,7 @@ export const CORES_DEGRADE = [
 export const TODAS_CORES = [...CORES_SOLIDAS, ...CORES_DEGRADE] as const;
 
 export const MATERIAIS_ARO = [
-  "TR90", "Acetato", "Nylon", "Titanium", "Alumínio", "Metal", "Silicone",
+  "Acetato", "Alumínio", "Metal", "Nylon", "Silicone", "Titanium", "TR90",
 ] as const;
 
 export const MATERIAIS_HASTE = [
