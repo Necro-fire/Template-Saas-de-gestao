@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useFilial } from "@/contexts/FilialContext";
-import { useProductTypes, type TipoProduto } from "@/hooks/useProductTypes";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
