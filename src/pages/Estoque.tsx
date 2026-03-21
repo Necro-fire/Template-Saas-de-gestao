@@ -36,6 +36,8 @@ export default function Estoque() {
   const { filters, setFilters } = useProductFilters();
   const [editingTipoId, setEditingTipoId] = useState<string | null>(null);
   const [editTipoValue, setEditTipoValue] = useState("");
+  const { hasPermission } = useAuth();
+  const canEdit = hasPermission('estoque', 'edit');
 
   // Pre-apply filters from URL params
   useEffect(() => {
