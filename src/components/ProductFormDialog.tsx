@@ -218,6 +218,12 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
+    // Block save if duplicate detected
+    if (duplicateInfo && !isEditing) {
+      toast.error("Este produto já está cadastrado no sistema.");
+      return;
+    }
+
     // Validate unique referencia + classificacao per filial
     const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
     for (const fId of filials) {
@@ -229,7 +235,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         .eq("filial_id", fId)
         .maybeSingle();
       if (existing && (!isEditing || existing.id !== product?.id)) {
-        toast.error(`Este código com classificação ${classificacao} já está em uso nesta filial`);
+        toast.error("Este produto já está cadastrado no sistema.");
         return;
       }
     }
