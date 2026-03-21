@@ -19,6 +19,8 @@ const statusMap: Record<string, { label: string; variant: "default" | "destructi
 
 export default function NotasFiscais() {
   const { selectedFilial } = useFilial();
+  const { hasPermission } = useAuth();
+  const canManage = hasPermission('fiscal', 'manage');
   const { data: notas, updateStatus } = useNotasFiscais();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
