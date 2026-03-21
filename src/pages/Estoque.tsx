@@ -183,7 +183,7 @@ export default function Estoque() {
                               {p.is_acessorio && accCat ? accCat : p.color}
                               {p.material_aro ? ` · ${p.material_aro}` : ""}
                             </p>
-                            {typeName && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{typeName}</Badge>}
+                            
                             {p.is_acessorio && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-accent text-accent-foreground">Acessório</Badge>}
                           </div>
                         </div>

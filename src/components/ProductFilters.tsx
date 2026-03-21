@@ -266,18 +266,6 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                 </Select>
               </div>
 
-              {tipos.length > 0 && (
-                <div className="space-y-1">
-                  <Label className="text-caption">Tipo de Produto</Label>
-                  <Select value={draft.tipo} onValueChange={(v) => setDraft({ ...draft, tipo: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {[...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, 'pt-BR')).map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
               {showFrameFilters && (
                 <>

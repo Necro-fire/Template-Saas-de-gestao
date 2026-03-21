@@ -490,21 +490,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             )}
           </fieldset>
 
-          {/* Tipo de Produto */}
-          {tipos.length > 0 && (
-            <div>
-              <Label>Tipo de Produto</Label>
-              <Select value={tipoProdutoId} onValueChange={setTipoProdutoId}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem tipo</SelectItem>
-                  {[...tipos].sort((a, b) => a.nome_tipo.localeCompare(b.nome_tipo, 'pt-BR')).map(t => <SelectItem key={t.id} value={t.id}>{t.nome_tipo}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* FRAME-SPECIFIC FIELDS */}
           {!isAcessorio && (
