@@ -1,0 +1,184 @@
+import { useState } from "react";
+import { Plus, Trash2, Split } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+
+export interface PaymentEntry {
+  id: string;
+  method: string;
+  amount: number;
+}
+
+const PAYMENT_METHODS = [
+  { value: "pix", label: "Pix" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "cartao", label: "Cartão" },
+  { value: "boleto", label: "Boleto" },
+  { value: "prazo", label: "Prazo" },
+];
+
+let entryCounter = 0;
+function nextEntryId() {
+  return `pay-${++entryCounter}-${Date.now()}`;
+}
+
+interface SplitPaymentPanelProps {
+  total: number;
+  isSplit: boolean;
+  onSplitChange: (split: boolean) => void;
+  singleMethod: string;
+  onSingleMethodChange: (method: string) => void;
+  entries: PaymentEntry[];
+  onEntriesChange: (entries: PaymentEntry[]) => void;
+}
+
+export function SplitPaymentPanel({
+  total,
+  isSplit,
+  onSplitChange,
+  singleMethod,
+  onSingleMethodChange,
+  entries,
+  onEntriesChange,
+}: SplitPaymentPanelProps) {
+  const addEntry = () => {
+    const usedMethods = entries.map(e => e.method);
+    const available = PAYMENT_METHODS.find(m => !usedMethods.includes(m.value));
+    const remaining = total - entries.reduce((s, e) => s + e.amount, 0);
+    onEntriesChange([
+      ...entries,
+      { id: nextEntryId(), method: available?.value || "pix", amount: Math.max(0, remaining) },
+    ]);
+  };
+
+  const removeEntry = (id: string) => {
+    onEntriesChange(entries.filter(e => e.id !== id));
+  };
+
+  const updateEntry = (id: string, field: "method" | "amount", value: string | number) => {
+    onEntriesChange(
+      entries.map(e => (e.id === id ? { ...e, [field]: value } : e))
+    );
+  };
+
+  const totalPaid = entries.reduce((s, e) => s + e.amount, 0);
+  const diff = totalPaid - total;
+
+  if (!isSplit) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Select value={singleMethod} onValueChange={onSingleMethodChange}>
+            <SelectTrigger className="h-9 flex-1">
+              <SelectValue placeholder="Forma de pagamento..." />
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_METHODS.map(m => (
+                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="split-toggle"
+            checked={isSplit}
+            onCheckedChange={(checked) => {
+              onSplitChange(checked);
+              if (checked && entries.length === 0) {
+                onEntriesChange([
+                  { id: nextEntryId(), method: singleMethod || "pix", amount: total },
+                ]);
+              }
+            }}
+          />
+          <Label htmlFor="split-toggle" className="text-caption text-muted-foreground cursor-pointer">
+            <Split className="inline h-3 w-3 mr-1" />
+            Dividir pagamento
+          </Label>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="split-toggle"
+            checked={isSplit}
+            onCheckedChange={(checked) => {
+              onSplitChange(checked);
+              if (!checked) {
+                onEntriesChange([]);
+              }
+            }}
+          />
+          <Label htmlFor="split-toggle" className="text-caption text-muted-foreground cursor-pointer">
+            <Split className="inline h-3 w-3 mr-1" />
+            Dividir pagamento
+          </Label>
+        </div>
+        {entries.length < PAYMENT_METHODS.length && (
+          <Button variant="ghost" size="sm" className="h-7 text-caption" onClick={addEntry}>
+            <Plus className="h-3 w-3 mr-1" /> Adicionar
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        {entries.map((entry) => (
+          <div key={entry.id} className="flex items-center gap-2">
+            <Select value={entry.method} onValueChange={(v) => updateEntry(entry.id, "method", v)}>
+              <SelectTrigger className="h-8 flex-1 text-caption">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_METHODS.map(m => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <CurrencyInput
+              value={entry.amount}
+              onValueChange={(v) => updateEntry(entry.id, "amount", v)}
+              className="h-8 w-28 text-caption tabular-nums"
+            />
+            {entries.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => removeEntry(entry.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between text-caption">
+        <span className="text-muted-foreground">Total pago:</span>
+        <span className={`font-medium tabular-nums ${Math.abs(diff) < 0.01 ? "text-success" : "text-destructive"}`}>
+          R$ {totalPaid.toFixed(2)}
+        </span>
+      </div>
+      {diff < -0.01 && (
+        <Badge variant="destructive" className="text-caption w-full justify-center">
+          Faltam R$ {Math.abs(diff).toFixed(2)}
+        </Badge>
+      )}
+      {diff > 0.01 && (
+        <Badge variant="destructive" className="text-caption w-full justify-center">
+          Excede R$ {diff.toFixed(2)}
+        </Badge>
+      )}
+    </div>
+  );
+}

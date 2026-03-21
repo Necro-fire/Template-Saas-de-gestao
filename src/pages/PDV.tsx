@@ -15,6 +15,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, createVenda, type DbProduct } from "@/hooks/useSupabaseData";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBlocker } from "react-router-dom";
+import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,8 @@ export default function PDV() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [isSplitPayment, setIsSplitPayment] = useState(false);
+  const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
@@ -145,7 +148,22 @@ export default function PDV() {
   const finalizeSale = async () => {
     if (!selectedClient) { toast.error("Selecione um cliente"); return; }
     if (cart.length === 0) { toast.error("Adicione produtos"); return; }
-    if (!paymentMethod) { toast.error("Selecione forma de pagamento"); return; }
+
+    if (isSplitPayment) {
+      if (paymentEntries.length === 0) { toast.error("Adicione ao menos uma forma de pagamento"); return; }
+      const totalPaid = paymentEntries.reduce((s, e) => s + e.amount, 0);
+      const diff = Math.abs(totalPaid - subtotal);
+      if (diff > 0.01) {
+        if (totalPaid < subtotal) {
+          toast.error("Não é possível finalizar: valor pago é inferior ao total da compra.");
+        } else {
+          toast.error("Não é possível finalizar: valor pago excede o total da compra.");
+        }
+        return;
+      }
+    } else {
+      if (!paymentMethod) { toast.error("Selecione forma de pagamento"); return; }
+    }
 
     const client = clients.find(c => c.id === selectedClient);
     const filialId = selectedFilial === "all" ? "1" : selectedFilial;
@@ -175,12 +193,22 @@ export default function PDV() {
         };
       });
 
-      await createVenda(items, selectedClient, client?.store_name || "", paymentMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "");
+      const finalMethod = isSplitPayment
+        ? paymentEntries.map(e => e.method).join("/")
+        : paymentMethod;
+
+      const splits = isSplitPayment
+        ? paymentEntries.map(e => ({ method: e.method, amount: e.amount }))
+        : undefined;
+
+      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "", splits);
 
       toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
       setCart([]);
       setSelectedClient("");
       setPaymentMethod("");
+      setIsSplitPayment(false);
+      setPaymentEntries([]);
     } catch (err: any) {
       toast.error(err.message || "Erro ao finalizar venda");
     } finally {
@@ -357,18 +385,15 @@ export default function PDV() {
           </div>
 
           <div className="p-4 border-t space-y-3 shrink-0">
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Forma de pagamento..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">Pix</SelectItem>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="cartao">Cartão</SelectItem>
-                <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="prazo">Prazo</SelectItem>
-              </SelectContent>
-            </Select>
+            <SplitPaymentPanel
+              total={subtotal}
+              isSplit={isSplitPayment}
+              onSplitChange={setIsSplitPayment}
+              singleMethod={paymentMethod}
+              onSingleMethodChange={setPaymentMethod}
+              entries={paymentEntries}
+              onEntriesChange={setPaymentEntries}
+            />
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
