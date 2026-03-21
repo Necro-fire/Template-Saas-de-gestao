@@ -131,8 +131,7 @@ export function applyProductFilters<T extends {
     if (filters.filial !== "all" && p.filial_id !== filters.filial) return false;
 
     if (filters.stockStatus !== "all") {
-      const catMin = tipos ? getCategoryMin(p, tipos) : (p.min_stock || 0);
-      const level = getStockLevel(p.stock, catMin);
+      const level = getStockLevel(p.stock, p.min_stock || 0);
       if (filters.stockStatus === "normal" && level !== "normal") return false;
       if (filters.stockStatus === "low" && level !== "low") return false;
       if (filters.stockStatus === "critical" && level !== "critical") return false;
