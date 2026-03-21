@@ -121,7 +121,7 @@ export default function Caixa() {
 
   async function handleAddMov() {
     if (!user || !caixaAberto) return;
-    const valor = parseFloat(movValor);
+    const valor = movValor;
     if (!valor || valor <= 0) { toast.error("Informe um valor válido."); return; }
     if (!movDesc.trim()) { toast.error("Informe uma descrição/justificativa."); return; }
     setSubmitting(true);
@@ -129,7 +129,7 @@ export default function Caixa() {
       await addMovimentacao(caixaAberto.id, movTipo, valor, movForma, movDesc.trim(), user.id, userName);
       toast.success("Movimentação registrada!");
       setOpenDialog(null);
-      setMovValor("");
+      setMovValor(0);
       setMovDesc("");
     } catch (e: any) {
       toast.error(e.message);
