@@ -296,16 +296,32 @@ export async function createVenda(
     .maybeSingle();
 
   if (caixaAberto && userId) {
-    await (supabase as any).from("caixa_movimentacoes").insert({
-      caixa_id: caixaAberto.id,
-      tipo: "venda",
-      valor: total,
-      forma_pagamento: paymentMethod,
-      descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"}`,
-      venda_id: venda.id,
-      usuario_id: userId,
-      usuario_nome: userName || "",
-    });
+    if (paymentSplits && paymentSplits.length > 0) {
+      // Register one caixa entry per split
+      for (const split of paymentSplits) {
+        await (supabase as any).from("caixa_movimentacoes").insert({
+          caixa_id: caixaAberto.id,
+          tipo: "venda",
+          valor: split.amount,
+          forma_pagamento: split.method,
+          descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"} (${split.method})`,
+          venda_id: venda.id,
+          usuario_id: userId,
+          usuario_nome: userName || "",
+        });
+      }
+    } else {
+      await (supabase as any).from("caixa_movimentacoes").insert({
+        caixa_id: caixaAberto.id,
+        tipo: "venda",
+        valor: total,
+        forma_pagamento: paymentMethod,
+        descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"}`,
+        venda_id: venda.id,
+        usuario_id: userId,
+        usuario_nome: userName || "",
+      });
+    }
   }
 
   return venda;
