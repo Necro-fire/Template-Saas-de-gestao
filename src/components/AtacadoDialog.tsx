@@ -1,17 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Percent, DollarSign, Package, Tag, Layers } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { Plus, Pencil, Trash2, Percent, DollarSign, Package, Layers, ShoppingBag, Glasses } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useFilial } from "@/contexts/FilialContext";
 import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
 import { useProducts } from "@/hooks/useSupabaseData";
-import { ESTILOS } from "@/data/productConstants";
 import { toast } from "sonner";
 
 interface AtacadoDialogProps {
@@ -19,8 +18,16 @@ interface AtacadoDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const TIPO_DESCONTO_OPTIONS = [
+  { value: "todos", label: "Todos os produtos e acessórios" },
+  { value: "todas_armacoes", label: "Todas as armações" },
+  { value: "todos_acessorios", label: "Todos os acessórios" },
+  { value: "armacao_especifica", label: "Armação específica" },
+  { value: "acessorio_especifico", label: "Acessório específico" },
+] as const;
+
 const EMPTY_FORM = {
-  tipo_desconto: "todas" as string,
+  tipo_desconto: "todos" as string,
   produto_id: "" as string,
   categoria: "" as string,
   quantidade_minima: 6,
@@ -32,7 +39,6 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const { selectedFilial } = useFilial();
   const { data: descontos } = useDescontosAtacado();
   const { data: products } = useProducts();
-  
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -40,14 +46,18 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const sortedProducts = useMemo(
-    () => [...products].filter(p => !(p as any).is_acessorio && p.status === "active").sort((a, b) => a.referencia.localeCompare(b.referencia, "pt-BR")),
+  const sortedArmacoes = useMemo(
+    () => [...products]
+      .filter(p => !(p as any).is_acessorio && p.status === "active")
+      .sort((a, b) => a.referencia.localeCompare(b.referencia, "pt-BR")),
     [products]
   );
 
-  const sortedEstilos = useMemo(
-    () => [...ESTILOS].sort((a, b) => a.localeCompare(b, "pt-BR")),
-    []
+  const sortedAcessorios = useMemo(
+    () => [...products]
+      .filter(p => (p as any).is_acessorio && p.status === "active")
+      .sort((a, b) => a.referencia.localeCompare(b.referencia, "pt-BR")),
+    [products]
   );
 
   const resetForm = () => {
@@ -72,8 +82,9 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const handleSave = async () => {
     if (form.valor_desconto <= 0) { toast.error("Informe o valor do desconto"); return; }
     if (form.quantidade_minima < 1) { toast.error("Quantidade mínima deve ser pelo menos 1"); return; }
-    if (form.tipo_desconto === "produto" && !form.produto_id) { toast.error("Selecione um produto"); return; }
-    if (form.tipo_desconto === "categoria" && !form.categoria) { toast.error("Selecione uma categoria"); return; }
+    if ((form.tipo_desconto === "armacao_especifica" || form.tipo_desconto === "acessorio_especifico") && !form.produto_id) {
+      toast.error("Selecione um produto"); return;
+    }
     if (form.tipo_valor === "percentual" && form.valor_desconto > 100) { toast.error("Percentual não pode exceder 100%"); return; }
 
     setSaving(true);
@@ -81,8 +92,8 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
 
     const payload = {
       tipo_desconto: form.tipo_desconto,
-      produto_id: form.tipo_desconto === "produto" ? form.produto_id : null,
-      categoria: form.tipo_desconto === "categoria" ? form.categoria : "",
+      produto_id: (form.tipo_desconto === "armacao_especifica" || form.tipo_desconto === "acessorio_especifico") ? form.produto_id : null,
+      categoria: "",
       quantidade_minima: form.quantidade_minima,
       tipo_valor: form.tipo_valor,
       valor_desconto: form.valor_desconto,
@@ -117,15 +128,27 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   };
 
   const getDescontoLabel = (d: DescontoAtacado) => {
+    if (d.tipo_desconto === "armacao_especifica" || d.tipo_desconto === "acessorio_especifico") return getProductRef(d.produto_id);
+    const opt = TIPO_DESCONTO_OPTIONS.find(o => o.value === d.tipo_desconto);
+    if (opt) return opt.label;
+    // Legacy fallback
+    if (d.tipo_desconto === "todas") return "Todas as armações";
     if (d.tipo_desconto === "produto") return getProductRef(d.produto_id);
     if (d.tipo_desconto === "categoria") return d.categoria;
-    return "Todas as armações";
+    return d.tipo_desconto;
   };
 
   const getDescontoIcon = (tipo: string) => {
-    if (tipo === "produto") return <Package className="h-4 w-4" />;
-    if (tipo === "categoria") return <Tag className="h-4 w-4" />;
+    if (tipo === "armacao_especifica") return <Glasses className="h-4 w-4" />;
+    if (tipo === "acessorio_especifico") return <Package className="h-4 w-4" />;
+    if (tipo === "todas_armacoes" || tipo === "todas") return <Glasses className="h-4 w-4" />;
+    if (tipo === "todos_acessorios") return <ShoppingBag className="h-4 w-4" />;
     return <Layers className="h-4 w-4" />;
+  };
+
+  const formatValor = (d: DescontoAtacado) => {
+    if (d.tipo_valor === "percentual") return `${d.valor_desconto}%`;
+    return `R$ ${Number(d.valor_desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return (
@@ -137,7 +160,6 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Add button */}
             {!showForm && (
               <Button size="sm" className="gap-1.5" onClick={() => { resetForm(); setShowForm(true); }}>
                 <Plus className="h-4 w-4" />
@@ -145,32 +167,29 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
               </Button>
             )}
 
-            {/* Form */}
             {showForm && (
               <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
                 <h3 className="text-ui font-semibold">{editingId ? "Editar Desconto" : "Novo Desconto"}</h3>
 
-                {/* Tipo de desconto */}
                 <div className="space-y-1.5">
                   <Label>Tipo de desconto</Label>
                   <Select value={form.tipo_desconto} onValueChange={v => setForm(f => ({ ...f, tipo_desconto: v, produto_id: "", categoria: "" }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todas">Todas as armações</SelectItem>
-                      <SelectItem value="categoria">Categoria (tipo de armação)</SelectItem>
-                      <SelectItem value="produto">Produto específico</SelectItem>
+                      {TIPO_DESCONTO_OPTIONS.map(o => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Produto selector */}
-                {form.tipo_desconto === "produto" && (
+                {form.tipo_desconto === "armacao_especifica" && (
                   <div className="space-y-1.5">
-                    <Label>Produto</Label>
+                    <Label>Armação</Label>
                     <Select value={form.produto_id} onValueChange={v => setForm(f => ({ ...f, produto_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um produto" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione uma armação" /></SelectTrigger>
                       <SelectContent>
-                        {sortedProducts.map(p => (
+                        {sortedArmacoes.map(p => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.referencia}{(p as any).classificacao ? ` (${(p as any).classificacao})` : ""}
                           </SelectItem>
@@ -180,22 +199,22 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                   </div>
                 )}
 
-                {/* Categoria selector */}
-                {form.tipo_desconto === "categoria" && (
+                {form.tipo_desconto === "acessorio_especifico" && (
                   <div className="space-y-1.5">
-                    <Label>Categoria</Label>
-                    <Select value={form.categoria} onValueChange={v => setForm(f => ({ ...f, categoria: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
+                    <Label>Acessório</Label>
+                    <Select value={form.produto_id} onValueChange={v => setForm(f => ({ ...f, produto_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um acessório" /></SelectTrigger>
                       <SelectContent>
-                        {sortedEstilos.map(e => (
-                          <SelectItem key={e} value={e}>{e}</SelectItem>
+                        {sortedAcessorios.map(p => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.referencia}{(p as any).classificacao ? ` (${(p as any).classificacao})` : ""}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 )}
 
-                {/* Quantidade mínima + Tipo valor + Valor */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
                     <Label>Qtd. mínima</Label>
@@ -218,17 +237,26 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Valor do desconto</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={form.tipo_valor === "percentual" ? 1 : 0.01}
-                      value={form.valor_desconto}
-                      onChange={e => setForm(f => ({ ...f, valor_desconto: parseFloat(e.target.value) || 0 }))}
-                    />
+                    {form.tipo_valor === "fixo" ? (
+                      <CurrencyInput
+                        value={form.valor_desconto}
+                        onValueChange={v => setForm(f => ({ ...f, valor_desconto: v }))}
+                        placeholder="0,00"
+                      />
+                    ) : (
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={form.valor_desconto}
+                        onChange={e => setForm(f => ({ ...f, valor_desconto: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    )}
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={resetForm}>Cancelar</Button>
                   <Button size="sm" onClick={handleSave} disabled={saving}>
@@ -238,7 +266,6 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
               </div>
             )}
 
-            {/* List */}
             {descontos.length === 0 && !showForm ? (
               <p className="text-ui text-muted-foreground text-center py-8">Nenhum desconto de atacado cadastrado</p>
             ) : (
@@ -256,7 +283,7 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                           <span>·</span>
                           <span className="flex items-center gap-0.5">
                             {d.tipo_valor === "percentual" ? <Percent className="h-3 w-3" /> : <DollarSign className="h-3 w-3" />}
-                            {d.tipo_valor === "percentual" ? `${d.valor_desconto}%` : `R$ ${Number(d.valor_desconto).toFixed(2)}`}
+                            {formatValor(d)}
                           </span>
                         </div>
                       </div>
