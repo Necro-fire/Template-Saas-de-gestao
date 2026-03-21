@@ -313,8 +313,6 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                     <FilterSelect label="Material Haste" value={draft.materialHaste}
                       onValueChange={(v) => setDraft({ ...draft, materialHaste: v })} options={MATERIAIS_HASTE} />
                   </div>
-                  <FilterSelect label="Material" value={draft.material}
-                    onValueChange={(v) => setDraft({ ...draft, material: v })} options={[...new Set([...MATERIAIS_ARO, ...MATERIAIS_HASTE])] as any} />
                   <FilterSelect label="Tipo de Lente" value={draft.tipoLente}
                     onValueChange={(v) => setDraft({ ...draft, tipoLente: v })} options={TIPOS_LENTE} />
                 </>
