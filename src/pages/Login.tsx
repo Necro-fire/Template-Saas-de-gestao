@@ -185,6 +185,7 @@ export default function Login() {
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input
                     type="email"
+                    preserveCase
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@empresa.com"
@@ -217,6 +218,7 @@ export default function Login() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
                   type={showPassword ? 'text' : 'password'}
+                  preserveCase
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
