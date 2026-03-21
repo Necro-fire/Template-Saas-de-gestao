@@ -16,6 +16,7 @@ export default function Dashboard() {
   const { data: alertConfigs } = useStockAlerts();
   const { selectedFilial, filiais } = useFilial();
   const { data: sales, loading: loadingSales } = useVendas();
+  const { data: vendaItems } = useVendaItems();
   const { data: clients } = useClients();
   const { preset, range, onChange: onDateChange } = useDateRangeFilter();
 
