@@ -320,7 +320,7 @@ export default function PDV() {
                   <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
                     <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden">
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
+                        <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
