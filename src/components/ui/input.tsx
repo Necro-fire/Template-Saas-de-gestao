@@ -4,9 +4,13 @@ import { cn } from "@/lib/utils";
 
 const SKIP_UPPERCASE_TYPES = new Set(["password", "email", "date", "datetime-local", "time", "number", "range", "color", "file", "hidden"]);
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, onChange, ...props }, ref) => {
-    const shouldUppercase = !SKIP_UPPERCASE_TYPES.has(type || "text");
+type InputProps = React.ComponentProps<"input"> & {
+  preserveCase?: boolean;
+};
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, onChange, preserveCase = false, style, ...props }, ref) => {
+    const shouldUppercase = !preserveCase && !SKIP_UPPERCASE_TYPES.has(type || "text");
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (shouldUppercase) {
@@ -18,6 +22,8 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       onChange?.(e);
     };
 
+    const resolvedStyle = preserveCase ? { ...style, textTransform: "none" as const } : style;
+
     return (
       <input
         type={type}
@@ -27,6 +33,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
         )}
         ref={ref}
         onChange={handleChange}
+        style={resolvedStyle}
         {...props}
       />
     );

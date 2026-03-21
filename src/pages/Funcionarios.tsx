@@ -318,6 +318,7 @@ export default function Funcionarios() {
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
+                      preserveCase
                       value={senha}
                       onChange={e => setSenha(e.target.value)}
                       placeholder="Mín. 6 caracteres"
