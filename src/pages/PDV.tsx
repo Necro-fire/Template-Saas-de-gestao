@@ -326,8 +326,7 @@ export default function PDV() {
                       )}
                     </div>
                     <div className="mt-2">
-                      <p className="text-caption text-muted-foreground">{product.referencia}</p>
-                      <h3 className="text-ui font-medium truncate">{product.model}</h3>
+                      <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
