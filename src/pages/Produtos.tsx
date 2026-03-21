@@ -100,12 +100,6 @@ export default function Produtos() {
               </Button>
             )}
             {canCreate && (
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowTypes(true)}>
-                <Tag className="h-4 w-4" />
-                Tipos
-              </Button>
-            )}
-            {canCreate && (
               <Button size="sm" className="gap-1.5" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
                 <Plus className="h-4 w-4" />
                 Novo Produto
