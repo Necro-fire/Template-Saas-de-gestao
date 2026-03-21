@@ -290,7 +290,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           description: detail.trim(),
           image_url: imageUrl,
           filial_id: filial,
-          tipo_produto_id: tipoProdutoId && tipoProdutoId !== "none" ? tipoProdutoId : null,
           is_acessorio: isAcessorio,
           categoria_idade: isAcessorio ? "" : categoriaIdade,
           genero: isAcessorio ? "" : genero,
