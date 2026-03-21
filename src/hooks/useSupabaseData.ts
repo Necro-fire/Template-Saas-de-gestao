@@ -206,6 +206,11 @@ export async function upsertEstoque(produtoId: string, filialId: string, quantid
   }
 }
 
+export interface PaymentSplit {
+  method: string;
+  amount: number;
+}
+
 export async function createVenda(
   items: { produto_id: string; product_code: string; product_model: string; quantity: number; unit_price: number; custo_unitario?: number }[],
   clientId: string | null,
@@ -215,7 +220,8 @@ export async function createVenda(
   filialId: string,
   discount: number = 0,
   userId?: string,
-  userName?: string
+  userName?: string,
+  paymentSplits?: PaymentSplit[]
 ) {
   const total = items.reduce((acc, i) => acc + i.unit_price * i.quantity, 0) - discount;
 
