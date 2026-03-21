@@ -428,7 +428,7 @@ export default function Caixa() {
           <div className="space-y-3">
             <div>
               <Label>Valor de abertura (troco)</Label>
-              <Input type="number" min="0" step="0.01" placeholder="0,00" value={valorAbertura} onChange={e => setValorAbertura(e.target.value)} />
+              <CurrencyInput placeholder="0,00" value={valorAbertura} onValueChange={setValorAbertura} />
             </div>
             <p className="text-xs text-muted-foreground">Filial: {filialLabel} | Responsável: {userName}</p>
           </div>
