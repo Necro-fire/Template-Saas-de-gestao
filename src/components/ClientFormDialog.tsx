@@ -138,8 +138,13 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
 
         <div className="space-y-4">
           <div>
-            <Label>Nome / Razão Social *</Label>
+            <Label>Nome do Cliente *</Label>
             <Input value={form.responsible_name} onChange={(e) => set("responsible_name", e.target.value)} placeholder="Nome completo ou razão social" className="mt-1.5" />
+          </div>
+
+          <div>
+            <Label>Nome Fantasia</Label>
+            <Input value={form.store_name} onChange={(e) => set("store_name", e.target.value)} placeholder="Nome fantasia (opcional)" className="mt-1.5" />
           </div>
 
           <div>
