@@ -36,6 +36,7 @@ export interface DbProduct {
   is_acessorio: boolean;
   tipo_produto_id: string | null;
   hash_produto: string;
+  custo: number;
 }
 
 export interface DbClient {
