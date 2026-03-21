@@ -145,6 +145,10 @@ export function useEstoque() {
   return useRealtimeTable<DbEstoque>("estoque");
 }
 
+export function useVendaItems() {
+  return useRealtimeTable<DbVendaItem>("venda_items", false);
+}
+
 export async function generateProductCodes(): Promise<{ code: string; barcode: string }> {
   const { data, error } = await (supabase as any).rpc("generate_product_codes");
   if (error) throw new Error(error.message);
