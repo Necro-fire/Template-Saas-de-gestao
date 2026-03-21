@@ -129,7 +129,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setDetail("");
     setFilial(filialLocked ? selectedFilial : "");
     setQuantidade("1");
-    setTipoProdutoId("");
+    
     setImageFile(null);
     setImagePreview(null);
     setCategoriaIdade("");
