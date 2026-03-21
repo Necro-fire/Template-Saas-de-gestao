@@ -43,7 +43,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [detail, setDetail] = useState("");
   const [filial, setFilial] = useState("");
   const [quantidade, setQuantidade] = useState("1");
-  const [tipoProdutoId, setTipoProdutoId] = useState("");
+  
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
