@@ -532,7 +532,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 <Select value={corArmacao} onValueChange={setCorArmacao}>
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
                   <SelectContent>
-                    {TODAS_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {[...TODAS_CORES].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
