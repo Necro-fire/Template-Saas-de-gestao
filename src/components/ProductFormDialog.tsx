@@ -167,31 +167,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setDuplicateInfo(null);
       return;
     }
-    const hash = generateProductHash({
-      referencia: referencia.trim(),
-      classificacao,
-      categoriaIdade,
-      genero,
-      estilo,
-      corArmacao,
-      materialAro,
-      materialHaste,
-      lensSize: Number(lensSize) || 0,
-      alturaLente: Number(alturaLente) || 0,
-      bridgeSize: Number(bridgeSize) || 0,
-      templeSize: Number(templeSize) || 0,
-      tipoLente,
-      isAcessorio,
-      subcategoriaAcessorio: buildSubcategoria(),
-    });
 
     const checkDuplicate = async () => {
       const filials = filial === "all" ? ["1", "2", "3"] : [filial];
       for (const fId of filials) {
-        const existing = await findProductByHash(hash, fId);
-        if (existing) {
-          setDuplicateInfo(`Produto "${existing.model}" já existe na filial ${fId}. A quantidade será adicionada ao estoque existente.`);
-          return;
+        // Check if same code + same classification exists
+        if (classificacao) {
+          const { data: exactMatch } = await (supabase as any)
+            .from("produtos")
+            .select("id, referencia, classificacao")
+            .eq("referencia", referencia.trim())
+            .eq("classificacao", classificacao)
+            .eq("filial_id", fId)
+            .maybeSingle();
+          if (exactMatch) {
+            setDuplicateInfo(`Este produto já está cadastrado no sistema. (Código "${referencia.trim()}" com classificação ${classificacao} na filial ${fId})`);
+            return;
+          }
         }
       }
       setDuplicateInfo(null);
@@ -199,7 +191,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
     const timeout = setTimeout(checkDuplicate, 500);
     return () => clearTimeout(timeout);
-  }, [referencia, classificacao, categoriaIdade, genero, estilo, corArmacao, materialAro, materialHaste, lensSize, alturaLente, bridgeSize, templeSize, tipoLente, isAcessorio, categoriaAcessorio, tipoAcessorio, variacaoAcessorio, corAcessorio, materialAcessorio, filial, isEditing]);
+  }, [referencia, classificacao, filial, isEditing]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -226,6 +218,12 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
+    // Block save if duplicate detected
+    if (duplicateInfo && !isEditing) {
+      toast.error("Este produto já está cadastrado no sistema.");
+      return;
+    }
+
     // Validate unique referencia + classificacao per filial
     const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
     for (const fId of filials) {
@@ -237,7 +235,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         .eq("filial_id", fId)
         .maybeSingle();
       if (existing && (!isEditing || existing.id !== product?.id)) {
-        toast.error(`Este código com classificação ${classificacao} já está em uso nesta filial`);
+        toast.error("Este produto já está cadastrado no sistema.");
         return;
       }
     }
@@ -331,12 +329,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         const filials = filial === "all" ? ["1", "2", "3"] : [filial];
 
         for (const fId of filials) {
-          const existing = await findProductByHash(hash, fId);
-
-          if (existing) {
-            await upsertEstoque(existing.id, fId, qty);
-            toast.success(`Produto "${existing.model}" já existe na filial ${fId}. +${qty} unidades adicionadas ao estoque!`);
-          } else {
             const codes = await generateProductCodes();
 
             const baseData = {
@@ -386,7 +378,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 ? `Produto cadastrado na filial ${fId}!`
                 : `Produto cadastrado! Código de barras: ${codes.barcode}`
             );
-          }
         }
       }
 
@@ -409,9 +400,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         <div className="space-y-4">
           {/* Duplicate Detection Banner */}
           {duplicateInfo && (
-            <div className="rounded-lg border border-warning/50 bg-warning/10 p-3 flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-              <p className="text-caption text-warning">{duplicateInfo}</p>
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <p className="text-caption text-destructive">{duplicateInfo}</p>
             </div>
           )}
 
@@ -761,9 +752,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || (!!duplicateInfo && !isEditing)}>
             {saving && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-            {isEditing ? "Salvar" : duplicateInfo ? "Adicionar ao Estoque" : "Cadastrar"}
+            {isEditing ? "Salvar" : "Cadastrar"}
           </Button>
         </DialogFooter>
       </DialogContent>
