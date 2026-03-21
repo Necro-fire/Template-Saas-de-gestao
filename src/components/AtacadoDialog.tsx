@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useFilial } from "@/contexts/FilialContext";
 import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
-import { useProducts } from "@/hooks/useSupabaseData";
+import { ESTILOS } from "@/data/productConstants";
+import { TODAS_CATEGORIAS_ACESSORIO } from "@/data/accessoryConstants";
 import { toast } from "sonner";
 
 interface AtacadoDialogProps {
@@ -28,37 +29,24 @@ const TIPO_DESCONTO_OPTIONS = [
 
 const EMPTY_FORM = {
   tipo_desconto: "todos" as string,
-  produto_id: "" as string,
   categoria: "" as string,
   quantidade_minima: 6,
   tipo_valor: "percentual" as string,
   valor_desconto: 0,
 };
 
+const sortedEstilos = [...ESTILOS].sort((a, b) => a.localeCompare(b, "pt-BR"));
+const sortedCategorias = [...TODAS_CATEGORIAS_ACESSORIO].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
 export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const { selectedFilial } = useFilial();
   const { data: descontos } = useDescontosAtacado();
-  const { data: products } = useProducts();
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  const sortedArmacoes = useMemo(
-    () => [...products]
-      .filter(p => !(p as any).is_acessorio && p.status === "active")
-      .sort((a, b) => a.referencia.localeCompare(b.referencia, "pt-BR")),
-    [products]
-  );
-
-  const sortedAcessorios = useMemo(
-    () => [...products]
-      .filter(p => (p as any).is_acessorio && p.status === "active")
-      .sort((a, b) => a.referencia.localeCompare(b.referencia, "pt-BR")),
-    [products]
-  );
 
   const resetForm = () => {
     setForm({ ...EMPTY_FORM });
@@ -69,7 +57,6 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const startEdit = (d: DescontoAtacado) => {
     setForm({
       tipo_desconto: d.tipo_desconto,
-      produto_id: d.produto_id || "",
       categoria: d.categoria,
       quantidade_minima: d.quantidade_minima,
       tipo_valor: d.tipo_valor,
@@ -82,8 +69,8 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
   const handleSave = async () => {
     if (form.valor_desconto <= 0) { toast.error("Informe o valor do desconto"); return; }
     if (form.quantidade_minima < 1) { toast.error("Quantidade mínima deve ser pelo menos 1"); return; }
-    if ((form.tipo_desconto === "armacao_especifica" || form.tipo_desconto === "acessorio_especifico") && !form.produto_id) {
-      toast.error("Selecione um produto"); return;
+    if ((form.tipo_desconto === "armacao_especifica" || form.tipo_desconto === "acessorio_especifico") && !form.categoria) {
+      toast.error("Selecione uma opção"); return;
     }
     if (form.tipo_valor === "percentual" && form.valor_desconto > 100) { toast.error("Percentual não pode exceder 100%"); return; }
 
@@ -92,8 +79,8 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
 
     const payload = {
       tipo_desconto: form.tipo_desconto,
-      produto_id: (form.tipo_desconto === "armacao_especifica" || form.tipo_desconto === "acessorio_especifico") ? form.produto_id : null,
-      categoria: "",
+      produto_id: null,
+      categoria: (form.tipo_desconto === "armacao_especifica" || form.tipo_desconto === "acessorio_especifico") ? form.categoria : "",
       quantidade_minima: form.quantidade_minima,
       tipo_valor: form.tipo_valor,
       valor_desconto: form.valor_desconto,
@@ -121,20 +108,11 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
     setDeletingId(null);
   };
 
-  const getProductRef = (id: string | null) => {
-    if (!id) return "";
-    const p = products.find(p => p.id === id);
-    return p ? `${p.referencia}${(p as any).classificacao ? ` (${(p as any).classificacao})` : ""}` : id;
-  };
-
   const getDescontoLabel = (d: DescontoAtacado) => {
-    if (d.tipo_desconto === "armacao_especifica" || d.tipo_desconto === "acessorio_especifico") return getProductRef(d.produto_id);
+    if (d.tipo_desconto === "armacao_especifica" || d.tipo_desconto === "acessorio_especifico") return d.categoria || "—";
     const opt = TIPO_DESCONTO_OPTIONS.find(o => o.value === d.tipo_desconto);
     if (opt) return opt.label;
-    // Legacy fallback
     if (d.tipo_desconto === "todas") return "Todas as armações";
-    if (d.tipo_desconto === "produto") return getProductRef(d.produto_id);
-    if (d.tipo_desconto === "categoria") return d.categoria;
     return d.tipo_desconto;
   };
 
@@ -173,7 +151,7 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
 
                 <div className="space-y-1.5">
                   <Label>Tipo de desconto</Label>
-                  <Select value={form.tipo_desconto} onValueChange={v => setForm(f => ({ ...f, tipo_desconto: v, produto_id: "", categoria: "" }))}>
+                  <Select value={form.tipo_desconto} onValueChange={v => setForm(f => ({ ...f, tipo_desconto: v, categoria: "" }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {TIPO_DESCONTO_OPTIONS.map(o => (
@@ -185,14 +163,12 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
 
                 {form.tipo_desconto === "armacao_especifica" && (
                   <div className="space-y-1.5">
-                    <Label>Armação</Label>
-                    <Select value={form.produto_id} onValueChange={v => setForm(f => ({ ...f, produto_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Selecione uma armação" /></SelectTrigger>
+                    <Label>Estilo de armação</Label>
+                    <Select value={form.categoria} onValueChange={v => setForm(f => ({ ...f, categoria: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um estilo" /></SelectTrigger>
                       <SelectContent>
-                        {sortedArmacoes.map(p => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.referencia}{(p as any).classificacao ? ` (${(p as any).classificacao})` : ""}
-                          </SelectItem>
+                        {sortedEstilos.map(e => (
+                          <SelectItem key={e} value={e}>{e}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -201,14 +177,12 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
 
                 {form.tipo_desconto === "acessorio_especifico" && (
                   <div className="space-y-1.5">
-                    <Label>Acessório</Label>
-                    <Select value={form.produto_id} onValueChange={v => setForm(f => ({ ...f, produto_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um acessório" /></SelectTrigger>
+                    <Label>Categoria de acessório</Label>
+                    <Select value={form.categoria} onValueChange={v => setForm(f => ({ ...f, categoria: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
                       <SelectContent>
-                        {sortedAcessorios.map(p => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.referencia}{(p as any).classificacao ? ` (${(p as any).classificacao})` : ""}
-                          </SelectItem>
+                        {sortedCategorias.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
