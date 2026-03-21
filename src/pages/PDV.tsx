@@ -354,37 +354,11 @@ export default function PDV() {
               <h2 className="text-ui font-semibold">Sacola</h2>
               {hasAnyWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
             </div>
-            <Input
-              placeholder="Buscar cliente por CPF/CNPJ..."
-              value={clientSearch}
-              onChange={(e) => setClientSearch(e.target.value)}
-              className="h-9"
+            <ClientSearchPanel
+              clients={clients}
+              selectedClient={selectedClient}
+              onSelectClient={setSelectedClient}
             />
-            {(() => {
-              const q = clientSearch.replace(/\D/g, "");
-              const filteredClients = q.length > 0
-                ? clients.filter(c => c.cnpj.replace(/\D/g, "").includes(q))
-                : clients;
-              return (
-                <Select value={selectedClient} onValueChange={(v) => { setSelectedClient(v); setClientSearch(""); }}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecionar cliente..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredClients.length > 0 ? (
-                      filteredClients.map(c => (
-                        <SelectItem key={c.id} value={c.id}>
-                          <span>{c.store_name}</span>
-                          {c.cnpj && <span className="ml-2 text-muted-foreground text-caption">· {c.cnpj}</span>}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-caption text-muted-foreground">Nenhum cliente encontrado</div>
-                    )}
-                  </SelectContent>
-                </Select>
-              );
-            })()}
           </div>
 
           <div className="flex-1 overflow-auto p-4 pt-2">
