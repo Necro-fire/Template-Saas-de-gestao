@@ -123,7 +123,7 @@ export default function PDV() {
       }
       const newQty = qtyInCart + 1;
       if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
-        toast.success(`Atacado aplicado para ${product.model}!`, { duration: 3000 });
+        toast.success(`Atacado aplicado para ${product.referencia}!`, { duration: 3000 });
       }
       return [...prev, { cartId: nextCartId(), product }];
     });
