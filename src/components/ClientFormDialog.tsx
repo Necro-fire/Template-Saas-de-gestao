@@ -15,6 +15,7 @@ interface ClientData {
   id?: string;
   responsible_name: string;
   store_name: string;
+  nome_fantasia: string;
   tipo_cliente: string;
   cnpj: string;
   cpf: string;
