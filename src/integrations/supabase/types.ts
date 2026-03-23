@@ -175,6 +175,7 @@ export type Database = {
           filial_id: string
           id: string
           inscricao_estadual: string
+          nome_fantasia: string
           observacoes: string
           phone: string
           responsible_name: string
@@ -198,6 +199,7 @@ export type Database = {
           filial_id?: string
           id?: string
           inscricao_estadual?: string
+          nome_fantasia?: string
           observacoes?: string
           phone?: string
           responsible_name: string
@@ -221,6 +223,7 @@ export type Database = {
           filial_id?: string
           id?: string
           inscricao_estadual?: string
+          nome_fantasia?: string
           observacoes?: string
           phone?: string
           responsible_name?: string
