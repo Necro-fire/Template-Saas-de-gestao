@@ -30,6 +30,9 @@ export interface ProductFilterValues {
   materialAro: string;
   materialHaste: string;
   tipoLente: string;
+  polarizado: string;
+  tipoHaste: string;
+  ponteArmacao: string;
   // Accessory hierarchical filters
   catAcessorio: string;
   tipoAcessorio: string;
@@ -47,10 +50,12 @@ const emptyFilters: ProductFilterValues = {
   genero: "all",
   estilo: "all",
   corArmacao: "all",
-  
   materialAro: "all",
   materialHaste: "all",
   tipoLente: "all",
+  polarizado: "all",
+  tipoHaste: "all",
+  ponteArmacao: "all",
   catAcessorio: "all",
   tipoAcessorio: "all",
   corAcessorio: "all",
