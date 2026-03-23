@@ -109,7 +109,13 @@ export function applyProductFilters<T extends {
     
 
     if (filters.categoriaIdade !== "all" && p.categoria_idade !== filters.categoriaIdade) return false;
-    if (filters.genero !== "all" && p.genero !== filters.genero) return false;
+    if (filters.genero !== "all") {
+      if (filters.genero === "Unissex") {
+        if (p.genero !== "Unissex") return false;
+      } else {
+        if (p.genero !== filters.genero && p.genero !== "Unissex") return false;
+      }
+    }
     if (filters.estilo !== "all" && p.estilo !== filters.estilo) return false;
     if (filters.corArmacao !== "all" && p.cor_armacao !== filters.corArmacao) return false;
     
