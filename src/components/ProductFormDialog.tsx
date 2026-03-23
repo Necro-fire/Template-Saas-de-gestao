@@ -17,9 +17,11 @@ import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/
 
 import { generateProductHash } from "@/lib/productHash";
 import {
-  CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
+  CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES, CORES_SOLIDAS,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
   MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE as MEDIDAS_HASTE_RANGE,
+  TIPOS_HASTE, PONTES_ARMACAO,
+  CATEGORIAS_IDADE_LABEL, GENEROS_LABEL,
 } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
@@ -56,6 +58,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [genero, setGenero] = useState("");
   const [estilo, setEstilo] = useState("");
   const [corArmacao, setCorArmacao] = useState("");
+  const [corHaste, setCorHaste] = useState("");
   const [materialAro, setMaterialAro] = useState("");
   const [materialHaste, setMaterialHaste] = useState("");
   const [lensSize, setLensSize] = useState("");
@@ -63,6 +66,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [bridgeSize, setBridgeSize] = useState("");
   const [templeSize, setTempleSize] = useState("");
   const [tipoLente, setTipoLente] = useState("");
+  const [polarizado, setPolarizado] = useState("");
+  const [tipoHaste, setTipoHaste] = useState("");
+  const [ponteArmacao, setPonteArmacao] = useState("");
   const [ncm, setNcm] = useState("");
   const [classificacao, setClassificacao] = useState("");
 
@@ -97,6 +103,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setGenero(product.genero || "");
       setEstilo(product.estilo || "");
       setCorArmacao(product.cor_armacao || "");
+      setCorHaste((product as any).cor_haste || "");
       setMaterialAro(product.material_aro || "");
       setMaterialHaste(product.material_haste || "");
       setLensSize(product.lens_size ? String(product.lens_size) : "");
@@ -104,6 +111,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setBridgeSize(product.bridge_size ? String(product.bridge_size) : "");
       setTempleSize(product.temple_size ? String(product.temple_size) : "");
       setTipoLente(product.tipo_lente || "");
+      setPolarizado((product as any).polarizado || "");
+      setTipoHaste((product as any).tipo_haste || "");
+      setPonteArmacao((product as any).ponte_armacao || "");
       setSubcategoriaAcessorio((product as any).subcategoria_acessorio || "");
       setCategoriaAcessorio((product as any).categoria_acessorio || "");
       setTipoAcessorio((product as any).tipo_acessorio || "");
@@ -136,6 +146,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setGenero("");
     setEstilo("");
     setCorArmacao("");
+    setCorHaste("");
     setMaterialAro("");
     setMaterialHaste("");
     setLensSize("");
@@ -143,6 +154,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setBridgeSize("");
     setTempleSize("");
     setTipoLente("");
+    setPolarizado("");
+    setTipoHaste("");
+    setPonteArmacao("");
     setNcm("");
     setClassificacao("");
     setSubcategoriaAcessorio("");
@@ -171,7 +185,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     const checkDuplicate = async () => {
       const filials = filial === "all" ? ["1", "2", "3"] : [filial];
       for (const fId of filials) {
-        // Check if same code + same classification exists
         if (classificacao) {
           const { data: exactMatch } = await (supabase as any)
             .from("produtos")
@@ -218,13 +231,11 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
 
-    // Block save if duplicate detected
     if (duplicateInfo && !isEditing) {
       toast.error("Este produto já está cadastrado no sistema.");
       return;
     }
 
-    // Validate unique referencia + classificacao per filial
     const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
     for (const fId of filials) {
       const { data: existing } = await (supabase as any)
@@ -246,7 +257,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-
 
       const subcatComputed = buildSubcategoria();
 
@@ -278,35 +288,46 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         material_acessorio: isAcessorio ? materialAcessorio : "",
       };
 
+      // Tipo de haste: se nenhuma opção marcada, é "Comum"
+      const tipoHasteValue = isAcessorio ? "" : (tipoHaste || "Comum");
+      const polarizadoValue = isAcessorio ? "" : polarizado;
+
+      const buildBaseData = (codes?: { code: string; barcode: string }, fId?: string) => ({
+        ...(codes ? { code: codes.code, barcode: codes.barcode } : {}),
+        referencia: referencia.trim(),
+        model: referencia.trim(),
+        classificacao,
+        retail_price: price,
+        custo: custo || 0,
+        description: detail.trim(),
+        image_url: imageUrl,
+        filial_id: fId || filial,
+        is_acessorio: isAcessorio,
+        categoria_idade: isAcessorio ? "" : categoriaIdade,
+        genero: isAcessorio ? "" : genero,
+        estilo: isAcessorio ? "" : estilo,
+        cor_armacao: isAcessorio ? "" : corArmacao,
+        cor_haste: isAcessorio ? "" : corHaste,
+        color: isAcessorio ? corAcessorio : corArmacao,
+        material_aro: isAcessorio ? "" : materialAro,
+        material_haste: isAcessorio ? "" : materialHaste,
+        lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
+        altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
+        bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
+        temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
+        tipo_lente: isAcessorio ? "" : tipoLente,
+        polarizado: polarizadoValue,
+        tipo_haste: tipoHasteValue,
+        ponte_armacao: isAcessorio ? "" : ponteArmacao,
+        subcategoria_acessorio: isAcessorio ? subcatComputed : "",
+        hash_produto: hash,
+        ncm,
+        stock: qty,
+        ...accessoryFields,
+      });
+
       if (isEditing) {
-        const baseData = {
-          referencia: referencia.trim(),
-          model: referencia.trim(),
-          classificacao,
-          retail_price: price,
-          custo: custo || 0,
-          description: detail.trim(),
-          image_url: imageUrl,
-          filial_id: filial,
-          is_acessorio: isAcessorio,
-          categoria_idade: isAcessorio ? "" : categoriaIdade,
-          genero: isAcessorio ? "" : genero,
-          estilo: isAcessorio ? "" : estilo,
-          cor_armacao: isAcessorio ? "" : corArmacao,
-          color: isAcessorio ? corAcessorio : corArmacao,
-          material_aro: isAcessorio ? "" : materialAro,
-          material_haste: isAcessorio ? "" : materialHaste,
-          lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
-          altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
-          bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
-          temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
-          tipo_lente: isAcessorio ? "" : tipoLente,
-          subcategoria_acessorio: isAcessorio ? subcatComputed : "",
-          hash_produto: hash,
-          ncm,
-          stock: qty,
-          ...accessoryFields,
-        };
+        const baseData = buildBaseData();
 
         const { error } = await (supabase as any).from("produtos").update(baseData).eq("id", product!.id);
         if (error) throw error;
@@ -326,58 +347,26 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
         toast.success("Produto atualizado com sucesso!");
       } else {
-        const filials = filial === "all" ? ["1", "2", "3"] : [filial];
+        const targetFilials = filial === "all" ? ["1", "2", "3"] : [filial];
 
-        for (const fId of filials) {
-            const codes = await generateProductCodes();
+        for (const fId of targetFilials) {
+          const codes = await generateProductCodes();
+          const baseData = buildBaseData(codes, fId);
 
-            const baseData = {
-              code: codes.code,
-              barcode: codes.barcode,
-              referencia: referencia.trim(),
-              model: referencia.trim(),
-              classificacao,
-              retail_price: price,
-              custo: custo || 0,
-              description: detail.trim(),
-              image_url: imageUrl,
-              filial_id: fId,
-              stock: qty,
-              
-              is_acessorio: isAcessorio,
-              categoria_idade: isAcessorio ? "" : categoriaIdade,
-              genero: isAcessorio ? "" : genero,
-              estilo: isAcessorio ? "" : estilo,
-              cor_armacao: isAcessorio ? "" : corArmacao,
-              color: isAcessorio ? corAcessorio : corArmacao,
-              material_aro: isAcessorio ? "" : materialAro,
-              material_haste: isAcessorio ? "" : materialHaste,
-              
-              lens_size: isAcessorio ? 0 : (Number(lensSize) || 0),
-              altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
-              bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
-              temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
-              tipo_lente: isAcessorio ? "" : tipoLente,
-              subcategoria_acessorio: isAcessorio ? subcatComputed : "",
-              hash_produto: hash,
-              ncm,
-              ...accessoryFields,
-            };
+          const { data: newProduct, error } = await (supabase as any).from("produtos").insert(baseData).select().single();
+          if (error) throw error;
 
-            const { data: newProduct, error } = await (supabase as any).from("produtos").insert(baseData).select().single();
-            if (error) throw error;
+          await (supabase as any).from("estoque").insert({
+            produto_id: newProduct.id,
+            filial_id: fId,
+            quantidade: qty,
+          });
 
-            await (supabase as any).from("estoque").insert({
-              produto_id: newProduct.id,
-              filial_id: fId,
-              quantidade: qty,
-            });
-
-            toast.success(
-              filials.length > 1
-                ? `Produto cadastrado na filial ${fId}!`
-                : `Produto cadastrado! Código de barras: ${codes.barcode}`
-            );
+          toast.success(
+            targetFilials.length > 1
+              ? `Produto cadastrado na filial ${fId}!`
+              : `Produto cadastrado! Código de barras: ${codes.barcode}`
+          );
         }
       }
 
@@ -389,6 +378,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setSaving(false);
     }
   };
+
+  const sortedCoresSolidas = [...CORES_SOLIDAS].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -494,7 +485,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={categoriaIdade} onValueChange={setCategoriaIdade}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {[...CATEGORIAS_IDADE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {[...CATEGORIAS_IDADE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => (
+                          <SelectItem key={c} value={c}>{CATEGORIAS_IDADE_LABEL[c] || c}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -503,7 +496,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={genero} onValueChange={setGenero}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {[...GENEROS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        {[...GENEROS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(g => (
+                          <SelectItem key={g} value={g}>{GENEROS_LABEL[g] || g}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -521,16 +516,30 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </Select>
               </div>
 
-              {/* 4. Cor */}
-              <div>
-                <Label>Cor da Armação</Label>
-                <Select value={corArmacao} onValueChange={setCorArmacao}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
-                  <SelectContent>
-                    {[...TODAS_CORES].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* 4. Cor da Armação + Cor da Haste */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="text-sm font-semibold px-1">Cores</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Cor da Armação</Label>
+                    <Select value={corArmacao} onValueChange={setCorArmacao}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                      <SelectContent>
+                        {[...TODAS_CORES].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Cor da Haste</Label>
+                    <Select value={corHaste} onValueChange={setCorHaste}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                      <SelectContent>
+                        {sortedCoresSolidas.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </fieldset>
 
               {/* 5. Material */}
               <fieldset className="space-y-3 rounded-lg border p-3">
@@ -551,6 +560,33 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {[...MATERIAIS_HASTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* Tipo de Haste */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="text-sm font-semibold px-1">Haste</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Tipo de Haste</Label>
+                    <Select value={tipoHaste} onValueChange={setTipoHaste}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Comum" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Comum">Comum</SelectItem>
+                        {TIPOS_HASTE.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">Se não selecionado, será considerado Comum</p>
+                  </div>
+                  <div>
+                    <Label>Ponte da Armação</Label>
+                    <Select value={ponteArmacao} onValueChange={setPonteArmacao}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {PONTES_ARMACAO.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -580,17 +616,34 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </div>
               </fieldset>
 
-              {/* 7. Tipo de Lente */}
-              <div>
-                <Label>Tipo de Lente</Label>
-                <Select value={tipoLente} onValueChange={setTipoLente}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* 7. Tipo de Lente + Polarizado */}
+              <fieldset className="space-y-3 rounded-lg border p-3">
+                <legend className="text-sm font-semibold px-1">Lente</legend>
+                <div>
+                  <Label>Tipo de Lente</Label>
+                  <Select value={tipoLente} onValueChange={(v) => {
+                    setTipoLente(v);
+                    if (v === "Receituário") setPolarizado("");
+                  }}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
+                    <SelectContent>
+                      {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {tipoLente && tipoLente !== "Receituário" && (
+                  <div>
+                    <Label>Polarizado</Label>
+                    <Select value={polarizado} onValueChange={setPolarizado}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sim">Sim</SelectItem>
+                        <SelectItem value="Não">Não</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </fieldset>
             </>
           )}
 
