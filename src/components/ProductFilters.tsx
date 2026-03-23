@@ -116,6 +116,9 @@ export function applyProductFilters<T extends {
     if (filters.materialAro !== "all" && p.material_aro !== filters.materialAro) return false;
     if (filters.materialHaste !== "all" && p.material_haste !== filters.materialHaste) return false;
     if (filters.tipoLente !== "all" && p.tipo_lente !== filters.tipoLente) return false;
+    if (filters.polarizado !== "all" && (p as any).polarizado !== filters.polarizado) return false;
+    if (filters.tipoHaste !== "all" && (p as any).tipo_haste !== filters.tipoHaste) return false;
+    if (filters.ponteArmacao !== "all" && (p as any).ponte_armacao !== filters.ponteArmacao) return false;
 
     // Accessory hierarchical filters
     if (filters.catAcessorio !== "all") {
