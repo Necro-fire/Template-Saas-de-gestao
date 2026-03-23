@@ -13,6 +13,8 @@ import { useFilial } from "@/contexts/FilialContext";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
+  TIPOS_HASTE, PONTES_ARMACAO,
+  CATEGORIAS_IDADE_LABEL, GENEROS_LABEL,
 } from "@/data/productConstants";
 import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
 
@@ -28,6 +30,9 @@ export interface ProductFilterValues {
   materialAro: string;
   materialHaste: string;
   tipoLente: string;
+  polarizado: string;
+  tipoHaste: string;
+  ponteArmacao: string;
   // Accessory hierarchical filters
   catAcessorio: string;
   tipoAcessorio: string;
@@ -45,10 +50,12 @@ const emptyFilters: ProductFilterValues = {
   genero: "all",
   estilo: "all",
   corArmacao: "all",
-  
   materialAro: "all",
   materialHaste: "all",
   tipoLente: "all",
+  polarizado: "all",
+  tipoHaste: "all",
+  ponteArmacao: "all",
   catAcessorio: "all",
   tipoAcessorio: "all",
   corAcessorio: "all",
@@ -109,6 +116,9 @@ export function applyProductFilters<T extends {
     if (filters.materialAro !== "all" && p.material_aro !== filters.materialAro) return false;
     if (filters.materialHaste !== "all" && p.material_haste !== filters.materialHaste) return false;
     if (filters.tipoLente !== "all" && p.tipo_lente !== filters.tipoLente) return false;
+    if (filters.polarizado !== "all" && (p as any).polarizado !== filters.polarizado) return false;
+    if (filters.tipoHaste !== "all" && (p as any).tipo_haste !== filters.tipoHaste) return false;
+    if (filters.ponteArmacao !== "all" && (p as any).ponte_armacao !== filters.ponteArmacao) return false;
 
     // Accessory hierarchical filters
     if (filters.catAcessorio !== "all") {
@@ -175,7 +185,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
   const countActive = (f: ProductFilterValues) => {
     const keys: (keyof ProductFilterValues)[] = [
       "tipoItem", "categoriaIdade", "genero", "estilo", "corArmacao",
-      "materialAro", "materialHaste", "tipoLente",
+      "materialAro", "materialHaste", "tipoLente", "polarizado", "tipoHaste", "ponteArmacao",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
     ];
@@ -289,6 +299,14 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                   </div>
                   <FilterSelect label="Tipo de Lente" value={draft.tipoLente}
                     onValueChange={(v) => setDraft({ ...draft, tipoLente: v })} options={TIPOS_LENTE} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FilterSelect label="Polarizado" value={draft.polarizado}
+                      onValueChange={(v) => setDraft({ ...draft, polarizado: v })} options={["Sim", "Não"]} />
+                    <FilterSelect label="Ponte" value={draft.ponteArmacao}
+                      onValueChange={(v) => setDraft({ ...draft, ponteArmacao: v })} options={[...PONTES_ARMACAO]} allLabel="Todas" />
+                  </div>
+                  <FilterSelect label="Tipo de Haste" value={draft.tipoHaste}
+                    onValueChange={(v) => setDraft({ ...draft, tipoHaste: v })} options={["Comum", ...TIPOS_HASTE]} />
                 </>
               )}
 

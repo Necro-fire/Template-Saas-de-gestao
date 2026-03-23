@@ -166,6 +166,7 @@ export type Database = {
           bairro: string
           city: string
           cnpj: string
+          cpf: string
           created_at: string
           credit_limit: number
           data_nascimento: string | null
@@ -180,6 +181,7 @@ export type Database = {
           state: string
           status: string
           store_name: string
+          telefones: string[]
           tipo_cliente: string
           whatsapp: string
         }
@@ -187,6 +189,7 @@ export type Database = {
           bairro?: string
           city?: string
           cnpj?: string
+          cpf?: string
           created_at?: string
           credit_limit?: number
           data_nascimento?: string | null
@@ -201,6 +204,7 @@ export type Database = {
           state?: string
           status?: string
           store_name: string
+          telefones?: string[]
           tipo_cliente?: string
           whatsapp?: string
         }
@@ -208,6 +212,7 @@ export type Database = {
           bairro?: string
           city?: string
           cnpj?: string
+          cpf?: string
           created_at?: string
           credit_limit?: number
           data_nascimento?: string | null
@@ -222,6 +227,7 @@ export type Database = {
           state?: string
           status?: string
           store_name?: string
+          telefones?: string[]
           tipo_cliente?: string
           whatsapp?: string
         }
@@ -520,6 +526,7 @@ export type Database = {
           color: string
           cor_acessorio: string
           cor_armacao: string
+          cor_haste: string
           created_at: string
           custo: number
           description: string
@@ -538,6 +545,8 @@ export type Database = {
           min_stock: number
           model: string
           ncm: string
+          polarizado: string
+          ponte_armacao: string
           referencia: string
           retail_price: number
           status: string
@@ -545,6 +554,7 @@ export type Database = {
           subcategoria_acessorio: string
           temple_size: number
           tipo_acessorio: string
+          tipo_haste: string
           tipo_lente: string
           tipo_produto_id: string | null
           variacao_acessorio: string
@@ -563,6 +573,7 @@ export type Database = {
           color?: string
           cor_acessorio?: string
           cor_armacao?: string
+          cor_haste?: string
           created_at?: string
           custo?: number
           description?: string
@@ -581,6 +592,8 @@ export type Database = {
           min_stock?: number
           model: string
           ncm?: string
+          polarizado?: string
+          ponte_armacao?: string
           referencia?: string
           retail_price?: number
           status?: string
@@ -588,6 +601,7 @@ export type Database = {
           subcategoria_acessorio?: string
           temple_size?: number
           tipo_acessorio?: string
+          tipo_haste?: string
           tipo_lente?: string
           tipo_produto_id?: string | null
           variacao_acessorio?: string
@@ -606,6 +620,7 @@ export type Database = {
           color?: string
           cor_acessorio?: string
           cor_armacao?: string
+          cor_haste?: string
           created_at?: string
           custo?: number
           description?: string
@@ -624,6 +639,8 @@ export type Database = {
           min_stock?: number
           model?: string
           ncm?: string
+          polarizado?: string
+          ponte_armacao?: string
           referencia?: string
           retail_price?: number
           status?: string
@@ -631,6 +648,7 @@ export type Database = {
           subcategoria_acessorio?: string
           temple_size?: number
           tipo_acessorio?: string
+          tipo_haste?: string
           tipo_lente?: string
           tipo_produto_id?: string | null
           variacao_acessorio?: string
