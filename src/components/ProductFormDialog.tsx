@@ -483,10 +483,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label>Categoria</Label>
                     <Select value={categoriaIdade} onValueChange={setCategoriaIdade}>
-                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecionar (Ex: Adulto, Infantil até 12 anos)" /></SelectTrigger>
                       <SelectContent>
                         {[...CATEGORIAS_IDADE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => (
-                          <SelectItem key={c} value={c}>{CATEGORIAS_IDADE_LABEL[c] || c}</SelectItem>
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -494,10 +494,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label>Gênero</Label>
                     <Select value={genero} onValueChange={setGenero}>
-                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecionar (Ex: Largos/retos, arredondados, neutros)" /></SelectTrigger>
                       <SelectContent>
                         {[...GENEROS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(g => (
-                          <SelectItem key={g} value={g}>{GENEROS_LABEL[g] || g}</SelectItem>
+                          <SelectItem key={g} value={g}>{g}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
