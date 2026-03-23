@@ -17,7 +17,6 @@ import {
   CATEGORIAS_IDADE_LABEL, GENEROS_LABEL,
 } from "@/data/productConstants";
 import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
-import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
 
 export type StockLevel = "normal" | "low" | "critical" | "out_of_stock";
 
