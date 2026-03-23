@@ -187,6 +187,11 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
             <Input value={form.responsible_name} onChange={(e) => set("responsible_name", e.target.value)} placeholder="Nome do responsável (opcional)" className="mt-1.5" />
           </div>
 
+          <div>
+            <Label>Nome Fantasia</Label>
+            <Input value={form.nome_fantasia} onChange={(e) => set("nome_fantasia", e.target.value)} placeholder="Nome fantasia (opcional)" className="mt-1.5" />
+          </div>
+
           {/* Telefone principal */}
           <div>
             <Label>Telefone / Celular *</Label>
