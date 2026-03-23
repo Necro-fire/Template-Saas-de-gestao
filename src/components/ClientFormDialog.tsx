@@ -36,6 +36,7 @@ interface ClientData {
 const emptyClient: ClientData = {
   responsible_name: "",
   store_name: "",
+  nome_fantasia: "",
   tipo_cliente: "pf",
   cnpj: "",
   cpf: "",
