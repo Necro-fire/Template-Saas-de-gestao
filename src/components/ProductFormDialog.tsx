@@ -482,7 +482,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label>Categoria</Label>
                     <Select value={categoriaIdade} onValueChange={setCategoriaIdade}>
-                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecionar (Ex: Adulto, Infantil até 12 anos)" /></SelectTrigger>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Adulto e Infantil" /></SelectTrigger>
                       <SelectContent>
                         {[...CATEGORIAS_IDADE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => (
                           <SelectItem key={c} value={c}>{c}</SelectItem>
