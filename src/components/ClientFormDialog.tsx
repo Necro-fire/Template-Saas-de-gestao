@@ -69,6 +69,7 @@ export function ClientFormDialog({ open, onOpenChange, editingClient }: ClientFo
     if (editingClient) {
       setForm({
         ...editingClient,
+        nome_fantasia: (editingClient as any).nome_fantasia || "",
         cpf: (editingClient as any).cpf || "",
         telefones: (editingClient as any).telefones || [],
       });
