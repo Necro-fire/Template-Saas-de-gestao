@@ -299,6 +299,14 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                   </div>
                   <FilterSelect label="Tipo de Lente" value={draft.tipoLente}
                     onValueChange={(v) => setDraft({ ...draft, tipoLente: v })} options={TIPOS_LENTE} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FilterSelect label="Polarizado" value={draft.polarizado}
+                      onValueChange={(v) => setDraft({ ...draft, polarizado: v })} options={["Sim", "Não"]} />
+                    <FilterSelect label="Ponte" value={draft.ponteArmacao}
+                      onValueChange={(v) => setDraft({ ...draft, ponteArmacao: v })} options={[...PONTES_ARMACAO]} allLabel="Todas" />
+                  </div>
+                  <FilterSelect label="Tipo de Haste" value={draft.tipoHaste}
+                    onValueChange={(v) => setDraft({ ...draft, tipoHaste: v })} options={["Comum", ...TIPOS_HASTE]} />
                 </>
               )}
 
