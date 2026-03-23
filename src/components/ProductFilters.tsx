@@ -13,7 +13,10 @@ import { useFilial } from "@/contexts/FilialContext";
 import {
   CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES,
   MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
+  TIPOS_HASTE, PONTES_ARMACAO,
+  CATEGORIAS_IDADE_LABEL, GENEROS_LABEL,
 } from "@/data/productConstants";
+import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
 import { ACESSORIOS_CATEGORIAS, getTiposByCategoria } from "@/data/accessoryConstants";
 
 export type StockLevel = "normal" | "low" | "critical" | "out_of_stock";
