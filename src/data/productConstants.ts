@@ -54,10 +54,25 @@ export const TIPOS_LENTE = [
   "Rosa",
 ] as const;
 
-export const MEDIDAS_LENTE = { min: 40, max: 64 } as const;
-export const MEDIDAS_ALTURA_LENTE = { min: 15, max: 60 } as const;
-export const MEDIDAS_PONTE = { min: 12, max: 25 } as const;
-export const MEDIDAS_HASTE = { min: 130, max: 148 } as const;
+export const MEDIDAS_LENTE = { min: 40, max: 65 } as const;
+export const MEDIDAS_ALTURA_LENTE = { min: 15, max: 70 } as const;
+export const MEDIDAS_PONTE = { min: 10, max: 30 } as const;
+export const MEDIDAS_HASTE = { min: 125, max: 155 } as const;
+
+export const TIPOS_HASTE = ["180", "360"] as const;
+
+export const PONTES_ARMACAO = ["Plaqueta", "Anatômica", "Normal"] as const;
+
+export const CATEGORIAS_IDADE_LABEL: Record<string, string> = {
+  "Adulto": "Adulto (Ex: Masculino adulto, Feminino adulto)",
+  "Infantil": "Infantil (Ex: Até 12 anos)",
+};
+
+export const GENEROS_LABEL: Record<string, string> = {
+  "Masculino": "Masculino (Ex: Modelos mais largos/retos)",
+  "Feminino": "Feminino (Ex: Modelos arredondados/delicados)",
+  "Unissex": "Unissex (Ex: Modelos neutros)",
+};
 
 export const SUBCATEGORIAS_ACESSORIOS: Record<string, string[]> = {
   "Teste de Lente": [
