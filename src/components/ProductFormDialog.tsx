@@ -24,7 +24,7 @@ import {
 } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
-  getCoresByVariacao, getMateriaisByCategoria, isEstojo,
+  getCoresByVariacao, getMateriaisByCategoria, getTiposVendaByCategoria, hasMaterial,
 } from "@/data/accessoryConstants";
 
 interface ProductFormDialogProps {
