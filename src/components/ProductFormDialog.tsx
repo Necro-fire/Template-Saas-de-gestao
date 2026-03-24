@@ -307,6 +307,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         variacao_acessorio: isAcessorio ? variacaoAcessorio : "",
         cor_acessorio: isAcessorio ? corAcessorio : "",
         material_acessorio: isAcessorio ? materialAcessorio : "",
+        tipo_venda: isAcessorio ? tipoVenda : "",
       };
 
       // Tipo de haste: se nenhuma opção marcada, é "Comum"
