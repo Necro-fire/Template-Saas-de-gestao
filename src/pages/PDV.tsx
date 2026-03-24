@@ -548,6 +548,34 @@ export default function PDV() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Credit Card Installment Modal */}
+      <CreditCardInstallmentDialog
+        open={showCreditCardModal}
+        onOpenChange={setShowCreditCardModal}
+        total={subtotal}
+        onConfirm={(installments, finalTotal) => {
+          setCreditCardInfo({ installments, finalTotal });
+        }}
+      />
+
+      {/* Boleto Config Modal */}
+      <BoletoConfigDialog
+        open={showBoletoModal}
+        onOpenChange={setShowBoletoModal}
+        total={subtotal}
+        onConfirm={(interval, installments, finalTotal) => {
+          setBoletoInfo({ interval, installments, finalTotal });
+        }}
+      />
+
+      {/* Product Image Zoom */}
+      <ProductImageDialog
+        open={!!zoomImage}
+        onOpenChange={(o) => { if (!o) setZoomImage(null); }}
+        imageUrl={zoomImage?.url || ""}
+        productName={zoomImage?.name || ""}
+      />
     </div>
   );
 }
