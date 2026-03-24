@@ -713,7 +713,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   ))}
                 </fieldset>
               )}
-              </fieldset>
             </>
           )}
 
