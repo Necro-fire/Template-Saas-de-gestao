@@ -19,7 +19,7 @@ export function RecentSalesCard({ sales }: RecentSalesCardProps) {
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className="space-y-1">
-          {sales.slice(0, 10).map((sale, i) => (
+          {sales.slice(0, 8).map((sale, i) => (
             <div
               key={sale.id}
               className={cn(
