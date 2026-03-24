@@ -95,7 +95,18 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
   useEffect(() => {
     if (product) {
-      setClassificacaoProduto(product.is_acessorio ? "Acessório" : ((product as any).classificacao_produto || ""));
+      const cat = product.category as ClassificacaoProduto;
+      setClassificacaoProduto(product.is_acessorio ? "Acessório" : (["Receituário", "Solar", "Clip-on"].includes(cat) ? cat : ""));
+      // Load clip-on lenses from tipo_lente JSON
+      if (cat === "Clip-on" && product.tipo_lente) {
+        try {
+          const parsed = JSON.parse(product.tipo_lente);
+          if (Array.isArray(parsed)) {
+            setCliponQtdLentes(parsed.length);
+            setCliponLentes(parsed);
+          }
+        } catch { /* not JSON, ignore */ }
+      }
       setReferencia(product.referencia || "");
       setName(product.model);
       setPrice(Number(product.retail_price) || 0);
