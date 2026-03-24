@@ -203,22 +203,37 @@ export default function PDV() {
         };
       });
 
-      const finalMethod = isSplitPayment
+      // Determine final method string and total with interest
+      let finalMethod = isSplitPayment
         ? paymentEntries.map(e => e.method).join("/")
         : paymentMethod;
+
+      let saleTotal = subtotal;
+      if (!isSplitPayment && paymentMethod === "cartao" && creditCardInfo) {
+        finalMethod = `Cartão de Crédito ${creditCardInfo.installments}x`;
+        saleTotal = creditCardInfo.finalTotal;
+      } else if (!isSplitPayment && paymentMethod === "boleto" && boletoInfo) {
+        finalMethod = `Boleto ${boletoInfo.installments}x/${boletoInfo.interval}d`;
+        saleTotal = boletoInfo.finalTotal;
+      }
+
+      const discount = saleTotal > subtotal ? 0 : 0;
+      const saleDiscount = 0;
 
       const splits = isSplitPayment
         ? paymentEntries.map(e => ({ method: e.method, amount: e.amount }))
         : undefined;
 
-      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "", splits);
+      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
 
-      toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
+      toast.success(`Venda finalizada! Total: R$ ${saleTotal.toFixed(2)}`);
       setCart([]);
       setSelectedClient("");
       setPaymentMethod("");
       setIsSplitPayment(false);
       setPaymentEntries([]);
+      setCreditCardInfo(null);
+      setBoletoInfo(null);
     } catch (err: any) {
       toast.error(err.message || "Erro ao finalizar venda");
     } finally {
