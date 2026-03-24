@@ -796,6 +796,60 @@ export type Database = {
           },
         ]
       }
+      venda_item_cancelamentos: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string
+          produto_id: string
+          quantity: number
+          unit_price: number
+          usuario_id: string
+          usuario_nome: string
+          venda_id: string
+          venda_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          produto_id: string
+          quantity?: number
+          unit_price?: number
+          usuario_id: string
+          usuario_nome?: string
+          venda_id: string
+          venda_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          produto_id?: string
+          quantity?: number
+          unit_price?: number
+          usuario_id?: string
+          usuario_nome?: string
+          venda_id?: string
+          venda_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venda_item_cancelamentos_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venda_item_cancelamentos_venda_item_id_fkey"
+            columns: ["venda_item_id"]
+            isOneToOne: false
+            referencedRelation: "venda_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venda_items: {
         Row: {
           custo_unitario: number
@@ -804,6 +858,7 @@ export type Database = {
           product_model: string
           produto_id: string
           quantity: number
+          status: string
           total: number
           unit_price: number
           venda_id: string
@@ -815,6 +870,7 @@ export type Database = {
           product_model?: string
           produto_id: string
           quantity?: number
+          status?: string
           total?: number
           unit_price?: number
           venda_id: string
@@ -826,6 +882,7 @@ export type Database = {
           product_model?: string
           produto_id?: string
           quantity?: number
+          status?: string
           total?: number
           unit_price?: number
           venda_id?: string
@@ -917,6 +974,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancelar_item_venda: {
+        Args: {
+          _motivo: string
+          _user_id: string
+          _user_name: string
+          _venda_item_id: string
+        }
+        Returns: undefined
+      }
       cancelar_venda: {
         Args: {
           _motivo: string
