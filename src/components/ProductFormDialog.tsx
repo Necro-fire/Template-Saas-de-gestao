@@ -205,6 +205,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setCorAcessorio("");
     setMaterialAcessorio("");
     setTipoVenda("");
+    setVariacaoRosca("");
+    setVariacaoComprimento("");
+    setIsPersonalizado(false);
+    setAcrescimoPersonalizado(0);
+    setLenteSolarTipo("");
+    setLenteSolarCor("");
+    setLenteBase("");
+    setLenteIndice("");
+    setLenteTratamentos([]);
+    setLenteEsferico("");
+    setLenteCilindrico("");
+    setLenteAdicao("");
+    setLenteDiametro("");
     setDuplicateInfo(null);
   };
 
