@@ -519,7 +519,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       "Pupilômetro", "Medir Altura e DNP", "Caixa Prova",
       "Caixa Prova Multifocal", "Armação para Caixa Prova",
       "Teste UV", "Furadeira de Modelo", "Lensômetro",
-      "Tabela", "Especímetro", "Clip-Car",
+      "Tabela", "Especímetro", "Clip-Car", "Cirex",
     ].map(simpleTipo),
   },
 
