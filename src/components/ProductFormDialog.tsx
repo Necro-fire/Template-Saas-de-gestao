@@ -36,7 +36,12 @@ interface ProductFormDialogProps {
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
   const { selectedFilial } = useFilial();
   const filialLocked = selectedFilial !== "all";
-  const [isAcessorio, setIsAcessorio] = useState(false);
+  const [classificacaoProduto, setClassificacaoProduto] = useState<ClassificacaoProduto | "">("");
+  const isAcessorio = classificacaoProduto === "Acessório";
+
+  // Clip-on state
+  const [cliponQtdLentes, setCliponQtdLentes] = useState(0);
+  const [cliponLentes, setCliponLentes] = useState<{ tipo: string; cor: string }[]>([]);
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number>(0);
