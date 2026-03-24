@@ -50,6 +50,11 @@ export default function PDV() {
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
+  const [showCreditCardModal, setShowCreditCardModal] = useState(false);
+  const [showBoletoModal, setShowBoletoModal] = useState(false);
+  const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
+  const [boletoInfo, setBoletoInfo] = useState<{ interval: string; installments: number; finalTotal: number } | null>(null);
+  const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
   const { user, profile, hasPermission } = useAuth();
