@@ -403,10 +403,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </div>
           )}
 
-          {/* Product Type Toggle */}
-          <div className="rounded-lg border p-3 flex items-center justify-between">
-            <Label htmlFor="acessorio-toggle" className="font-medium">É um Acessório?</Label>
-            <Switch id="acessorio-toggle" checked={isAcessorio} onCheckedChange={setIsAcessorio} />
+          {/* Product Classification */}
+          <div className="rounded-lg border p-3">
+            <Label className="font-medium">Classificação do Produto *</Label>
+            <Select value={classificacaoProduto} onValueChange={(v) => {
+              setClassificacaoProduto(v as ClassificacaoProduto);
+              if (v !== "Clip-on") { setCliponQtdLentes(0); setCliponLentes([]); }
+              if (v === "Receituário") { setTipoLente(""); setPolarizado(""); }
+            }}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a classificação" /></SelectTrigger>
+              <SelectContent>
+                {CLASSIFICACOES_PRODUTO.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Image */}
