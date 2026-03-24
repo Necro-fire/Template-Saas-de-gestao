@@ -18,9 +18,9 @@ import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/
 import { generateProductHash } from "@/lib/productHash";
 import {
   CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES, CORES_SOLIDAS,
-  MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
+  MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE, CORES_LENTE_CLIPON,
   MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE as MEDIDAS_HASTE_RANGE,
-  TIPOS_HASTE, PONTES_ARMACAO,
+  TIPOS_HASTE, PONTES_ARMACAO, CLASSIFICACOES_PRODUTO, type ClassificacaoProduto,
 } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
@@ -36,7 +36,12 @@ interface ProductFormDialogProps {
 export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
   const { selectedFilial } = useFilial();
   const filialLocked = selectedFilial !== "all";
-  const [isAcessorio, setIsAcessorio] = useState(false);
+  const [classificacaoProduto, setClassificacaoProduto] = useState<ClassificacaoProduto | "">("");
+  const isAcessorio = classificacaoProduto === "Acessório";
+
+  // Clip-on state
+  const [cliponQtdLentes, setCliponQtdLentes] = useState(0);
+  const [cliponLentes, setCliponLentes] = useState<{ tipo: string; cor: string }[]>([]);
   const [referencia, setReferencia] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number>(0);
@@ -90,7 +95,18 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
   useEffect(() => {
     if (product) {
-      setIsAcessorio(product.is_acessorio || false);
+      const cat = product.category as ClassificacaoProduto;
+      setClassificacaoProduto(product.is_acessorio ? "Acessório" : (["Receituário", "Solar", "Clip-on"].includes(cat) ? cat : ""));
+      // Load clip-on lenses from tipo_lente JSON
+      if (cat === "Clip-on" && product.tipo_lente) {
+        try {
+          const parsed = JSON.parse(product.tipo_lente);
+          if (Array.isArray(parsed)) {
+            setCliponQtdLentes(parsed.length);
+            setCliponLentes(parsed);
+          }
+        } catch { /* not JSON, ignore */ }
+      }
       setReferencia(product.referencia || "");
       setName(product.model);
       setPrice(Number(product.retail_price) || 0);
@@ -130,7 +146,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   }, [product, open, selectedFilial, filialLocked]);
 
   const resetForm = () => {
-    setIsAcessorio(false);
+    setClassificacaoProduto("");
+    setCliponQtdLentes(0);
+    setCliponLentes([]);
     setReferencia("");
     setName("");
     setPrice(0);
@@ -224,6 +242,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   };
 
   const handleSave = async () => {
+    if (!classificacaoProduto) { toast.error("Selecione a classificação do produto"); return; }
     if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
     if (!classificacao) { toast.error("Selecione a classificação (C1-C10)"); return; }
     if (!price || price <= 0) { toast.error("Informe um preço válido"); return; }
@@ -289,13 +308,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       // Tipo de haste: se nenhuma opção marcada, é "Comum"
       const tipoHasteValue = isAcessorio ? "" : (tipoHaste || "Comum");
-      const polarizadoValue = isAcessorio ? "" : polarizado;
+      const polarizadoValue = isAcessorio || classificacaoProduto === "Receituário" || classificacaoProduto === "Clip-on" ? "" : polarizado;
+
+      // For Clip-on, store lenses as JSON in tipo_lente
+      const tipoLenteValue = classificacaoProduto === "Clip-on"
+        ? JSON.stringify(cliponLentes)
+        : classificacaoProduto === "Receituário" ? "" : tipoLente;
 
       const buildBaseData = (codes?: { code: string; barcode: string }, fId?: string) => ({
         ...(codes ? { code: codes.code, barcode: codes.barcode } : {}),
         referencia: referencia.trim(),
         model: referencia.trim(),
         classificacao,
+        category: classificacaoProduto,
         retail_price: price,
         custo: custo || 0,
         description: detail.trim(),
@@ -314,7 +339,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
         bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
         temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
-        tipo_lente: isAcessorio ? "" : tipoLente,
+        tipo_lente: isAcessorio ? "" : tipoLenteValue,
         polarizado: polarizadoValue,
         tipo_haste: tipoHasteValue,
         ponte_armacao: isAcessorio ? "" : ponteArmacao,
@@ -396,10 +421,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </div>
           )}
 
-          {/* Product Type Toggle */}
-          <div className="rounded-lg border p-3 flex items-center justify-between">
-            <Label htmlFor="acessorio-toggle" className="font-medium">É um Acessório?</Label>
-            <Switch id="acessorio-toggle" checked={isAcessorio} onCheckedChange={setIsAcessorio} />
+          {/* Product Classification */}
+          <div className="rounded-lg border p-3">
+            <Label className="font-medium">Classificação do Produto *</Label>
+            <Select value={classificacaoProduto} onValueChange={(v) => {
+              setClassificacaoProduto(v as ClassificacaoProduto);
+              if (v !== "Clip-on") { setCliponQtdLentes(0); setCliponLentes([]); }
+              if (v === "Receituário") { setTipoLente(""); setPolarizado(""); }
+            }}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a classificação" /></SelectTrigger>
+              <SelectContent>
+                {CLASSIFICACOES_PRODUTO.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Image */}
@@ -615,22 +649,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </div>
               </fieldset>
 
-              {/* 7. Tipo de Lente + Polarizado */}
-              <fieldset className="space-y-3 rounded-lg border p-3">
-                <legend className="text-sm font-semibold px-1">Lente</legend>
-                <div>
-                  <Label>Tipo de Lente</Label>
-                  <Select value={tipoLente} onValueChange={(v) => {
-                    setTipoLente(v);
-                    if (v === "Receituário") setPolarizado("");
-                  }}>
-                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
-                    <SelectContent>
-                      {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {tipoLente && tipoLente !== "Receituário" && (
+              {/* 7. Tipo de Lente + Polarizado — Solar only */}
+              {classificacaoProduto === "Solar" && (
+                <fieldset className="space-y-3 rounded-lg border p-3">
+                  <legend className="text-sm font-semibold px-1">Lente</legend>
+                  <div>
+                    <Label>Tipo de Lente</Label>
+                    <Select value={tipoLente} onValueChange={setTipoLente}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de lente" /></SelectTrigger>
+                      <SelectContent>
+                        {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <Label>Polarizado</Label>
                     <Select value={polarizado} onValueChange={setPolarizado}>
@@ -641,8 +672,65 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                       </SelectContent>
                     </Select>
                   </div>
-                )}
-              </fieldset>
+                </fieldset>
+              )}
+
+              {/* 7b. Clip-on — dynamic lens selectors */}
+              {classificacaoProduto === "Clip-on" && (
+                <fieldset className="space-y-3 rounded-lg border p-3">
+                  <legend className="text-sm font-semibold px-1">Lentes do Clip-on</legend>
+                  <div>
+                    <Label>Quantidade de Lentes</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={cliponQtdLentes || ""}
+                      onChange={(e) => {
+                        const qty = Math.min(10, Math.max(0, Number(e.target.value) || 0));
+                        setCliponQtdLentes(qty);
+                        setCliponLentes(prev => {
+                          const arr = [...prev];
+                          while (arr.length < qty) arr.push({ tipo: "", cor: "" });
+                          return arr.slice(0, qty);
+                        });
+                      }}
+                      className="mt-1.5 w-24"
+                      placeholder="Ex: 3"
+                    />
+                  </div>
+                  {cliponLentes.map((lente, idx) => (
+                    <div key={idx} className="grid grid-cols-2 gap-3 p-2 rounded-md bg-secondary/30">
+                      <div>
+                        <Label className="text-caption">Lente {idx + 1} — Tipo</Label>
+                        <Select value={lente.tipo} onValueChange={(v) => {
+                          const arr = [...cliponLentes];
+                          arr[idx] = { ...arr[idx], tipo: v };
+                          setCliponLentes(arr);
+                        }}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                          <SelectContent>
+                            {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-caption">Lente {idx + 1} — Cor</Label>
+                        <Select value={lente.cor} onValueChange={(v) => {
+                          const arr = [...cliponLentes];
+                          arr[idx] = { ...arr[idx], cor: v };
+                          setCliponLentes(arr);
+                        }}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="Cor" /></SelectTrigger>
+                          <SelectContent>
+                            {[...CORES_LENTE_CLIPON].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                </fieldset>
+              )}
             </>
           )}
 

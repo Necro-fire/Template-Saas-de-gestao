@@ -2,6 +2,9 @@
 
 export const CLASSIFICACOES = ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10"] as const;
 
+export const CLASSIFICACOES_PRODUTO = ["Receituário", "Solar", "Clip-on", "Acessório"] as const;
+export type ClassificacaoProduto = typeof CLASSIFICACOES_PRODUTO[number];
+
 export const CATEGORIAS_IDADE = ["Adulto", "Infantil"] as const;
 
 export const GENEROS = ["Masculino", "Feminino", "Unissex"] as const;
@@ -45,13 +48,17 @@ export const TIPOS_LENTE = [
   "Espelhado Prata",
   "G15 (Verde)",
   "G15 (Verde Degradê)",
+  "Lente Transparente",
   "Marrom Degradê",
   "Marrom Total",
   "Night Drive (Amarela)",
   "Preto Degradê",
   "Preto Total",
-  "Receituário",
   "Rosa",
+] as const;
+
+export const CORES_LENTE_CLIPON = [
+  "Amarelo", "Azul", "Cinza", "Marrom", "Prata", "Preto", "Rosa", "Verde",
 ] as const;
 
 export const MEDIDAS_LENTE = { min: 40, max: 65 } as const;
