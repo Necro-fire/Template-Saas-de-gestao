@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type DbVenda } from "@/hooks/useSupabaseData";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface RecentSalesCardProps {
@@ -9,22 +7,7 @@ interface RecentSalesCardProps {
 }
 
 export function RecentSalesCard({ sales }: RecentSalesCardProps) {
-  const [codesMap, setCodesMap] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const top = sales.slice(0, 10);
-    if (top.length === 0) return;
-    (supabase as any)
-      .from("venda_items")
-      .select("venda_id, product_code")
-      .in("venda_id", top.map(s => s.id))
-      .then(({ data }: { data: { venda_id: string; product_code: string }[] | null }) => {
-        if (!data) return;
-        const map: Record<string, string> = {};
-        data.forEach(item => { if (!map[item.venda_id]) map[item.venda_id] = item.product_code; });
-        setCodesMap(map);
-      });
-  }, [sales]);
 
   return (
     <Card className="shadow-card transition-all duration-300 hover:shadow-lg">
@@ -33,7 +16,7 @@ export function RecentSalesCard({ sales }: RecentSalesCardProps) {
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className="space-y-1">
-          {sales.slice(0, 10).map((sale, i) => (
+          {sales.slice(0, 8).map((sale, i) => (
             <div
               key={sale.id}
               className={cn(
@@ -43,7 +26,7 @@ export function RecentSalesCard({ sales }: RecentSalesCardProps) {
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div>
-                <p className="text-ui font-medium">{codesMap[sale.id] || `#${sale.number}`}</p>
+                <p className="text-ui font-medium">#{sale.number}</p>
                 <p className="text-caption text-muted-foreground">{sale.client_name}</p>
               </div>
               <div className="text-right">
