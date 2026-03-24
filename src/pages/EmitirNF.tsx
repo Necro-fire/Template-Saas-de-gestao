@@ -1,33 +1,32 @@
 import { useState, useMemo } from "react";
-import { FileText, Send, AlertTriangle } from "lucide-react";
+import { FileText, Send, AlertTriangle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useFilial } from "@/contexts/FilialContext";
-import { useVendas } from "@/hooks/useSupabaseData";
+import { useVendas, useClients } from "@/hooks/useSupabaseData";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { toast } from "sonner";
 
 export default function EmitirNF() {
-  const { selectedFilial, filiais } = useFilial();
+  const { selectedFilial } = useFilial();
   const { data: allSales } = useVendas();
-  const { create: createNF } = useNotasFiscais();
+  const { data: clients } = useClients();
+  const { create: createNF, data: notasExistentes } = useNotasFiscais();
   const { data: empresas } = useEmpresas();
   const [selectedSaleId, setSelectedSaleId] = useState("");
   const [emitting, setEmitting] = useState(false);
 
   const isAllFiliais = selectedFilial === "all";
 
-  // Find the empresa record for the selected filial
   const empresaFilial = useMemo(() => {
     if (isAllFiliais) return null;
     return empresas.find(e => e.filial_id === selectedFilial && e.ativa);
   }, [empresas, selectedFilial, isAllFiliais]);
 
-  // Validate empresa has minimum required data
   const empresaIncompleta = useMemo(() => {
     if (!empresaFilial) return true;
     const required = [
@@ -41,12 +40,31 @@ export default function EmitirNF() {
     return required.some(v => !v || v.trim() === "");
   }, [empresaFilial]);
 
+  // IDs de vendas que já possuem NF emitida (não cancelada)
+  const vendasComNF = useMemo(() => {
+    return new Set(
+      notasExistentes
+        .filter(nf => nf.status !== "cancelada" && nf.venda_id)
+        .map(nf => nf.venda_id)
+    );
+  }, [notasExistentes]);
+
   const availableSales = useMemo(() => {
     if (isAllFiliais) return [];
-    return allSales.filter(s => s.status === "concluida" && s.filial_id === selectedFilial);
-  }, [allSales, selectedFilial, isAllFiliais]);
+    return allSales.filter(s =>
+      s.status === "concluida" &&
+      s.filial_id === selectedFilial &&
+      !vendasComNF.has(s.id)
+    );
+  }, [allSales, selectedFilial, isAllFiliais, vendasComNF]);
 
   const sale = availableSales.find(s => s.id === selectedSaleId);
+
+  // Buscar CNPJ/CPF do cliente vinculado à venda
+  const clientData = useMemo(() => {
+    if (!sale?.client_id) return null;
+    return clients.find(c => c.id === sale.client_id) || null;
+  }, [sale, clients]);
 
   const handleEmit = async () => {
     if (isAllFiliais) {
@@ -61,6 +79,9 @@ export default function EmitirNF() {
       toast.error("Selecione uma venda");
       return;
     }
+
+    const clientCnpj = clientData?.cnpj || clientData?.cpf || "";
+
     setEmitting(true);
     try {
       await createNF({
@@ -69,7 +90,7 @@ export default function EmitirNF() {
         venda_id: sale.id,
         empresa_id: empresaFilial.id,
         client_name: sale.client_name,
-        client_cnpj: "",
+        client_cnpj: clientCnpj,
         valor_total: Number(sale.total),
         status: "pendente",
         chave_acesso: "",
@@ -155,7 +176,7 @@ export default function EmitirNF() {
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <FileText className="h-12 w-12 mb-3 opacity-30" />
                 <p className="text-ui font-medium">Nenhuma venda disponível</p>
-                <p className="text-caption mt-1">Vendas concluídas da filial selecionada aparecerão aqui</p>
+                <p className="text-caption mt-1">Vendas concluídas sem NF emitida aparecerão aqui</p>
               </div>
             )}
 
@@ -168,10 +189,20 @@ export default function EmitirNF() {
                   <CardContent className="space-y-3">
                     <div className="grid grid-cols-2 gap-3 text-ui">
                       <div><span className="text-muted-foreground">Cliente:</span> {sale.client_name}</div>
+                      <div><span className="text-muted-foreground">CNPJ/CPF:</span> {clientData?.cnpj || clientData?.cpf || "Não informado"}</div>
                       <div><span className="text-muted-foreground">Data:</span> {new Date(sale.created_at).toLocaleDateString("pt-BR")}</div>
                       <div><span className="text-muted-foreground">Pagamento:</span> {sale.payment_method}</div>
                       <div><span className="text-muted-foreground">Total:</span> R$ {Number(sale.total).toFixed(2)}</div>
                     </div>
+
+                    {!clientData?.cnpj && !clientData?.cpf && (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-caption">
+                          Cliente sem CNPJ/CPF cadastrado. A NF será emitida sem identificação do destinatário.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </CardContent>
                 </Card>
 
