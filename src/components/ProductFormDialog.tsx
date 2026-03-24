@@ -18,9 +18,9 @@ import { generateProductCodes, findProductByHash, upsertEstoque } from "@/hooks/
 import { generateProductHash } from "@/lib/productHash";
 import {
   CLASSIFICACOES, CATEGORIAS_IDADE, GENEROS, ESTILOS, TODAS_CORES, CORES_SOLIDAS,
-  MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE,
+  MATERIAIS_ARO, MATERIAIS_HASTE, TIPOS_LENTE, CORES_LENTE_CLIPON,
   MEDIDAS_LENTE, MEDIDAS_ALTURA_LENTE, MEDIDAS_PONTE, MEDIDAS_HASTE as MEDIDAS_HASTE_RANGE,
-  TIPOS_HASTE, PONTES_ARMACAO,
+  TIPOS_HASTE, PONTES_ARMACAO, CLASSIFICACOES_PRODUTO, type ClassificacaoProduto,
 } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
