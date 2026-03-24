@@ -5,17 +5,19 @@ import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-reac
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
   if (key.includes("pix")) return <QrCode className="h-3.5 w-3.5" />;
-  if (key.includes("cart") || key.includes("debit") || key.includes("credit")) return <CreditCard className="h-3.5 w-3.5" />;
+  if (key.includes("cart") || key.includes("debit") || key.includes("credit") || key.includes("débito") || key.includes("crédito")) return <CreditCard className="h-3.5 w-3.5" />;
   return <Banknote className="h-3.5 w-3.5" />;
 }
 
@@ -23,6 +25,8 @@ export default function Vendas() {
   const { data: sales } = useVendas();
   const { preset, range, onChange } = useDateRangeFilter();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [boletoFilter, setBoletoFilter] = useState("all");
   const [selectedVenda, setSelectedVenda] = useState<DbVenda | null>(null);
   const [vendaCodesMap, setVendaCodesMap] = useState<Record<string, string>>({});
 
@@ -53,13 +57,33 @@ export default function Vendas() {
           s.client_name.toLowerCase().includes(q)
       );
     }
+    if (statusFilter !== "all") {
+      result = result.filter(s => s.status === statusFilter);
+    }
+    if (boletoFilter !== "all") {
+      result = result.filter(s => (s as any).status_boleto === boletoFilter);
+    }
     return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [sales, range, search]);
+  }, [sales, range, search, statusFilter, boletoFilter]);
 
   const totalRevenue = filtered.reduce((acc, s) => acc + Number(s.total), 0);
 
   const { filiais } = useFilial();
   const getFilialName = (filialId: string) => filiais.find((f) => f.id === filialId)?.name || filialId;
+
+  const handleBoletoStatusChange = async (vendaId: string, newStatus: string) => {
+    const { error } = await (supabase as any)
+      .from("vendas")
+      .update({ status_boleto: newStatus })
+      .eq("id", vendaId);
+    if (error) {
+      toast.error("Erro ao atualizar status do boleto");
+    } else {
+      toast.success(`Status do boleto alterado para ${newStatus}`);
+    }
+  };
+
+  const hasBoletos = sales.some(s => (s as any).status_boleto && (s as any).status_boleto !== "");
 
   return (
     <div>
@@ -75,21 +99,45 @@ export default function Vendas() {
           <DateRangeFilter preset={preset} range={range} onChange={onChange} />
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por código ou cliente..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9"
-          />
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por código ou cliente..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-9 w-[140px]">
+              <SelectValue placeholder="Status..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="concluida">Concluída</SelectItem>
+              <SelectItem value="cancelada">Cancelada</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasBoletos && (
+            <Select value={boletoFilter} onValueChange={setBoletoFilter}>
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Status boleto..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos boletos</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="gerado">Gerado</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {["dinheiro", "pix", "cartão de crédito", "cartão de débito"].map((method) => {
-            const methodSales = filtered.filter((s) => s.payment_method.toLowerCase() === method);
+            const methodSales = filtered.filter((s) => s.payment_method.toLowerCase().includes(method));
             const methodTotal = methodSales.reduce((acc, s) => acc + Number(s.total), 0);
             return (
               <Card key={method} className="border-border/50">
@@ -113,6 +161,8 @@ export default function Vendas() {
               const createdAt = new Date(sale.created_at);
               const isRecent = Date.now() - createdAt.getTime() < 24 * 60 * 60 * 1000;
               const isCancelled = sale.status === "cancelada";
+              const statusBoleto = (sale as any).status_boleto || "";
+              const isBoleto = statusBoleto !== "";
 
               return (
                 <div
@@ -131,6 +181,30 @@ export default function Vendas() {
                         <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>{vendaCodesMap[sale.id] || `#${sale.number}`}</p>
                         {isCancelled && <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Cancelada</Badge>}
                         {!isCancelled && isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
+                        {isBoleto && !isCancelled && (
+                          <Select
+                            value={statusBoleto}
+                            onValueChange={(v) => {
+                              handleBoletoStatusChange(sale.id, v);
+                            }}
+                          >
+                            <SelectTrigger
+                              className="h-5 text-[10px] px-2 w-auto min-w-0 border-none"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Badge
+                                variant={statusBoleto === "gerado" ? "default" : "secondary"}
+                                className="text-[10px] h-4 px-1.5"
+                              >
+                                {statusBoleto === "gerado" ? "Gerado" : "Pendente"}
+                              </Badge>
+                            </SelectTrigger>
+                            <SelectContent onClick={(e) => e.stopPropagation()}>
+                              <SelectItem value="pendente">Pendente</SelectItem>
+                              <SelectItem value="gerado">Gerado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <p className="text-caption text-muted-foreground">{sale.client_name || "Cliente avulso"}</p>
                     </div>
