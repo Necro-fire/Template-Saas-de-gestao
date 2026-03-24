@@ -88,6 +88,22 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [corAcessorio, setCorAcessorio] = useState("");
   const [materialAcessorio, setMaterialAcessorio] = useState("");
   const [tipoVenda, setTipoVenda] = useState("");
+  // Parafusos dual variations
+  const [variacaoRosca, setVariacaoRosca] = useState("");
+  const [variacaoComprimento, setVariacaoComprimento] = useState("");
+  // Estojos personalizado
+  const [isPersonalizado, setIsPersonalizado] = useState(false);
+  const [acrescimoPersonalizado, setAcrescimoPersonalizado] = useState<number>(0);
+  // Lentes CG
+  const [lenteSolarTipo, setLenteSolarTipo] = useState("");
+  const [lenteSolarCor, setLenteSolarCor] = useState("");
+  const [lenteBase, setLenteBase] = useState("");
+  const [lenteIndice, setLenteIndice] = useState("");
+  const [lenteTratamentos, setLenteTratamentos] = useState<string[]>([]);
+  const [lenteEsferico, setLenteEsferico] = useState("");
+  const [lenteCilindrico, setLenteCilindrico] = useState("");
+  const [lenteAdicao, setLenteAdicao] = useState("");
+  const [lenteDiametro, setLenteDiametro] = useState("");
 
   const isEditing = !!product;
 
