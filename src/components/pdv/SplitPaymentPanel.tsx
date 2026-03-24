@@ -16,7 +16,8 @@ export interface PaymentEntry {
 const PAYMENT_METHODS = [
   { value: "pix", label: "Pix" },
   { value: "dinheiro", label: "Dinheiro" },
-  { value: "cartao", label: "Cartão" },
+  { value: "cartao", label: "Cartão de Crédito" },
+  { value: "debito", label: "Cartão de Débito" },
   { value: "boleto", label: "Boleto" },
   { value: "prazo", label: "Prazo" },
 ];
