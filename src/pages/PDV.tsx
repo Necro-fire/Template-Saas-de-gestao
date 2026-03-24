@@ -419,27 +419,73 @@ export default function PDV() {
             <SplitPaymentPanel
               total={subtotal}
               isSplit={isSplitPayment}
-              onSplitChange={setIsSplitPayment}
+              onSplitChange={(split) => {
+                setIsSplitPayment(split);
+                setCreditCardInfo(null);
+                setBoletoInfo(null);
+              }}
               singleMethod={paymentMethod}
-              onSingleMethodChange={setPaymentMethod}
+              onSingleMethodChange={(method) => {
+                setPaymentMethod(method);
+                setCreditCardInfo(null);
+                setBoletoInfo(null);
+                if (method === "cartao" && cart.length > 0) {
+                  setShowCreditCardModal(true);
+                } else if (method === "boleto" && cart.length > 0) {
+                  setShowBoletoModal(true);
+                }
+              }}
               entries={paymentEntries}
               onEntriesChange={setPaymentEntries}
             />
+
+            {/* Show credit card / boleto info badge */}
+            {!isSplitPayment && paymentMethod === "cartao" && creditCardInfo && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
+                <span className="text-muted-foreground">{creditCardInfo.installments}x de R$ {(creditCardInfo.finalTotal / creditCardInfo.installments).toFixed(2)}</span>
+                <button className="text-primary text-xs underline" onClick={() => setShowCreditCardModal(true)}>Alterar</button>
+              </div>
+            )}
+            {!isSplitPayment && paymentMethod === "boleto" && boletoInfo && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
+                <span className="text-muted-foreground">{boletoInfo.installments}x a cada {boletoInfo.interval} dias</span>
+                <button className="text-primary text-xs underline" onClick={() => setShowBoletoModal(true)}>Alterar</button>
+              </div>
+            )}
+
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
                 <span>{cart.length} {cart.length === 1 ? "item" : "itens"}</span>
                 {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
               </div>
-              <div className="flex justify-between text-subhead font-semibold">
-                <span>Total</span>
-                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${hasAnyWholesale ? "text-success" : "text-foreground"}`}>
-                  R$ {subtotal.toFixed(2)}
-                </motion.span>
-              </div>
+              {(() => {
+                const displayTotal = !isSplitPayment && paymentMethod === "cartao" && creditCardInfo
+                  ? creditCardInfo.finalTotal
+                  : !isSplitPayment && paymentMethod === "boleto" && boletoInfo
+                    ? boletoInfo.finalTotal
+                    : subtotal;
+                const hasInterest = displayTotal > subtotal + 0.01;
+                return (
+                  <>
+                    {hasInterest && (
+                      <div className="flex justify-between text-caption text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span className="tabular-nums">R$ {subtotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-subhead font-semibold">
+                      <span>Total{hasInterest ? " c/ juros" : ""}</span>
+                      <motion.span key={displayTotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${hasAnyWholesale ? "text-success" : "text-foreground"}`}>
+                        R$ {displayTotal.toFixed(2)}
+                      </motion.span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 h-10" onClick={() => setCart([])}>
+              <Button variant="outline" className="flex-1 h-10" onClick={() => { setCart([]); setCreditCardInfo(null); setBoletoInfo(null); }}>
                 Cancelar
               </Button>
               <Button className="flex-1 h-10" onClick={finalizeSale} disabled={submitting || !canSell} title={!canSell ? "Sem permissão para vender" : undefined}>
