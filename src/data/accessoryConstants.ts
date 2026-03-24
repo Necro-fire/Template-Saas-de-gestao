@@ -567,6 +567,17 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       { nome: "Blocos", variacoes: [{ nome: "Padrão", cores: [...SEM_COR] }] },
     ],
   },
+
+  // ── KITS ──
+  {
+    nome: "Kits",
+    tiposVenda: ["Unidade"],
+    tipos: [
+      "Kit Extensor + Cordão", "Kit Infantil", "Kit Adulto", "Kit Limpeza",
+      "Kit Flanela", "Kit Parafusos", "Kit Chave",
+      "Kit 01", "Kit 02", "Kit 03", "Kit 04", "Kit 05", "Kit 06",
+    ].map(simpleTipo),
+  },
 ];
 
 // ── Lentes helper data ──

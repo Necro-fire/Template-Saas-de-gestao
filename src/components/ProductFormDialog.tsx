@@ -737,7 +737,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     />
                   </div>
                   {cliponLentes.map((lente, idx) => (
-                    <div key={idx} className="grid grid-cols-2 gap-3 p-2 rounded-md bg-secondary/30">
+                    <div key={idx} className="p-2 rounded-md bg-secondary/30">
                       <div>
                         <Label className="text-caption">Lente {idx + 1} — Tipo</Label>
                         <Select value={lente.tipo} onValueChange={(v) => {
@@ -748,19 +748,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                           <SelectTrigger className="mt-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
                           <SelectContent>
                             {[...TIPOS_LENTE].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-caption">Lente {idx + 1} — Cor</Label>
-                        <Select value={lente.cor} onValueChange={(v) => {
-                          const arr = [...cliponLentes];
-                          arr[idx] = { ...arr[idx], cor: v };
-                          setCliponLentes(arr);
-                        }}>
-                          <SelectTrigger className="mt-1"><SelectValue placeholder="Cor" /></SelectTrigger>
-                          <SelectContent>
-                            {[...CORES_LENTE_CLIPON].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
