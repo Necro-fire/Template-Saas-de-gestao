@@ -31,8 +31,8 @@ export function ProductImageDialog({
       }}
     >
       <DialogContent className="max-w-2xl p-2">
-        <div className="flex items-center justify-between px-2 pt-1 pb-2">
-          <p className="text-sm font-medium truncate pr-8">{productName}</p>
+        <div className="flex items-center gap-2 px-2 pt-1 pb-2 pr-10">
+          <p className="text-sm font-medium truncate flex-1">{productName}</p>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut}>
               <ZoomOut className="h-4 w-4" />
