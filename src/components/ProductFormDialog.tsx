@@ -91,8 +91,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const tiposAcessorio = getTiposByCategoria(categoriaAcessorio);
   const variacoesAcessorio = getVariacoesByTipo(categoriaAcessorio, tipoAcessorio);
   const coresAcessorio = getCoresByVariacao(categoriaAcessorio, tipoAcessorio, variacaoAcessorio);
-  const materiaisEstojo = getMateriaisByCategoria(categoriaAcessorio);
-  const showMaterial = isEstojo(categoriaAcessorio);
+  const materiaisAcessorio = getMateriaisByCategoria(categoriaAcessorio);
+  const tiposVendaAcessorio = getTiposVendaByCategoria(categoriaAcessorio);
+  const showMaterial = hasMaterial(categoriaAcessorio);
 
   useEffect(() => {
     if (product) {
