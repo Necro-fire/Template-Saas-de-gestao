@@ -7,7 +7,6 @@ interface RecentSalesCardProps {
 }
 
 export function RecentSalesCard({ sales }: RecentSalesCardProps) {
-  const [codesMap, setCodesMap] = useState<Record<string, string>>({});
 
 
   return (
