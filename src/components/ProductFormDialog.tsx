@@ -135,7 +135,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   }, [product, open, selectedFilial, filialLocked]);
 
   const resetForm = () => {
-    setIsAcessorio(false);
+    setClassificacaoProduto("");
+    setCliponQtdLentes(0);
+    setCliponLentes([]);
     setReferencia("");
     setName("");
     setPrice(0);
