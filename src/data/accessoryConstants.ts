@@ -339,6 +339,15 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       },
     ],
   },
+  {
+    nome: "Alicates",
+    tipos: [
+      {
+        nome: "Padrão",
+        variacoes: [{ nome: "Padrão", cores: ["Nenhuma"] }],
+      },
+    ],
+  },
 ];
 
 // Helper functions
