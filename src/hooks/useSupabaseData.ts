@@ -44,6 +44,7 @@ export interface DbClient {
   responsible_name: string;
   store_name: string;
   cnpj: string;
+  cpf: string;
   city: string;
   state: string;
   bairro: string;
