@@ -1,6 +1,6 @@
 /**
- * Hierarchical accessory structure: Categoria → Tipo → Variação → Cor
- * Estojos have an extra level: Material
+ * Hierarchical accessory structure: Grupo → Subtipo → Variação → Cor
+ * Some groups have Material and/or Tipos de Venda dimensions.
  */
 
 export interface AccessoryVariation {
@@ -16,15 +16,197 @@ export interface AccessoryType {
 export interface AccessoryCategory {
   nome: string;
   tipos: AccessoryType[];
-  /** Estojos have an extra "material" dimension */
+  /** Extra "material" dimension (e.g. Estojos, Suporte p/ Grau) */
   materiais?: string[];
+  /** Allowed sale types for this group */
+  tiposVenda: string[];
 }
 
 const SEM_COR = ["Nenhuma"] as const;
 
+// Helper: generate numeric variations like 1.1, 1.2, …, 2.3
+function genNumericVariations(from: number, to: number, step = 0.1): AccessoryVariation[] {
+  const result: AccessoryVariation[] = [];
+  for (let v = from; v <= to + 0.001; v += step) {
+    result.push({ nome: v.toFixed(1), cores: [...SEM_COR] });
+  }
+  return result;
+}
+
+// Cores para travas
+const CORES_TRAVA = [
+  "Preto", "Prata", "Dourado", "Rose", "Azul", "Vermelho",
+  "Verde", "Branco", "Marrom", "Cinza", "Roxo", "Laranja",
+];
+
+const CORES_PARAFUSO = ["Preto", "Prata", "Dourado", "Rose"];
+
+const simpleTipo = (nome: string): AccessoryType => ({
+  nome,
+  variacoes: [{ nome: "Padrão", cores: [...SEM_COR] }],
+});
+
 export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
+  // ── GRUPO B — ALICATES ──
+  {
+    nome: "Alicates",
+    tiposVenda: ["Unidade"],
+    tipos: [
+      "Corte", "Bico Fino", "Bico Redondo", "Meia-Cana",
+      "Nylon (Proteção)", "Plaqueta", "Abrir Aro", "Charneira",
+    ].map(simpleTipo),
+  },
+
+  // ── GRUPO D — PONTAS DE ALICATE ──
+  {
+    nome: "Pontas de Alicate",
+    tiposVenda: ["Unidade"],
+    tipos: Array.from({ length: 10 }, (_, i) =>
+      simpleTipo(`Nylon ${String(i + 1).padStart(2, "0")}`)
+    ),
+  },
+
+  // ── GRUPO F — CHAVES ──
+  {
+    nome: "Chaves",
+    tiposVenda: ["Unidade"],
+    tipos: [
+      "4 Pontas", "Dourada Fenda", "Dourada Porca", "Dourada Estrela",
+      "Fenda", "Porca", "Estrela", "Ponta Fenda", "Ponta Porca", "Ponta Estrela",
+      "Chaveirinho", "Kit 10 Pontas", "Kit Grande", "Kit Extra", "Extra",
+    ].map(simpleTipo),
+  },
+
+  // ── GRUPO H — PINÇAS ──
+  {
+    nome: "Pinças",
+    tiposVenda: ["Unidade"],
+    tipos: ["Reta", "Curva", "Comum"].map(simpleTipo),
+  },
+
+  // ── GRUPO R — SUPORTE PARA GRAU ──
+  {
+    nome: "Suporte para Grau",
+    tiposVenda: ["Unidade"],
+    materiais: ["Metal", "Acetato", "Nylon", "TR"],
+    tipos: [simpleTipo("Padrão")],
+  },
+
+  // ── GRUPO T — FLANELAS ──
+  {
+    nome: "Flanelas",
+    tiposVenda: ["Unidade", "Pacote 10 und", "Pacote 50 und", "Pacote 80 und", "Pacote 100 und"],
+    tipos: ["Microfibra", "Camurça", "Mágica", "Anti-Embaçante", "Poliéster"].map(n => ({
+      nome: n,
+      variacoes: [
+        { nome: "Pequena", cores: [...SEM_COR] },
+        { nome: "Grande", cores: [...SEM_COR] },
+      ],
+    })),
+  },
+
+  // ── GRUPO V — LIMPA LENTE ──
+  {
+    nome: "Limpa Lente",
+    tiposVenda: ["Unidade", "Pacote 10 unidades"],
+    tipos: [{
+      nome: "Padrão",
+      variacoes: ["25ml", "30ml", "50ml", "100ml"].map(v => ({ nome: v, cores: [...SEM_COR] })),
+    }],
+  },
+
+  // ── GRUPO X — PLAQUETAS ──
+  {
+    nome: "Plaquetas",
+    tiposVenda: ["Unidade", "Pacote 2", "Pacote 5", "Pacote 10", "Pacote 50", "Pacote 100", "Pacote 200"],
+    materiais: ["Silicone", "PVC", "Anatômica", "Ray-Ban", "Especial", "Adesiva", "AR"],
+    tipos: [simpleTipo("Padrão")],
+  },
+
+  // ── GRUPO Z — MOLAS ──
+  {
+    nome: "Molas",
+    tiposVenda: ["Unidade", "Par", "Pacote com 10"],
+    tipos: [
+      simpleTipo("Mola com Caixa"),
+      simpleTipo("Mola sem Caixa"),
+    ],
+  },
+
+  // ── GRUPO AB — CHARNEIRA ──
+  {
+    nome: "Charneira",
+    tiposVenda: ["Unidade", "Pacote 10"],
+    tipos: [
+      simpleTipo("Dupla"),
+      simpleTipo("Simples"),
+    ],
+  },
+
+  // ── GRUPO AD — TRAVA ──
+  {
+    nome: "Travas",
+    tiposVenda: ["Pacote 10", "Pacote 25", "Pacote 50"],
+    tipos: ["Pino Duplo", "Simples", "Colorida", "Bucha Curta", "Longa"].map(n => ({
+      nome: n,
+      variacoes: genNumericVariations(1.1, 2.3).map(v => ({
+        ...v,
+        cores: [...CORES_TRAVA],
+      })),
+    })),
+  },
+
+  // ── GRUPO AF — PARAFUSOS ──
+  {
+    nome: "Parafusos",
+    tiposVenda: ["Pacote 10", "Pacote 50", "Pacote 100"],
+    tipos: ["Guia", "Soberba", "Fenda", "Estrela", "Metade", "Cabeça Maior"].map(n => ({
+      nome: n,
+      variacoes: genNumericVariations(1.1, 2.3).map(v => ({
+        ...v,
+        cores: [...CORES_PARAFUSO],
+      })),
+    })),
+  },
+
+  // ── GRUPO AH — PORCAS ──
+  {
+    nome: "Porcas",
+    tiposVenda: ["Pacote 10", "Pacote 50", "Pacote 100"],
+    materiais: ["Metal", "Alumínio", "Plástico"],
+    tipos: [{
+      nome: "Padrão",
+      variacoes: genNumericVariations(1.1, 2.0),
+    }],
+  },
+
+  // ── GRUPO AJ — ARRUELAS ──
+  {
+    nome: "Arruelas",
+    tiposVenda: ["Pacote 10", "Pacote 50", "Pacote 100"],
+    materiais: ["Metal", "Alumínio", "Plástico"],
+    tipos: [{
+      nome: "Padrão",
+      variacoes: genNumericVariations(1.1, 2.0),
+    }],
+  },
+
+  // ── GRUPO AL — CAPACETES ──
+  {
+    nome: "Capacetes",
+    tiposVenda: ["Pacote 10", "Pacote 50", "Pacote 100"],
+    materiais: ["Metal", "Alumínio", "Plástico"],
+    tipos: [{
+      nome: "Padrão",
+      variacoes: genNumericVariations(1.1, 2.0),
+    }],
+  },
+
+  // ── Grupos existentes mantidos ──
+
   {
     nome: "Testes",
+    tiposVenda: ["Unidade"],
     tipos: [
       {
         nome: "Polarizado",
@@ -37,6 +219,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
   },
   {
     nome: "Lentes",
+    tiposVenda: ["Unidade", "Par"],
     tipos: [
       {
         nome: "Degradê",
@@ -56,53 +239,8 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     ],
   },
   {
-    nome: "Ferragens",
-    tipos: [
-      {
-        nome: "Parafuso",
-        variacoes: [
-          { nome: "1.2 - 4.0", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.4 - 3.0", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.4 - 3.2", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.4 - 3.6", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.4 - 4.0", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.4 - 5.0", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.4 - 6.0", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "1.6 - 3.6", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "Mini", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-        ],
-      },
-      {
-        nome: "Arruela",
-        variacoes: [
-          { nome: "PVC", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "Metal", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-        ],
-      },
-      {
-        nome: "Porca",
-        variacoes: [
-          { nome: "1.4", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-        ],
-      },
-      {
-        nome: "Capacete",
-        variacoes: [
-          { nome: "Metal", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "PVC 1.2", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-          { nome: "PVC 1.4", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-        ],
-      },
-      {
-        nome: "Parafuso Guia",
-        variacoes: [
-          { nome: "1.4", cores: ["Prata", "Dourado", "Preto", "Nenhuma"] },
-        ],
-      },
-    ],
-  },
-  {
     nome: "Pontes",
+    tiposVenda: ["Unidade"],
     tipos: [
       {
         nome: "Parafuso",
@@ -131,56 +269,8 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     ],
   },
   {
-    nome: "Plaquetas",
-    tipos: [
-      {
-        nome: "Anatômica",
-        variacoes: [{ nome: "Padrão", cores: ["Transparente", "Branco", "Preto", "Nenhuma"] }],
-      },
-      {
-        nome: "Rayban",
-        variacoes: [{ nome: "Padrão", cores: ["Transparente", "Branco", "Preto", "Nenhuma"] }],
-      },
-      {
-        nome: "Silicone",
-        variacoes: [{ nome: "Padrão", cores: ["Transparente", "Branco", "Preto", "Nenhuma"] }],
-      },
-      {
-        nome: "PVC",
-        variacoes: [{ nome: "Padrão", cores: ["Transparente", "Branco", "Preto", "Nenhuma"] }],
-      },
-      {
-        nome: "Ar",
-        variacoes: [{ nome: "Padrão", cores: ["Transparente", "Branco", "Preto", "Nenhuma"] }],
-      },
-    ],
-  },
-  {
-    nome: "Limpeza",
-    tipos: [
-      {
-        nome: "Flanela",
-        variacoes: [
-          { nome: "Poliéster", cores: ["Nenhuma"] },
-          { nome: "Microfibra", cores: ["Nenhuma"] },
-          { nome: "Mágica", cores: ["Nenhuma"] },
-        ],
-      },
-      {
-        nome: "Limpa Lentes",
-        variacoes: [
-          { nome: "PCT 10", cores: ["Nenhuma"] },
-          { nome: "Unidade", cores: ["Nenhuma"] },
-        ],
-      },
-      {
-        nome: "Kit Limpeza",
-        variacoes: [{ nome: "Padrão", cores: ["Nenhuma"] }],
-      },
-    ],
-  },
-  {
     nome: "Cordões",
+    tiposVenda: ["Unidade", "Dúzia"],
     tipos: [
       {
         nome: "Silicone",
@@ -206,71 +296,34 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     ],
   },
   {
-    nome: "Ferramentas",
-    tipos: [
-      {
-        nome: "Chave",
-        variacoes: [
-          { nome: "Estrela", cores: ["Prata", "Dourado", "Preto"] },
-          { nome: "Allen", cores: ["Prata", "Dourado", "Preto"] },
-          { nome: "Fenda", cores: ["Prata", "Dourado", "Preto"] },
-          { nome: "Torx", cores: ["Prata", "Dourado", "Preto"] },
-          { nome: "Dourada Fenda", cores: ["Prata", "Dourado", "Preto"] },
-          { nome: "Dourada Estrela", cores: ["Prata", "Dourado", "Preto"] },
-        ],
-      },
-      {
-        nome: "Kit Chave",
-        variacoes: [
-          { nome: "4 pontas", cores: ["Prata", "Dourado", "Preto"] },
-          { nome: "10 pontas", cores: ["Prata", "Dourado", "Preto"] },
-        ],
-      },
-    ],
-  },
-  {
     nome: "Utilidades",
+    tiposVenda: ["Unidade"],
     tipos: [
-      { nome: "Chaveiro", variacoes: [{ nome: "Padrão", cores: ["Variável", "Nenhuma"] }] },
-      { nome: "Broche", variacoes: [{ nome: "Padrão", cores: ["Variável", "Nenhuma"] }] },
-      { nome: "Meia", variacoes: [{ nome: "Padrão", cores: ["Variável", "Nenhuma"] }] },
-      { nome: "Cirex", variacoes: [{ nome: "Padrão", cores: ["Variável", "Nenhuma"] }] },
-      { nome: "Escala", variacoes: [{ nome: "Padrão", cores: ["Variável", "Nenhuma"] }] },
-      { nome: "Porta O.S.", variacoes: [{ nome: "Padrão", cores: ["Variável", "Nenhuma"] }] },
-    ],
-  },
-  {
-    nome: "Suportes",
-    tipos: [
-      {
-        nome: "Lente de contato",
-        variacoes: [{ nome: "Padrão", cores: ["Branco", "Transparente", "Nenhuma"] }],
-      },
-      {
-        nome: "Orelha",
-        variacoes: [{ nome: "Padrão", cores: ["Branco", "Transparente", "Nenhuma"] }],
-      },
+      simpleTipo("Chaveiro"),
+      simpleTipo("Broche"),
+      simpleTipo("Meia"),
+      simpleTipo("Cirex"),
+      simpleTipo("Escala"),
+      simpleTipo("Porta O.S."),
     ],
   },
   {
     nome: "Sacolas",
+    tiposVenda: ["Unidade", "Pacote 10"],
     tipos: [
       {
         nome: "Papel",
-        variacoes: [
-          { nome: "Unidade", cores: ["Branco", "Preto", "Personalizado"] },
-        ],
+        variacoes: [{ nome: "Unidade", cores: ["Branco", "Preto", "Personalizado"] }],
       },
       {
         nome: "TNT",
-        variacoes: [
-          { nome: "PCT c/10", cores: ["Branco", "Preto", "Personalizado"] },
-        ],
+        variacoes: [{ nome: "PCT c/10", cores: ["Branco", "Preto", "Personalizado"] }],
       },
     ],
   },
   {
     nome: "Estojos",
+    tiposVenda: ["Unidade"],
     materiais: ["EVA", "Malha", "Plástico", "Couro", "Sintético"],
     tipos: [
       {
@@ -290,15 +343,11 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       },
       {
         nome: "Solar",
-        variacoes: [
-          { nome: "Zíper", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] },
-        ],
+        variacoes: [{ nome: "Zíper", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] }],
       },
       {
         nome: "Receituário",
-        variacoes: [
-          { nome: "Zíper", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] },
-        ],
+        variacoes: [{ nome: "Zíper", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] }],
       },
       {
         nome: "Infantil",
@@ -309,44 +358,26 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       },
       {
         nome: "Caixa Imã",
-        variacoes: [
-          { nome: "Imã", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] },
-        ],
+        variacoes: [{ nome: "Imã", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] }],
       },
       {
         nome: "Texturizado",
-        variacoes: [
-          { nome: "Botão", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] },
-        ],
+        variacoes: [{ nome: "Botão", cores: ["Azul", "Preto", "Vermelho", "Rosa", "Variado"] }],
       },
     ],
   },
   {
     nome: "Porta Óculos",
-    tipos: [
-      {
-        nome: "Padrão",
-        variacoes: [{ nome: "Padrão", cores: ["Variável"] }],
-      },
-    ],
+    tiposVenda: ["Unidade"],
+    tipos: [simpleTipo("Padrão")],
   },
   {
     nome: "Expositores",
-    tipos: [
-      {
-        nome: "Óculos",
-        variacoes: [{ nome: "5 lugares", cores: ["Nenhuma"] }],
-      },
-    ],
-  },
-  {
-    nome: "Alicates",
-    tipos: [
-      {
-        nome: "Padrão",
-        variacoes: [{ nome: "Padrão", cores: ["Nenhuma"] }],
-      },
-    ],
+    tiposVenda: ["Unidade"],
+    tipos: [{
+      nome: "Óculos",
+      variacoes: [{ nome: "5 lugares", cores: ["Nenhuma"] }],
+    }],
   },
 ];
 
@@ -373,8 +404,17 @@ export function getMateriaisByCategoria(categoriaNome: string): string[] {
   return getCategoriaByName(categoriaNome)?.materiais ?? [];
 }
 
+export function getTiposVendaByCategoria(categoriaNome: string): string[] {
+  return getCategoriaByName(categoriaNome)?.tiposVenda ?? [];
+}
+
 export function isEstojo(categoriaNome: string): boolean {
   return categoriaNome === "Estojos";
+}
+
+export function hasMaterial(categoriaNome: string): boolean {
+  const cat = getCategoriaByName(categoriaNome);
+  return !!cat?.materiais && cat.materiais.length > 0;
 }
 
 /** All category names */
