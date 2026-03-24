@@ -340,22 +340,32 @@ export default function PDV() {
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {filteredProducts.map(product => (
-                  <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
-                    <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden">
+                  <div key={product.id} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
+                    <div
+                      className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden cursor-pointer"
+                      onClick={(e) => {
+                        if (product.image_url) {
+                          e.stopPropagation();
+                          setZoomImage({ url: product.image_url, name: product.referencia });
+                        } else {
+                          addToCart(product);
+                        }
+                      }}
+                    >
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
                     </div>
-                    <div className="mt-2">
+                    <button onClick={() => addToCart(product)} className="w-full text-left mt-2">
                       <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : (
