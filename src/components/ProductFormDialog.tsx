@@ -806,15 +806,30 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </div>
               )}
 
-              {/* Material (Estojos only) */}
-              {showMaterial && materiaisEstojo.length > 0 && (
+              {/* Material */}
+              {showMaterial && materiaisAcessorio.length > 0 && (
                 <div>
                   <Label>Material</Label>
                   <Select value={materialAcessorio} onValueChange={setMaterialAcessorio}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o material" /></SelectTrigger>
                     <SelectContent>
-                      {materiaisEstojo.map(m => (
+                      {materiaisAcessorio.map(m => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Tipo de Venda */}
+              {categoriaAcessorio && tiposVendaAcessorio.length > 0 && (
+                <div>
+                  <Label>Tipo de Venda *</Label>
+                  <Select value={tipoVenda} onValueChange={setTipoVenda}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de venda" /></SelectTrigger>
+                    <SelectContent>
+                      {tiposVendaAcessorio.map(tv => (
+                        <SelectItem key={tv} value={tv}>{tv}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
