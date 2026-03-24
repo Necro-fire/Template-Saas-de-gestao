@@ -178,7 +178,7 @@ export function StockAlertCard({ alerts, alertConfigsCount }: StockAlertCardProp
           </div>
         )}
         <div className="space-y-1 max-h-[300px] overflow-y-auto">
-          {alerts.map((alert, i) => (
+          {alerts.slice(0, 8).map((alert, i) => (
             <div
               key={i}
               className={cn(
