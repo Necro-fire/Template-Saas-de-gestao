@@ -160,7 +160,7 @@ export default function Vendas() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>{vendaCodesMap[sale.id] || `#${sale.number}`}</p>
+                        <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>#{sale.number}</p>
                         {isCancelled && <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Cancelada</Badge>}
                         {!isCancelled && isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
                         {isBoleto && !isCancelled && (
