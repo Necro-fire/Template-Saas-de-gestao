@@ -120,7 +120,7 @@ export function StockAlertConfigDialog() {
   const variacoesAc = getVariacoesByTipo(formCatAcessorio, formTipoAcessorio);
   const coresAc = getCoresByVariacao(formCatAcessorio, formTipoAcessorio, formVariacao);
   const materiaisAc = getMateriaisByCategoria(formCatAcessorio);
-  const showMat = isEstojo(formCatAcessorio);
+  const showMat = hasMaterial(formCatAcessorio);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) resetForm(); }}>
