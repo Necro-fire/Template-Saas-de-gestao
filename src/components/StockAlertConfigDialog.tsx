@@ -13,7 +13,7 @@ import { useFilial } from "@/contexts/FilialContext";
 import { ESTILOS } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
-  getCoresByVariacao, isEstojo, getMateriaisByCategoria,
+  getCoresByVariacao, hasMaterial, getMateriaisByCategoria,
 } from "@/data/accessoryConstants";
 import { toast } from "sonner";
 
@@ -120,7 +120,7 @@ export function StockAlertConfigDialog() {
   const variacoesAc = getVariacoesByTipo(formCatAcessorio, formTipoAcessorio);
   const coresAc = getCoresByVariacao(formCatAcessorio, formTipoAcessorio, formVariacao);
   const materiaisAc = getMateriaisByCategoria(formCatAcessorio);
-  const showMat = isEstojo(formCatAcessorio);
+  const showMat = hasMaterial(formCatAcessorio);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) resetForm(); }}>

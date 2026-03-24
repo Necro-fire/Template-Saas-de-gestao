@@ -25,7 +25,11 @@ import {
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
   getCoresByVariacao, getMateriaisByCategoria, getTiposVendaByCategoria, hasMaterial,
+  hasVariacoesDuplas, getVariacoesDuplas, isPersonalizavel, isLenteCategory,
+  LENTES_SOLAR_TIPOS, LENTES_SOLAR_CORES, LENTES_BASES, LENTES_BLOCOS_BASES,
+  LENTES_INDICES, LENTES_TRATAMENTOS,
 } from "@/data/accessoryConstants";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -84,6 +88,22 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [corAcessorio, setCorAcessorio] = useState("");
   const [materialAcessorio, setMaterialAcessorio] = useState("");
   const [tipoVenda, setTipoVenda] = useState("");
+  // Parafusos dual variations
+  const [variacaoRosca, setVariacaoRosca] = useState("");
+  const [variacaoComprimento, setVariacaoComprimento] = useState("");
+  // Estojos personalizado
+  const [isPersonalizado, setIsPersonalizado] = useState(false);
+  const [acrescimoPersonalizado, setAcrescimoPersonalizado] = useState<number>(0);
+  // Lentes CG
+  const [lenteSolarTipo, setLenteSolarTipo] = useState("");
+  const [lenteSolarCor, setLenteSolarCor] = useState("");
+  const [lenteBase, setLenteBase] = useState("");
+  const [lenteIndice, setLenteIndice] = useState("");
+  const [lenteTratamentos, setLenteTratamentos] = useState<string[]>([]);
+  const [lenteEsferico, setLenteEsferico] = useState("");
+  const [lenteCilindrico, setLenteCilindrico] = useState("");
+  const [lenteAdicao, setLenteAdicao] = useState("");
+  const [lenteDiametro, setLenteDiametro] = useState("");
 
   const isEditing = !!product;
 
@@ -185,6 +205,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setCorAcessorio("");
     setMaterialAcessorio("");
     setTipoVenda("");
+    setVariacaoRosca("");
+    setVariacaoComprimento("");
+    setIsPersonalizado(false);
+    setAcrescimoPersonalizado(0);
+    setLenteSolarTipo("");
+    setLenteSolarCor("");
+    setLenteBase("");
+    setLenteIndice("");
+    setLenteTratamentos([]);
+    setLenteEsferico("");
+    setLenteCilindrico("");
+    setLenteAdicao("");
+    setLenteDiametro("");
     setDuplicateInfo(null);
   };
 
@@ -755,6 +788,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     setCorAcessorio("");
                     setMaterialAcessorio("");
                     setTipoVenda("");
+                    setVariacaoRosca("");
+                    setVariacaoComprimento("");
+                    setIsPersonalizado(false);
+                    setAcrescimoPersonalizado(0);
+                    setLenteSolarTipo("");
+                    setLenteSolarCor("");
+                    setLenteBase("");
+                    setLenteIndice("");
+                    setLenteTratamentos([]);
+                    setLenteEsferico("");
+                    setLenteCilindrico("");
+                    setLenteAdicao("");
+                    setLenteDiametro("");
                   }}
                 >
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
@@ -776,6 +822,15 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                       setTipoAcessorio(v);
                       setVariacaoAcessorio("");
                       setCorAcessorio("");
+                      setLenteSolarTipo("");
+                      setLenteSolarCor("");
+                      setLenteBase("");
+                      setLenteIndice("");
+                      setLenteTratamentos([]);
+                      setLenteEsferico("");
+                      setLenteCilindrico("");
+                      setLenteAdicao("");
+                      setLenteDiametro("");
                     }}
                   >
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
@@ -789,9 +844,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               )}
 
               {/* Variação */}
-              {tipoAcessorio && variacoesAcessorio.length > 0 && (
+              {tipoAcessorio && variacoesAcessorio.length > 0 && !variacoesAcessorio.every(v => v.nome === "Padrão") && (
                 <div>
-                  <Label>Variação *</Label>
+                  <Label>Variação</Label>
                   <Select
                     value={variacaoAcessorio}
                     onValueChange={(v) => {
@@ -808,6 +863,34 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   </Select>
                 </div>
               )}
+
+              {/* Parafusos: Dual variations (Rosca + Comprimento) */}
+              {hasVariacoesDuplas(categoriaAcessorio) && (() => {
+                const duplas = getVariacoesDuplas(categoriaAcessorio);
+                if (!duplas) return null;
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>{duplas.label1}</Label>
+                      <Select value={variacaoRosca} onValueChange={setVariacaoRosca}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {duplas.valores1.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>{duplas.label2}</Label>
+                      <Select value={variacaoComprimento} onValueChange={setVariacaoComprimento}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {duplas.valores2.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Material */}
               {showMaterial && materiaisAcessorio.length > 0 && (
@@ -839,19 +922,215 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </div>
               )}
 
-              {/* Cor */}
-              {variacaoAcessorio && coresAcessorio.length > 0 && (
-                <div>
-                  <Label>Cor</Label>
-                  <Select value={corAcessorio} onValueChange={setCorAcessorio}>
-                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
-                    <SelectContent>
-                      {coresAcessorio.map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Cor — show when tipo has cores (not just "Nenhuma") */}
+              {tipoAcessorio && (() => {
+                // Get cores from the selected variação, or from the first variação if only "Padrão"
+                const selectedVar = variacaoAcessorio || (variacoesAcessorio.length === 1 && variacoesAcessorio[0].nome === "Padrão" ? "Padrão" : "");
+                const cores = selectedVar ? getCoresByVariacao(categoriaAcessorio, tipoAcessorio, selectedVar) : [];
+                const hasCores = cores.length > 0 && !(cores.length === 1 && cores[0] === "Nenhuma");
+                if (!hasCores) return null;
+                return (
+                  <div>
+                    <Label>Cor</Label>
+                    <Select value={corAcessorio} onValueChange={setCorAcessorio}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                      <SelectContent>
+                        {cores.filter(c => c !== "Nenhuma").map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })()}
+
+              {/* Estojos: Personalizado toggle + acréscimo */}
+              {isPersonalizavel(categoriaAcessorio) && (
+                <div className="space-y-2 p-3 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={isPersonalizado} onCheckedChange={setIsPersonalizado} />
+                    <Label>Personalizado?</Label>
+                  </div>
+                  {isPersonalizado && (
+                    <div>
+                      <Label>Acréscimo por unidade (R$)</Label>
+                      <CurrencyInput value={acrescimoPersonalizado} onValueChange={setAcrescimoPersonalizado} placeholder="0,00" className="mt-1.5" />
+                    </div>
+                  )}
                 </div>
+              )}
+
+              {/* ── LENTES CG — Special Fields ── */}
+              {isLenteCategory(categoriaAcessorio) && tipoAcessorio === "Solar" && (
+                <fieldset className="space-y-3 rounded-lg border p-3">
+                  <legend className="text-sm font-semibold px-1">Lente Solar</legend>
+                  <div>
+                    <Label>Tipo</Label>
+                    <Select value={lenteSolarTipo} onValueChange={setLenteSolarTipo}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {LENTES_SOLAR_TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Cor</Label>
+                    <Select value={lenteSolarCor} onValueChange={setLenteSolarCor}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                      <SelectContent>
+                        {LENTES_SOLAR_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Base</Label>
+                    <Select value={lenteBase} onValueChange={setLenteBase}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a base" /></SelectTrigger>
+                      <SelectContent>
+                        {LENTES_BASES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </fieldset>
+              )}
+
+              {isLenteCategory(categoriaAcessorio) && tipoAcessorio === "Receituário" && (
+                <fieldset className="space-y-3 rounded-lg border p-3">
+                  <legend className="text-sm font-semibold px-1">Lente Receituário</legend>
+                  <div>
+                    <Label>Índice</Label>
+                    <Select value={lenteIndice} onValueChange={setLenteIndice}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o índice" /></SelectTrigger>
+                      <SelectContent>
+                        {LENTES_INDICES.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">Tratamentos</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {LENTES_TRATAMENTOS.map(t => (
+                        <label key={t} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox
+                            checked={lenteTratamentos.includes(t)}
+                            onCheckedChange={(checked) => {
+                              setLenteTratamentos(prev =>
+                                checked ? [...prev, t] : prev.filter(x => x !== t)
+                              );
+                            }}
+                          />
+                          {t}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Esférico (+12.00 a -12.00)</Label>
+                      <Select value={lenteEsferico} onValueChange={setLenteEsferico}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 97 }, (_, i) => {
+                            const val = 12 - i * 0.25;
+                            return (val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2));
+                          }).map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Cilíndrico (0.00 a -6.00)</Label>
+                      <Select value={lenteCilindrico} onValueChange={setLenteCilindrico}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 25 }, (_, i) => {
+                            const val = -(i * 0.25);
+                            return val.toFixed(2);
+                          }).map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Adição (+1.00 a +3.00)</Label>
+                      <Select value={lenteAdicao} onValueChange={setLenteAdicao}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 9 }, (_, i) => {
+                            const val = 1 + i * 0.25;
+                            return `+${val.toFixed(2)}`;
+                          }).map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Diâmetro (65mm a 80mm)</Label>
+                      <Select value={lenteDiametro} onValueChange={setLenteDiametro}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 16 }, (_, i) => `${65 + i}mm`).map(v => (
+                            <SelectItem key={v} value={v}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </fieldset>
+              )}
+
+              {isLenteCategory(categoriaAcessorio) && tipoAcessorio === "Blocos" && (
+                <fieldset className="space-y-3 rounded-lg border p-3">
+                  <legend className="text-sm font-semibold px-1">Bloco</legend>
+                  <div>
+                    <Label>Índice</Label>
+                    <Select value={lenteIndice} onValueChange={setLenteIndice}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o índice" /></SelectTrigger>
+                      <SelectContent>
+                        {LENTES_INDICES.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">Tratamentos</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {LENTES_TRATAMENTOS.map(t => (
+                        <label key={t} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox
+                            checked={lenteTratamentos.includes(t)}
+                            onCheckedChange={(checked) => {
+                              setLenteTratamentos(prev =>
+                                checked ? [...prev, t] : prev.filter(x => x !== t)
+                              );
+                            }}
+                          />
+                          {t}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Diâmetro (65mm a 80mm)</Label>
+                      <Select value={lenteDiametro} onValueChange={setLenteDiametro}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 16 }, (_, i) => `${65 + i}mm`).map(v => (
+                            <SelectItem key={v} value={v}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Base</Label>
+                      <Select value={lenteBase} onValueChange={setLenteBase}>
+                        <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {LENTES_BLOCOS_BASES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </fieldset>
               )}
             </fieldset>
           )}
