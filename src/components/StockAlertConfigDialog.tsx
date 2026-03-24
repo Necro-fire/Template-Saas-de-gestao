@@ -13,7 +13,7 @@ import { useFilial } from "@/contexts/FilialContext";
 import { ESTILOS } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
-  getCoresByVariacao, isEstojo, getMateriaisByCategoria,
+  getCoresByVariacao, hasMaterial, getMateriaisByCategoria,
 } from "@/data/accessoryConstants";
 import { toast } from "sonner";
 
