@@ -754,6 +754,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     setVariacaoAcessorio("");
                     setCorAcessorio("");
                     setMaterialAcessorio("");
+                    setTipoVenda("");
                   }}
                 >
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
