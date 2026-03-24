@@ -17,6 +17,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useBlocker } from "react-router-dom";
 import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
 import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
+import { CreditCardInstallmentDialog } from "@/components/pdv/CreditCardInstallmentDialog";
+import { BoletoConfigDialog } from "@/components/pdv/BoletoConfigDialog";
+import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +50,11 @@ export default function PDV() {
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
+  const [showCreditCardModal, setShowCreditCardModal] = useState(false);
+  const [showBoletoModal, setShowBoletoModal] = useState(false);
+  const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
+  const [boletoInfo, setBoletoInfo] = useState<{ interval: string; installments: number; finalTotal: number } | null>(null);
+  const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
   const { user, profile, hasPermission } = useAuth();
@@ -195,22 +203,37 @@ export default function PDV() {
         };
       });
 
-      const finalMethod = isSplitPayment
+      // Determine final method string and total with interest
+      let finalMethod = isSplitPayment
         ? paymentEntries.map(e => e.method).join("/")
         : paymentMethod;
+
+      let saleTotal = subtotal;
+      if (!isSplitPayment && paymentMethod === "cartao" && creditCardInfo) {
+        finalMethod = `Cartão de Crédito ${creditCardInfo.installments}x`;
+        saleTotal = creditCardInfo.finalTotal;
+      } else if (!isSplitPayment && paymentMethod === "boleto" && boletoInfo) {
+        finalMethod = `Boleto ${boletoInfo.installments}x/${boletoInfo.interval}d`;
+        saleTotal = boletoInfo.finalTotal;
+      }
+
+      const discount = saleTotal > subtotal ? 0 : 0;
+      const saleDiscount = 0;
 
       const splits = isSplitPayment
         ? paymentEntries.map(e => ({ method: e.method, amount: e.amount }))
         : undefined;
 
-      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, 0, user?.id, profile?.nome || user?.email || "", splits);
+      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
 
-      toast.success(`Venda finalizada! Total: R$ ${subtotal.toFixed(2)}`);
+      toast.success(`Venda finalizada! Total: R$ ${saleTotal.toFixed(2)}`);
       setCart([]);
       setSelectedClient("");
       setPaymentMethod("");
       setIsSplitPayment(false);
       setPaymentEntries([]);
+      setCreditCardInfo(null);
+      setBoletoInfo(null);
     } catch (err: any) {
       toast.error(err.message || "Erro ao finalizar venda");
     } finally {
@@ -317,22 +340,32 @@ export default function PDV() {
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {filteredProducts.map(product => (
-                  <button key={product.id} onClick={() => addToCart(product)} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
-                    <div className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden">
+                  <div key={product.id} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
+                    <div
+                      className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden cursor-pointer"
+                      onClick={(e) => {
+                        if (product.image_url) {
+                          e.stopPropagation();
+                          setZoomImage({ url: product.image_url, name: product.referencia });
+                        } else {
+                          addToCart(product);
+                        }
+                      }}
+                    >
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
                     </div>
-                    <div className="mt-2">
+                    <button onClick={() => addToCart(product)} className="w-full text-left mt-2">
                       <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -386,27 +419,73 @@ export default function PDV() {
             <SplitPaymentPanel
               total={subtotal}
               isSplit={isSplitPayment}
-              onSplitChange={setIsSplitPayment}
+              onSplitChange={(split) => {
+                setIsSplitPayment(split);
+                setCreditCardInfo(null);
+                setBoletoInfo(null);
+              }}
               singleMethod={paymentMethod}
-              onSingleMethodChange={setPaymentMethod}
+              onSingleMethodChange={(method) => {
+                setPaymentMethod(method);
+                setCreditCardInfo(null);
+                setBoletoInfo(null);
+                if (method === "cartao" && cart.length > 0) {
+                  setShowCreditCardModal(true);
+                } else if (method === "boleto" && cart.length > 0) {
+                  setShowBoletoModal(true);
+                }
+              }}
               entries={paymentEntries}
               onEntriesChange={setPaymentEntries}
             />
+
+            {/* Show credit card / boleto info badge */}
+            {!isSplitPayment && paymentMethod === "cartao" && creditCardInfo && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
+                <span className="text-muted-foreground">{creditCardInfo.installments}x de R$ {(creditCardInfo.finalTotal / creditCardInfo.installments).toFixed(2)}</span>
+                <button className="text-primary text-xs underline" onClick={() => setShowCreditCardModal(true)}>Alterar</button>
+              </div>
+            )}
+            {!isSplitPayment && paymentMethod === "boleto" && boletoInfo && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
+                <span className="text-muted-foreground">{boletoInfo.installments}x a cada {boletoInfo.interval} dias</span>
+                <button className="text-primary text-xs underline" onClick={() => setShowBoletoModal(true)}>Alterar</button>
+              </div>
+            )}
+
             <Separator />
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
                 <span>{cart.length} {cart.length === 1 ? "item" : "itens"}</span>
                 {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
               </div>
-              <div className="flex justify-between text-subhead font-semibold">
-                <span>Total</span>
-                <motion.span key={subtotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${hasAnyWholesale ? "text-success" : "text-foreground"}`}>
-                  R$ {subtotal.toFixed(2)}
-                </motion.span>
-              </div>
+              {(() => {
+                const displayTotal = !isSplitPayment && paymentMethod === "cartao" && creditCardInfo
+                  ? creditCardInfo.finalTotal
+                  : !isSplitPayment && paymentMethod === "boleto" && boletoInfo
+                    ? boletoInfo.finalTotal
+                    : subtotal;
+                const hasInterest = displayTotal > subtotal + 0.01;
+                return (
+                  <>
+                    {hasInterest && (
+                      <div className="flex justify-between text-caption text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span className="tabular-nums">R$ {subtotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-subhead font-semibold">
+                      <span>Total{hasInterest ? " c/ juros" : ""}</span>
+                      <motion.span key={displayTotal} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className={`tabular-nums ${hasAnyWholesale ? "text-success" : "text-foreground"}`}>
+                        R$ {displayTotal.toFixed(2)}
+                      </motion.span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 h-10" onClick={() => setCart([])}>
+              <Button variant="outline" className="flex-1 h-10" onClick={() => { setCart([]); setCreditCardInfo(null); setBoletoInfo(null); }}>
                 Cancelar
               </Button>
               <Button className="flex-1 h-10" onClick={finalizeSale} disabled={submitting || !canSell} title={!canSell ? "Sem permissão para vender" : undefined}>
@@ -469,6 +548,34 @@ export default function PDV() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Credit Card Installment Modal */}
+      <CreditCardInstallmentDialog
+        open={showCreditCardModal}
+        onOpenChange={setShowCreditCardModal}
+        total={subtotal}
+        onConfirm={(installments, finalTotal) => {
+          setCreditCardInfo({ installments, finalTotal });
+        }}
+      />
+
+      {/* Boleto Config Modal */}
+      <BoletoConfigDialog
+        open={showBoletoModal}
+        onOpenChange={setShowBoletoModal}
+        total={subtotal}
+        onConfirm={(interval, installments, finalTotal) => {
+          setBoletoInfo({ interval, installments, finalTotal });
+        }}
+      />
+
+      {/* Product Image Zoom */}
+      <ProductImageDialog
+        open={!!zoomImage}
+        onOpenChange={(o) => { if (!o) setZoomImage(null); }}
+        imageUrl={zoomImage?.url || ""}
+        productName={zoomImage?.name || ""}
+      />
     </div>
   );
 }

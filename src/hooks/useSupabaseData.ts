@@ -265,6 +265,8 @@ export async function createVenda(
     }
   }
 
+  const isBoleto = paymentMethod.toLowerCase().includes("boleto");
+
   const { data: venda, error: vendaError } = await (supabase as any)
     .from("vendas")
     .insert({
@@ -276,6 +278,7 @@ export async function createVenda(
       payment_method: paymentMethod,
       origin,
       filial_id: filialId,
+      status_boleto: isBoleto ? "pendente" : "",
     })
     .select()
     .single();

@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle } from "lucide-react";
+import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +28,8 @@ const paymentIcons: Record<string, React.ReactNode> = {
   "cartão de crédito": <CreditCard className="h-4 w-4" />,
   debito: <CreditCard className="h-4 w-4" />,
   credito: <CreditCard className="h-4 w-4" />,
+  cartao: <CreditCard className="h-4 w-4" />,
+  boleto: <Banknote className="h-4 w-4" />,
 };
 
 function getPaymentIcon(method: string) {
@@ -38,13 +40,22 @@ function getPaymentIcon(method: string) {
   return <Banknote className="h-4 w-4" />;
 }
 
+interface VendaItemWithStatus extends DbVendaItem {
+  status?: string;
+}
+
 export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDialogProps) {
-  const [items, setItems] = useState<DbVendaItem[]>([]);
+  const [items, setItems] = useState<VendaItemWithStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const { user, profile, hasPermission } = useAuth();
+
+  // Item-level cancel state
+  const [cancellingItemId, setCancellingItemId] = useState<string | null>(null);
+  const [itemMotivo, setItemMotivo] = useState("");
+  const [itemCancelling, setItemCancelling] = useState(false);
 
   useEffect(() => {
     if (!venda || !open) return;
@@ -53,7 +64,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
       .from("venda_items")
       .select("*")
       .eq("venda_id", venda.id)
-      .then(({ data }: { data: DbVendaItem[] | null }) => {
+      .then(({ data }: { data: VendaItemWithStatus[] | null }) => {
         setItems(data || []);
         setLoading(false);
       });
@@ -86,6 +97,37 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
       toast.error(err.message || "Erro ao cancelar venda");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleCancelItem = async () => {
+    if (!cancellingItemId) return;
+    if (!itemMotivo.trim()) {
+      toast.error("Informe o motivo do cancelamento");
+      return;
+    }
+    setItemCancelling(true);
+    try {
+      const { error } = await (supabase as any).rpc("cancelar_item_venda", {
+        _venda_item_id: cancellingItemId,
+        _motivo: itemMotivo.trim(),
+        _user_id: user?.id || "",
+        _user_name: profile?.nome || user?.email || "",
+      });
+      if (error) throw new Error(error.message);
+      toast.success("Item cancelado com sucesso");
+      // Refresh items
+      const { data } = await (supabase as any)
+        .from("venda_items")
+        .select("*")
+        .eq("venda_id", venda.id);
+      setItems(data || []);
+      setCancellingItemId(null);
+      setItemMotivo("");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao cancelar item");
+    } finally {
+      setItemCancelling(false);
     }
   };
 
@@ -192,19 +234,43 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                     <TableHead className="text-center">Qtd</TableHead>
                     <TableHead className="text-right">Unit.</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    {!isCancelled && hasPermission('vendas', 'cancel') && (
+                      <TableHead className="w-10"></TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <p className="font-medium text-sm">{item.product_code}</p>
-                      </TableCell>
-                      <TableCell className="text-center tabular-nums">{item.quantity}</TableCell>
-                      <TableCell className="text-right tabular-nums">R$ {Number(item.unit_price).toFixed(2)}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">R$ {Number(item.total).toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
+                  {items.map((item) => {
+                    const isItemCancelled = item.status === "cancelado";
+                    return (
+                      <TableRow key={item.id} className={isItemCancelled ? "opacity-50" : ""}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <p className={`font-medium text-sm ${isItemCancelled ? "line-through" : ""}`}>{item.product_code}</p>
+                            {isItemCancelled && <Badge variant="destructive" className="text-[9px] h-4 px-1">Cancelado</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center tabular-nums">{item.quantity}</TableCell>
+                        <TableCell className="text-right tabular-nums">R$ {Number(item.unit_price).toFixed(2)}</TableCell>
+                        <TableCell className={`text-right tabular-nums font-medium ${isItemCancelled ? "line-through" : ""}`}>R$ {Number(item.total).toFixed(2)}</TableCell>
+                        {!isCancelled && hasPermission('vendas', 'cancel') && (
+                          <TableCell>
+                            {!isItemCancelled && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                onClick={() => setCancellingItemId(item.id)}
+                                title="Cancelar este item"
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             ) : (
@@ -239,7 +305,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         </DialogContent>
       </Dialog>
 
-      {/* Cancel confirmation dialog */}
+      {/* Cancel entire sale confirmation */}
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -272,6 +338,43 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {cancelling ? "Cancelando..." : "Confirmar Cancelamento"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel individual item confirmation */}
+      <AlertDialog open={!!cancellingItemId} onOpenChange={(open) => { if (!open) { setCancellingItemId(null); setItemMotivo(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Cancelar produto?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O estoque será restaurado e o valor será subtraído da venda. A venda continuará ativa com os demais itens.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <label className="text-sm font-medium mb-1.5 block">Motivo (opcional)</label>
+            <Textarea
+              placeholder="Motivo do cancelamento do item..."
+              value={itemMotivo}
+              onChange={(e) => setItemMotivo(e.target.value)}
+              rows={2}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={itemCancelling}>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancelItem();
+              }}
+              disabled={itemCancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {itemCancelling ? "Cancelando..." : "Cancelar Item"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
