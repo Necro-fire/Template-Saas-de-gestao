@@ -519,7 +519,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       "Pupilômetro", "Medir Altura e DNP", "Caixa Prova",
       "Caixa Prova Multifocal", "Armação para Caixa Prova",
       "Teste UV", "Furadeira de Modelo", "Lensômetro",
-      "Tabela", "Especímetro", "Clip-Car",
+      "Tabela", "Especímetro", "Clip-Car", "Cirex",
     ].map(simpleTipo),
   },
 
@@ -566,6 +566,17 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       { nome: "Receituário", variacoes: [{ nome: "Padrão", cores: [...SEM_COR] }] },
       { nome: "Blocos", variacoes: [{ nome: "Padrão", cores: [...SEM_COR] }] },
     ],
+  },
+
+  // ── KITS ──
+  {
+    nome: "Kits",
+    tiposVenda: ["Unidade"],
+    tipos: [
+      "Kit Extensor + Cordão", "Kit Infantil", "Kit Adulto", "Kit Limpeza",
+      "Kit Flanela", "Kit Parafusos", "Kit Chave",
+      "Kit 01", "Kit 02", "Kit 03", "Kit 04", "Kit 05", "Kit 06",
+    ].map(simpleTipo),
   },
 ];
 
