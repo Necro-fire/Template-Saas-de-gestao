@@ -25,7 +25,11 @@ import {
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
   getCoresByVariacao, getMateriaisByCategoria, getTiposVendaByCategoria, hasMaterial,
+  hasVariacoesDuplas, getVariacoesDuplas, isPersonalizavel, isLenteCategory,
+  LENTES_SOLAR_TIPOS, LENTES_SOLAR_CORES, LENTES_BASES, LENTES_BLOCOS_BASES,
+  LENTES_INDICES, LENTES_TRATAMENTOS,
 } from "@/data/accessoryConstants";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ProductFormDialogProps {
   open: boolean;
