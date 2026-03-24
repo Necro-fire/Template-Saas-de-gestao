@@ -348,6 +348,15 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       },
     ],
   },
+  {
+    nome: "Medidor de Altura e DNP",
+    tipos: [
+      {
+        nome: "Padrão",
+        variacoes: [{ nome: "Padrão", cores: ["Nenhuma"] }],
+      },
+    ],
+  },
 ];
 
 // Helper functions
