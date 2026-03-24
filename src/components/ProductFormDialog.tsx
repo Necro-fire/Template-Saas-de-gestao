@@ -307,13 +307,19 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       // Tipo de haste: se nenhuma opção marcada, é "Comum"
       const tipoHasteValue = isAcessorio ? "" : (tipoHaste || "Comum");
-      const polarizadoValue = isAcessorio ? "" : polarizado;
+      const polarizadoValue = isAcessorio || classificacaoProduto === "Receituário" || classificacaoProduto === "Clip-on" ? "" : polarizado;
+
+      // For Clip-on, store lenses as JSON in tipo_lente
+      const tipoLenteValue = classificacaoProduto === "Clip-on"
+        ? JSON.stringify(cliponLentes)
+        : classificacaoProduto === "Receituário" ? "" : tipoLente;
 
       const buildBaseData = (codes?: { code: string; barcode: string }, fId?: string) => ({
         ...(codes ? { code: codes.code, barcode: codes.barcode } : {}),
         referencia: referencia.trim(),
         model: referencia.trim(),
         classificacao,
+        category: classificacaoProduto,
         retail_price: price,
         custo: custo || 0,
         description: detail.trim(),
@@ -332,7 +338,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         altura_lente: isAcessorio ? 0 : (Number(alturaLente) || 0),
         bridge_size: isAcessorio ? 0 : (Number(bridgeSize) || 0),
         temple_size: isAcessorio ? 0 : (Number(templeSize) || 0),
-        tipo_lente: isAcessorio ? "" : tipoLente,
+        tipo_lente: isAcessorio ? "" : tipoLenteValue,
         polarizado: polarizadoValue,
         tipo_haste: tipoHasteValue,
         ponte_armacao: isAcessorio ? "" : ponteArmacao,
