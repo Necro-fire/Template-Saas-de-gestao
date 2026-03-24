@@ -2,6 +2,9 @@
 
 export const CLASSIFICACOES = ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10"] as const;
 
+export const CLASSIFICACOES_PRODUTO = ["Receituário", "Solar", "Clip-on", "Acessório"] as const;
+export type ClassificacaoProduto = typeof CLASSIFICACOES_PRODUTO[number];
+
 export const CATEGORIAS_IDADE = ["Adulto", "Infantil"] as const;
 
 export const GENEROS = ["Masculino", "Feminino", "Unissex"] as const;
