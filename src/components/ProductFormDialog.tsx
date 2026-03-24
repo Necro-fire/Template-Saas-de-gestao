@@ -184,6 +184,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setVariacaoAcessorio("");
     setCorAcessorio("");
     setMaterialAcessorio("");
+    setTipoVenda("");
     setDuplicateInfo(null);
   };
 
