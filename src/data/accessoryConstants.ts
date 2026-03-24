@@ -339,24 +339,6 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
       },
     ],
   },
-  {
-    nome: "Pupillômetro",
-    tipos: [
-      {
-        nome: "Padrão",
-        variacoes: [{ nome: "Padrão", cores: ["Nenhuma"] }],
-      },
-    ],
-  },
-  {
-    nome: "Medidor de Altura e DNP",
-    tipos: [
-      {
-        nome: "Padrão",
-        variacoes: [{ nome: "Padrão", cores: ["Nenhuma"] }],
-      },
-    ],
-  },
 ];
 
 // Helper functions
