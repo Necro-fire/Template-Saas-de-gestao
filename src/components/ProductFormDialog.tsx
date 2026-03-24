@@ -24,7 +24,7 @@ import {
 } from "@/data/productConstants";
 import {
   ACESSORIOS_CATEGORIAS, getTiposByCategoria, getVariacoesByTipo,
-  getCoresByVariacao, getMateriaisByCategoria, isEstojo,
+  getCoresByVariacao, getMateriaisByCategoria, getTiposVendaByCategoria, hasMaterial,
 } from "@/data/accessoryConstants";
 
 interface ProductFormDialogProps {
@@ -83,6 +83,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [variacaoAcessorio, setVariacaoAcessorio] = useState("");
   const [corAcessorio, setCorAcessorio] = useState("");
   const [materialAcessorio, setMaterialAcessorio] = useState("");
+  const [tipoVenda, setTipoVenda] = useState("");
 
   const isEditing = !!product;
 
@@ -90,8 +91,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const tiposAcessorio = getTiposByCategoria(categoriaAcessorio);
   const variacoesAcessorio = getVariacoesByTipo(categoriaAcessorio, tipoAcessorio);
   const coresAcessorio = getCoresByVariacao(categoriaAcessorio, tipoAcessorio, variacaoAcessorio);
-  const materiaisEstojo = getMateriaisByCategoria(categoriaAcessorio);
-  const showMaterial = isEstojo(categoriaAcessorio);
+  const materiaisAcessorio = getMateriaisByCategoria(categoriaAcessorio);
+  const tiposVendaAcessorio = getTiposVendaByCategoria(categoriaAcessorio);
+  const showMaterial = hasMaterial(categoriaAcessorio);
 
   useEffect(() => {
     if (product) {
@@ -135,7 +137,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       setVariacaoAcessorio((product as any).variacao_acessorio || "");
       setCorAcessorio((product as any).cor_acessorio || "");
       setMaterialAcessorio((product as any).material_acessorio || "");
-      
+      setTipoVenda((product as any).tipo_venda || "");
       setNcm((product as any).ncm || "");
       setClassificacao((product as any).classificacao || "");
       setImagePreview(product.image_url || null);
@@ -182,6 +184,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setVariacaoAcessorio("");
     setCorAcessorio("");
     setMaterialAcessorio("");
+    setTipoVenda("");
     setDuplicateInfo(null);
   };
 
@@ -304,6 +307,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         variacao_acessorio: isAcessorio ? variacaoAcessorio : "",
         cor_acessorio: isAcessorio ? corAcessorio : "",
         material_acessorio: isAcessorio ? materialAcessorio : "",
+        tipo_venda: isAcessorio ? tipoVenda : "",
       };
 
       // Tipo de haste: se nenhuma opção marcada, é "Comum"
@@ -750,6 +754,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     setVariacaoAcessorio("");
                     setCorAcessorio("");
                     setMaterialAcessorio("");
+                    setTipoVenda("");
                   }}
                 >
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
@@ -804,15 +809,30 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </div>
               )}
 
-              {/* Material (Estojos only) */}
-              {showMaterial && materiaisEstojo.length > 0 && (
+              {/* Material */}
+              {showMaterial && materiaisAcessorio.length > 0 && (
                 <div>
                   <Label>Material</Label>
                   <Select value={materialAcessorio} onValueChange={setMaterialAcessorio}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o material" /></SelectTrigger>
                     <SelectContent>
-                      {materiaisEstojo.map(m => (
+                      {materiaisAcessorio.map(m => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Tipo de Venda */}
+              {categoriaAcessorio && tiposVendaAcessorio.length > 0 && (
+                <div>
+                  <Label>Tipo de Venda *</Label>
+                  <Select value={tipoVenda} onValueChange={setTipoVenda}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de venda" /></SelectTrigger>
+                    <SelectContent>
+                      {tiposVendaAcessorio.map(tv => (
+                        <SelectItem key={tv} value={tv}>{tv}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -560,6 +560,7 @@ export type Database = {
           tipo_haste: string
           tipo_lente: string
           tipo_produto_id: string | null
+          tipo_venda: string
           variacao_acessorio: string
           wholesale_min_qty: number
           wholesale_price: number
@@ -607,6 +608,7 @@ export type Database = {
           tipo_haste?: string
           tipo_lente?: string
           tipo_produto_id?: string | null
+          tipo_venda?: string
           variacao_acessorio?: string
           wholesale_min_qty?: number
           wholesale_price?: number
@@ -654,6 +656,7 @@ export type Database = {
           tipo_haste?: string
           tipo_lente?: string
           tipo_produto_id?: string | null
+          tipo_venda?: string
           variacao_acessorio?: string
           wholesale_min_qty?: number
           wholesale_price?: number
