@@ -48,13 +48,17 @@ export const TIPOS_LENTE = [
   "Espelhado Prata",
   "G15 (Verde)",
   "G15 (Verde Degradê)",
+  "Lente Transparente",
   "Marrom Degradê",
   "Marrom Total",
   "Night Drive (Amarela)",
   "Preto Degradê",
   "Preto Total",
-  "Receituário",
   "Rosa",
+] as const;
+
+export const CORES_LENTE_CLIPON = [
+  "Amarelo", "Azul", "Cinza", "Marrom", "Prata", "Preto", "Rosa", "Verde",
 ] as const;
 
 export const MEDIDAS_LENTE = { min: 40, max: 65 } as const;
