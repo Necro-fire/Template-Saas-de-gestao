@@ -83,6 +83,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const [variacaoAcessorio, setVariacaoAcessorio] = useState("");
   const [corAcessorio, setCorAcessorio] = useState("");
   const [materialAcessorio, setMaterialAcessorio] = useState("");
+  const [tipoVenda, setTipoVenda] = useState("");
 
   const isEditing = !!product;
 
