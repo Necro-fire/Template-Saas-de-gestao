@@ -138,31 +138,65 @@ export function SplitPaymentPanel({
 
       <div className="space-y-1.5">
         {entries.map((entry) => (
-          <div key={entry.id} className="flex items-center gap-2">
-            <Select value={entry.method} onValueChange={(v) => updateEntry(entry.id, "method", v)}>
-              <SelectTrigger className="h-8 flex-1 text-caption">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map(m => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <CurrencyInput
-              value={entry.amount}
-              onValueChange={(v) => updateEntry(entry.id, "amount", v)}
-              className="h-8 w-28 text-caption tabular-nums"
-            />
-            {entries.length > 1 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                onClick={() => removeEntry(entry.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+          <div key={entry.id} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Select value={entry.method} onValueChange={(v) => {
+                updateEntry(entry.id, "method", v);
+                // Clear installment info when method changes
+                if (v !== "cartao") {
+                  onEntriesChange(
+                    entries.map(e => e.id === entry.id ? { ...e, method: v, installments: undefined, finalTotal: undefined } : e)
+                  );
+                }
+              }}>
+                <SelectTrigger className="h-8 flex-1 text-caption">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <CurrencyInput
+                value={entry.amount}
+                onValueChange={(v) => updateEntry(entry.id, "amount", v)}
+                className="h-8 w-28 text-caption tabular-nums"
+              />
+              {entry.method === "cartao" && onOpenInstallments && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-primary"
+                  title="Parcelamento"
+                  onClick={() => onOpenInstallments(entry.id, entry.amount)}
+                >
+                  <CreditCard className="h-3 w-3" />
+                </Button>
+              )}
+              {entries.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={() => removeEntry(entry.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+            {entry.method === "cartao" && entry.installments && entry.finalTotal && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded px-2 py-1 ml-1">
+                <span className="text-muted-foreground">
+                  {entry.installments}x de R$ {(entry.finalTotal / entry.installments).toFixed(2)} (total R$ {entry.finalTotal.toFixed(2)})
+                </span>
+                <button
+                  className="text-primary text-xs underline"
+                  onClick={() => onOpenInstallments?.(entry.id, entry.amount)}
+                >
+                  Alterar
+                </button>
+              </div>
             )}
           </div>
         ))}
