@@ -442,7 +442,7 @@ export default function PDV() {
             {/* Show credit card / boleto info badge */}
             {!isSplitPayment && paymentMethod === "cartao" && creditCardInfo && (
               <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
-                <span className="text-muted-foreground">{creditCardInfo.installments}x de R$ {(creditCardInfo.finalTotal / creditCardInfo.installments).toFixed(2)}</span>
+                <span className="text-muted-foreground">{creditCardInfo.installments}x de R$ {(creditCardInfo.finalTotal / creditCardInfo.installments).toFixed(2)} (total R$ {creditCardInfo.finalTotal.toFixed(2)})</span>
                 <button className="text-primary text-xs underline" onClick={() => setShowCreditCardModal(true)}>Alterar</button>
               </div>
             )}
