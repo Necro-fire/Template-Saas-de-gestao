@@ -13,6 +13,7 @@ import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { parsePaymentDisplay, formatCurrency } from "@/lib/paymentUtils";
 
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
