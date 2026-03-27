@@ -207,14 +207,25 @@ export default function PDV() {
 
       // Determine final method string and total with interest
       let finalMethod = isSplitPayment
-        ? paymentEntries.map(e => e.method).join("/")
+        ? paymentEntries.map(e => {
+            if (e.method === "cartao" && e.installments) {
+              return `Cartão ${e.installments}x`;
+            }
+            const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", prazo: "Prazo" }[e.method] || e.method;
+            return label;
+          }).join("/")
         : paymentMethod;
 
       let saleTotal = subtotal;
-      if (!isSplitPayment && paymentMethod === "cartao" && creditCardInfo) {
+      if (isSplitPayment) {
+        // Sum up: for credit card entries with installments, use finalTotal; otherwise use amount
+        saleTotal = paymentEntries.reduce((sum, e) => {
+          return sum + (e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount);
+        }, 0);
+      } else if (paymentMethod === "cartao" && creditCardInfo) {
         finalMethod = `Cartão de Crédito ${creditCardInfo.installments}x`;
         saleTotal = creditCardInfo.finalTotal;
-      } else if (!isSplitPayment && paymentMethod === "boleto" && boletoInfo) {
+      } else if (paymentMethod === "boleto" && boletoInfo) {
         finalMethod = `Boleto ${boletoInfo.installments}x/${boletoInfo.interval}d`;
         saleTotal = boletoInfo.finalTotal;
       }
@@ -223,7 +234,10 @@ export default function PDV() {
       const saleDiscount = 0;
 
       const splits = isSplitPayment
-        ? paymentEntries.map(e => ({ method: e.method, amount: e.amount }))
+        ? paymentEntries.map(e => ({
+            method: e.method,
+            amount: e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount,
+          }))
         : undefined;
 
       await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
