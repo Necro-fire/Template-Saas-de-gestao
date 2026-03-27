@@ -54,6 +54,8 @@ export default function PDV() {
   const [showBoletoModal, setShowBoletoModal] = useState(false);
   const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
   const [boletoInfo, setBoletoInfo] = useState<{ interval: string; installments: number; finalTotal: number } | null>(null);
+  const [splitInstallmentEntryId, setSplitInstallmentEntryId] = useState<string | null>(null);
+  const [splitInstallmentAmount, setSplitInstallmentAmount] = useState(0);
   const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
@@ -205,14 +207,25 @@ export default function PDV() {
 
       // Determine final method string and total with interest
       let finalMethod = isSplitPayment
-        ? paymentEntries.map(e => e.method).join("/")
+        ? paymentEntries.map(e => {
+            if (e.method === "cartao" && e.installments) {
+              return `Cartão ${e.installments}x`;
+            }
+            const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", prazo: "Prazo" }[e.method] || e.method;
+            return label;
+          }).join("/")
         : paymentMethod;
 
       let saleTotal = subtotal;
-      if (!isSplitPayment && paymentMethod === "cartao" && creditCardInfo) {
+      if (isSplitPayment) {
+        // Sum up: for credit card entries with installments, use finalTotal; otherwise use amount
+        saleTotal = paymentEntries.reduce((sum, e) => {
+          return sum + (e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount);
+        }, 0);
+      } else if (paymentMethod === "cartao" && creditCardInfo) {
         finalMethod = `Cartão de Crédito ${creditCardInfo.installments}x`;
         saleTotal = creditCardInfo.finalTotal;
-      } else if (!isSplitPayment && paymentMethod === "boleto" && boletoInfo) {
+      } else if (paymentMethod === "boleto" && boletoInfo) {
         finalMethod = `Boleto ${boletoInfo.installments}x/${boletoInfo.interval}d`;
         saleTotal = boletoInfo.finalTotal;
       }
@@ -221,7 +234,10 @@ export default function PDV() {
       const saleDiscount = 0;
 
       const splits = isSplitPayment
-        ? paymentEntries.map(e => ({ method: e.method, amount: e.amount }))
+        ? paymentEntries.map(e => ({
+            method: e.method,
+            amount: e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount,
+          }))
         : undefined;
 
       await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
@@ -437,6 +453,11 @@ export default function PDV() {
               }}
               entries={paymentEntries}
               onEntriesChange={setPaymentEntries}
+              onOpenInstallments={(entryId, entryAmount) => {
+                setSplitInstallmentEntryId(entryId);
+                setSplitInstallmentAmount(entryAmount);
+                setShowCreditCardModal(true);
+              }}
             />
 
             {/* Show credit card / boleto info badge */}
@@ -552,10 +573,28 @@ export default function PDV() {
       {/* Credit Card Installment Modal */}
       <CreditCardInstallmentDialog
         open={showCreditCardModal}
-        onOpenChange={setShowCreditCardModal}
-        total={subtotal}
+        onOpenChange={(open) => {
+          setShowCreditCardModal(open);
+          if (!open) {
+            setSplitInstallmentEntryId(null);
+            setSplitInstallmentAmount(0);
+          }
+        }}
+        total={splitInstallmentEntryId ? splitInstallmentAmount : subtotal}
         onConfirm={(installments, finalTotal) => {
-          setCreditCardInfo({ installments, finalTotal });
+          if (splitInstallmentEntryId) {
+            // Update the split payment entry with installment info
+            setPaymentEntries(prev =>
+              prev.map(e => e.id === splitInstallmentEntryId
+                ? { ...e, installments, finalTotal }
+                : e
+              )
+            );
+            setSplitInstallmentEntryId(null);
+            setSplitInstallmentAmount(0);
+          } else {
+            setCreditCardInfo({ installments, finalTotal });
+          }
         }}
       />
 
