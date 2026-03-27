@@ -439,6 +439,11 @@ export default function PDV() {
               }}
               entries={paymentEntries}
               onEntriesChange={setPaymentEntries}
+              onOpenInstallments={(entryId, entryAmount) => {
+                setSplitInstallmentEntryId(entryId);
+                setSplitInstallmentAmount(entryAmount);
+                setShowCreditCardModal(true);
+              }}
             />
 
             {/* Show credit card / boleto info badge */}
