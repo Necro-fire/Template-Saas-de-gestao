@@ -188,17 +188,35 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               <Badge variant="secondary">{venda.origin === "bag" ? "Mala" : "Estoque"}</Badge>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Valor total</p>
-              <p className={`font-semibold text-base tabular-nums ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
-                R$ {Number(venda.total).toFixed(2)}
-              </p>
+              <p className="text-muted-foreground text-xs">Valor</p>
+              {(() => {
+                const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
+                if (info.hasInterest && !isCancelled) {
+                  return (
+                    <div>
+                      <p className="font-semibold text-base tabular-nums text-primary">
+                        {formatCurrency(info.finalTotal)}
+                        <span className="text-xs font-normal text-muted-foreground ml-1">c/ juros</span>
+                      </p>
+                      <p className="text-xs tabular-nums text-muted-foreground line-through">
+                        {formatCurrency(info.originalTotal)}
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <p className={`font-semibold text-base tabular-nums ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
+                    {formatCurrency(Number(venda.total))}
+                  </p>
+                );
+              })()}
             </div>
           </div>
 
           {venda.discount > 0 && (
             <div className="text-sm">
               <p className="text-muted-foreground text-xs">Desconto aplicado</p>
-              <p className="font-medium text-destructive">- R$ {Number(venda.discount).toFixed(2)}</p>
+              <p className="font-medium text-destructive">- {formatCurrency(Number(venda.discount))}</p>
             </div>
           )}
 
@@ -210,10 +228,43 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               {getPaymentIcon(venda.payment_method)}
               Pagamento
             </h4>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="capitalize">{venda.payment_method}</Badge>
-              <span className="text-sm tabular-nums font-medium">R$ {Number(venda.total).toFixed(2)}</span>
-            </div>
+            {(() => {
+              if (isSplitPayment(venda.payment_method)) {
+                const methods = parseSplitMethods(venda.payment_method);
+                return (
+                  <div className="space-y-1.5">
+                    {methods.map((method, i) => {
+                      const info = parsePaymentDisplay(method, 0);
+                      return (
+                        <div key={i} className="flex items-center gap-2">
+                          {getPaymentIcon(method)}
+                          <Badge variant="outline" className="capitalize">{method}</Badge>
+                          {info.hasInterest && (
+                            <span className="text-[10px] text-muted-foreground">({info.rate}% juros)</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
+              return (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="capitalize">{venda.payment_method}</Badge>
+                  </div>
+                  {info.hasInterest && info.installments && info.installmentValue && (
+                    <div className="text-xs text-muted-foreground bg-secondary rounded px-2 py-1.5 space-y-0.5">
+                      <p>{info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                      <p>Juros: {info.rate}% (+{formatCurrency(info.finalTotal - info.originalTotal)})</p>
+                      <p className="font-medium text-foreground">Total: {formatCurrency(info.finalTotal)}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           <Separator />
