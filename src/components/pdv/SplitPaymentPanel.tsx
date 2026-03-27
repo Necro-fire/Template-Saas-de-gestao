@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Split } from "lucide-react";
+import { Plus, Trash2, Split, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -11,6 +11,8 @@ export interface PaymentEntry {
   id: string;
   method: string;
   amount: number;
+  installments?: number;
+  finalTotal?: number;
 }
 
 const PAYMENT_METHODS = [
