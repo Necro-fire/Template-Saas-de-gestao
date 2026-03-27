@@ -559,10 +559,28 @@ export default function PDV() {
       {/* Credit Card Installment Modal */}
       <CreditCardInstallmentDialog
         open={showCreditCardModal}
-        onOpenChange={setShowCreditCardModal}
-        total={subtotal}
+        onOpenChange={(open) => {
+          setShowCreditCardModal(open);
+          if (!open) {
+            setSplitInstallmentEntryId(null);
+            setSplitInstallmentAmount(0);
+          }
+        }}
+        total={splitInstallmentEntryId ? splitInstallmentAmount : subtotal}
         onConfirm={(installments, finalTotal) => {
-          setCreditCardInfo({ installments, finalTotal });
+          if (splitInstallmentEntryId) {
+            // Update the split payment entry with installment info
+            setPaymentEntries(prev =>
+              prev.map(e => e.id === splitInstallmentEntryId
+                ? { ...e, installments, finalTotal }
+                : e
+              )
+            );
+            setSplitInstallmentEntryId(null);
+            setSplitInstallmentAmount(0);
+          } else {
+            setCreditCardInfo({ installments, finalTotal });
+          }
         }}
       />
 
