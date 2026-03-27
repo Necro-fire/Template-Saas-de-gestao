@@ -199,9 +199,26 @@ export default function Vendas() {
                       <span className="text-caption capitalize hidden sm:inline">{sale.payment_method}</span>
                     </div>
                     <div>
-                      <p className={`text-ui font-medium tabular-nums ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
-                        R$ {Number(sale.total).toFixed(2)}
-                      </p>
+                      {(() => {
+                        const info = parsePaymentDisplay(sale.payment_method, Number(sale.total));
+                        if (info.hasInterest && !isCancelled) {
+                          return (
+                            <>
+                              <p className="text-ui font-medium tabular-nums text-primary">
+                                {formatCurrency(info.finalTotal)}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground tabular-nums line-through">
+                                {formatCurrency(info.originalTotal)}
+                              </p>
+                            </>
+                          );
+                        }
+                        return (
+                          <p className={`text-ui font-medium tabular-nums ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
+                            {formatCurrency(Number(sale.total))}
+                          </p>
+                        );
+                      })()}
                       <p className="text-caption text-muted-foreground">
                         {format(createdAt, "dd/MM/yy HH:mm", { locale: ptBR })}
                       </p>
