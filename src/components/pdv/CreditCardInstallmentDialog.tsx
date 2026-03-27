@@ -4,21 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const INTEREST_RATES: Record<number, number> = {
-  1: 3.75,
-  2: 5.39,
-  3: 6.72,
-  4: 6.85,
-  5: 7.57,
-  6: 8.28,
-  7: 8.99,
-  8: 9.69,
-  9: 10.38,
-  10: 11.76,
-  11: 11.78,
-  12: 12.40,
-};
+import { INTEREST_RATES } from "@/lib/paymentUtils";
 
 interface CreditCardInstallmentDialogProps {
   open: boolean;
