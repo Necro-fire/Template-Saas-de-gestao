@@ -314,7 +314,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               // Single payment method
               if (paymentSplits.length === 1) {
                 const split = paymentSplits[0];
-                const info = parsePaymentDisplay(split.method, split.amount);
+                const info = parsePaymentDisplay(split.method, split.amount, boletoMeta);
                 return (
                   <div className="bg-secondary/50 rounded px-3 py-2">
                     <div className="flex items-center gap-2 mb-1">
