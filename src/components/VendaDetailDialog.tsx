@@ -323,16 +323,22 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               // Fallback: no caixa data, use payment_method string
               const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
               return (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                <div className="bg-secondary/50 rounded px-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    {getPaymentIcon(venda.payment_method)}
                     <Badge variant="outline">{venda.payment_method}</Badge>
                   </div>
-                  {info.hasInterest && info.installments && info.installmentValue && (
-                    <div className="text-xs text-muted-foreground bg-secondary rounded px-2 py-1.5 space-y-0.5">
-                      <p>{info.installments}x de {formatCurrency(info.installmentValue)}</p>
-                      <p>Juros: {info.rate}% (+{formatCurrency(info.finalTotal - info.originalTotal)})</p>
-                      <p className="font-medium text-foreground">Total: {formatCurrency(info.finalTotal)}</p>
+                  {info.hasInterest && info.installments && info.installmentValue ? (
+                    <div className="text-xs text-muted-foreground space-y-0.5 pl-6">
+                      <p>Valor sem juros: {formatCurrency(info.originalTotal)}</p>
+                      <p>{info.installments}x com {info.rate}% de juros</p>
+                      <p>Valor final: <span className="font-medium text-primary">{formatCurrency(info.finalTotal)}</span></p>
+                      <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
                     </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pl-6">
+                      Valor: <span className="font-medium text-foreground">{formatCurrency(Number(venda.total))}</span> (sem juros)
+                    </p>
                   )}
                 </div>
               );
