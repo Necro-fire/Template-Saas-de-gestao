@@ -48,14 +48,25 @@ export function useBoletoAlertas() {
   useEffect(() => {
     fetchAlertas();
 
+    // Realtime subscription
     const channel = supabase
       .channel("boleto-alertas-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "boleto_alertas" }, () => {
         fetchAlertas();
       })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "vendas" }, () => {
+        // Refetch when new sale is created (may include boleto)
+        setTimeout(() => fetchAlertas(), 1500);
+      })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Polling every 60s for time-based urgency changes
+    const interval = window.setInterval(fetchAlertas, 60_000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.clearInterval(interval);
+    };
   }, [fetchAlertas]);
 
   const updateStatus = useCallback(async (alertaId: string, newStatus: string) => {
