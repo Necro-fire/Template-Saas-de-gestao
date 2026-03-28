@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useBlocker } from "react-router-dom";
 import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
 import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
-import { CreditCardInstallmentDialog } from "@/components/pdv/CreditCardInstallmentDialog";
+import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
 import { BoletoConfigDialog } from "@/components/pdv/BoletoConfigDialog";
 import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
 import {
