@@ -69,7 +69,6 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
     if (!venda || !open) return;
     setLoading(true);
 
-    // Fetch items and payment splits in parallel
     Promise.all([
       (supabase as any)
         .from("venda_items")
@@ -80,13 +79,31 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         .select("forma_pagamento, valor")
         .eq("venda_id", venda.id)
         .eq("tipo", "venda"),
-    ]).then(([itemsRes, splitsRes]) => {
+      (supabase as any)
+        .from("boleto_alertas")
+        .select("total_parcelas, intervalo_dias")
+        .eq("venda_id", venda.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]).then(([itemsRes, splitsRes, boletoRes]) => {
       setItems(itemsRes.data || []);
+
       const splits: PaymentSplitInfo[] = (splitsRes.data || []).map((s: any) => ({
         method: s.forma_pagamento,
         amount: Number(s.valor),
       }));
       setPaymentSplits(splits);
+
+      const boletoRow = boletoRes.data?.[0];
+      if (boletoRow?.total_parcelas && boletoRow?.intervalo_dias) {
+        setBoletoMeta({
+          installments: Number(boletoRow.total_parcelas),
+          intervalDays: Number(boletoRow.intervalo_dias),
+        });
+      } else {
+        setBoletoMeta(null);
+      }
+
       setLoading(false);
     });
   }, [venda, open]);
