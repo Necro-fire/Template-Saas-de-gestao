@@ -7,68 +7,36 @@ import { Badge } from "@/components/ui/badge";
 import { Banknote, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const BOLETO_INTEREST_PER_INSTALLMENT = {
-  "15": 3,
-  "30": 6,
+// Max total duration: 90 days
+const MAX_INSTALLMENTS = {
+  "15": 6,  // 6×15 = 90d
+  "30": 3,  // 3×30 = 90d
 } as const;
 
-const MAX_INSTALLMENTS = {
-  "15": 6,
-  "30": 3,
+// Interest rate per period AFTER 30 days
+const RATE_PER_PERIOD = {
+  "15": 3,  // 3% per 15-day period after 30d
+  "30": 6,  // 6% per 30-day period after 30d
 } as const;
 
 type BoletoInterval = "15" | "30";
 
-interface BoletoConfigDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  total: number;
-  onConfirm: (interval: string, installments: number, finalTotal: number) => void;
-}
-
-export function BoletoConfigDialog({
-  open,
-  onOpenChange,
-  total,
-  onConfirm,
-}: BoletoConfigDialogProps) {
-  const [interval, setInterval] = useState<BoletoInterval>("30");
-  const [installments, setInstallments] = useState(1);
-
-  const maxInstallments = MAX_INSTALLMENTS[interval];
-  const interestPerInstallment = BOLETO_INTEREST_PER_INSTALLMENT[interval];
-
-  // Juros começam apenas após 30 dias
-  const getInstallmentData = (n: number) => {
-    if (interval === "15") {
-      // 15 dias: parcelas a cada 15 dias. Juros só após 30 dias.
-      // Parcela 1 = dia 15 (sem juros), Parcela 2 = dia 30 (sem juros), Parcela 3+ = com juros
-      let totalWithInterest = 0;
-      const installmentBase = total / n;
-      for (let i = 1; i <= n; i++) {
-        const daysUntil = i * 15;
-        if (daysUntil > 30) {
-          totalWithInterest += installmentBase * (1 + interestPerInstallment / 100);
-        } else {
-          totalWithInterest += installmentBase;
-        }
-      }
-      return { finalTotal: totalWithInterest, installmentValue: totalWithInterest / n };
-    } else {
-      // 30 dias: parcelas a cada 30 dias. Juros só após 30 dias.
-      // Parcela 1 = dia 30 (sem juros), Parcela 2+ = com juros
-      let totalWithInterest = 0;
-      const installmentBase = total / n;
-      for (let i = 1; i <= n; i++) {
-        const daysUntil = i * 30;
-        if (daysUntil > 30) {
-          totalWithInterest += installmentBase * (1 + interestPerInstallment / 100);
-        } else {
-          totalWithInterest += installmentBase;
-        }
-      }
-      return { finalTotal: totalWithInterest, installmentValue: totalWithInterest / n };
+  const getInstallmentData = (n: number, interval: BoletoInterval, total: number) => {
+    const intervalDays = parseInt(interval);
+    const lastPaymentDay = n * intervalDays;
+    
+    // No interest if last payment is within 30 days
+    if (lastPaymentDay <= 30) {
+      return { finalTotal: total, installmentValue: total / n, periodsWithInterest: 0 };
     }
+    
+    // Count how many periods past 30 days
+    const daysOver30 = lastPaymentDay - 30;
+    const periodsOver = Math.ceil(daysOver30 / intervalDays);
+    const ratePercent = periodsOver * RATE_PER_PERIOD[interval];
+    const finalTotal = total * (1 + ratePercent / 100);
+    
+    return { finalTotal, installmentValue: finalTotal / n, periodsWithInterest: periodsOver };
   };
 
   // Clamp installments when interval changes
