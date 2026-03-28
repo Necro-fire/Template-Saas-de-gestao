@@ -243,10 +243,10 @@ export default function Vendas() {
                                 {getPaymentIcon(s.method)}
                                 <span className="text-muted-foreground">{s.method}:</span>
                                 {info.hasInterest ? (
-                                  <>
-                                    <span className="text-muted-foreground">{formatCurrency(s.amount)}</span>
-                                    <span className="text-primary font-medium">c/ juros {formatCurrency(info.finalTotal)}</span>
-                                  </>
+                                  <span className="text-primary font-medium">
+                                    {formatCurrency(s.amount)} c/ juros {info.rate}% {formatCurrency(info.finalTotal)}
+                                    {info.installments && ` (${info.installments}x ${formatCurrency(info.installmentValue!)})`}
+                                  </span>
                                 ) : (
                                   <span className="font-medium text-primary">{formatCurrency(s.amount)}</span>
                                 )}
@@ -262,10 +262,10 @@ export default function Vendas() {
                             {getPaymentIcon(sale.payment_method)}
                             <span className="text-muted-foreground hidden sm:inline">{sale.payment_method}:</span>
                             {info.hasInterest && !isCancelled ? (
-                              <>
-                                <span className="text-muted-foreground">{formatCurrency(info.originalTotal)}</span>
-                                <span className="text-primary font-medium">c/ juros {formatCurrency(info.finalTotal)}</span>
-                              </>
+                              <span className="text-primary font-medium">
+                                {formatCurrency(info.originalTotal)} c/ juros {info.rate}% {formatCurrency(info.finalTotal)}
+                                {info.installments && ` (${info.installments}x ${formatCurrency(info.installmentValue!)})`}
+                              </span>
                             ) : (
                               <span className={`font-medium ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
                                 {formatCurrency(Number(sale.total))}
