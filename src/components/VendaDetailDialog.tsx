@@ -285,8 +285,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                       <span className="text-xs text-muted-foreground">Total</span>
                       <span className="text-sm font-bold tabular-nums text-primary">
                         {formatCurrency(paymentSplits.reduce((sum, s) => {
-                          const info = parsePaymentDisplay(s.method, s.amount);
-                          return sum + (info.hasInterest ? info.finalTotal : s.amount);
+                          return sum + s.amount;
                         }, 0))}
                       </span>
                     </div>
