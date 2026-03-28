@@ -45,8 +45,14 @@ interface VendaItemWithStatus extends DbVendaItem {
   status?: string;
 }
 
+interface PaymentSplitInfo {
+  method: string;
+  amount: number;
+}
+
 export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDialogProps) {
   const [items, setItems] = useState<VendaItemWithStatus[]>([]);
+  const [paymentSplits, setPaymentSplits] = useState<PaymentSplitInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -61,14 +67,27 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   useEffect(() => {
     if (!venda || !open) return;
     setLoading(true);
-    (supabase as any)
-      .from("venda_items")
-      .select("*")
-      .eq("venda_id", venda.id)
-      .then(({ data }: { data: VendaItemWithStatus[] | null }) => {
-        setItems(data || []);
-        setLoading(false);
-      });
+
+    // Fetch items and payment splits in parallel
+    Promise.all([
+      (supabase as any)
+        .from("venda_items")
+        .select("*")
+        .eq("venda_id", venda.id),
+      (supabase as any)
+        .from("caixa_movimentacoes")
+        .select("forma_pagamento, valor")
+        .eq("venda_id", venda.id)
+        .eq("tipo", "venda"),
+    ]).then(([itemsRes, splitsRes]) => {
+      setItems(itemsRes.data || []);
+      const splits: PaymentSplitInfo[] = (splitsRes.data || []).map((s: any) => ({
+        method: s.forma_pagamento,
+        amount: Number(s.valor),
+      }));
+      setPaymentSplits(splits);
+      setLoading(false);
+    });
   }, [venda, open]);
 
   if (!venda) return null;
