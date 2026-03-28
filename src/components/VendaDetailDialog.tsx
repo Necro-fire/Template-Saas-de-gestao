@@ -227,7 +227,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             <div>
               <p className="text-muted-foreground text-xs">Valor</p>
               {(() => {
-                const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
+                const info = parsePaymentDisplay(venda.payment_method, Number(venda.total), boletoMeta);
                 if (info.hasInterest && !isCancelled) {
                   return (
                     <div>
