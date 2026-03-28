@@ -3,11 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Banknote, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Max total duration: 90 days
+// Max 90 days total
 const MAX_INSTALLMENTS = {
   "15": 6,  // 6×15 = 90d
   "30": 3,  // 3×30 = 90d
@@ -21,25 +20,35 @@ const RATE_PER_PERIOD = {
 
 type BoletoInterval = "15" | "30";
 
-  const getInstallmentData = (n: number, interval: BoletoInterval, total: number) => {
-    const intervalDays = parseInt(interval);
-    const lastPaymentDay = n * intervalDays;
-    
-    // No interest if last payment is within 30 days
-    if (lastPaymentDay <= 30) {
-      return { finalTotal: total, installmentValue: total / n, periodsWithInterest: 0 };
-    }
-    
-    // Count how many periods past 30 days
-    const daysOver30 = lastPaymentDay - 30;
-    const periodsOver = Math.ceil(daysOver30 / intervalDays);
-    const ratePercent = periodsOver * RATE_PER_PERIOD[interval];
-    const finalTotal = total * (1 + ratePercent / 100);
-    
-    return { finalTotal, installmentValue: finalTotal / n, periodsWithInterest: periodsOver };
-  };
+function getInstallmentData(n: number, interval: BoletoInterval, total: number) {
+  const intervalDays = parseInt(interval);
+  const lastPaymentDay = n * intervalDays;
 
-  // Clamp installments when interval changes
+  if (lastPaymentDay <= 30) {
+    return { finalTotal: total, installmentValue: total / n, ratePercent: 0 };
+  }
+
+  const daysOver30 = lastPaymentDay - 30;
+  const periodsOver = Math.ceil(daysOver30 / intervalDays);
+  const ratePercent = periodsOver * RATE_PER_PERIOD[interval];
+  const finalTotal = total * (1 + ratePercent / 100);
+
+  return { finalTotal, installmentValue: finalTotal / n, ratePercent };
+}
+
+interface BoletoConfigDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  total: number;
+  onConfirm: (interval: string, installments: number, finalTotal: number) => void;
+}
+
+export function BoletoConfigDialog({ open, onOpenChange, total, onConfirm }: BoletoConfigDialogProps) {
+  const [interval, setInterval] = useState<BoletoInterval>("30");
+  const [installments, setInstallments] = useState(1);
+
+  const maxInstallments = MAX_INSTALLMENTS[interval];
+
   const handleIntervalChange = (val: BoletoInterval) => {
     setInterval(val);
     if (installments > MAX_INSTALLMENTS[val]) {
@@ -47,7 +56,7 @@ type BoletoInterval = "15" | "30";
     }
   };
 
-  const { finalTotal, installmentValue } = getInstallmentData(installments);
+  const { finalTotal, installmentValue, ratePercent } = getInstallmentData(installments, interval, total);
   const jurosTotal = finalTotal - total;
 
   return (
@@ -82,8 +91,9 @@ type BoletoInterval = "15" | "30";
             <Label className="text-sm">Número de parcelas</Label>
             <div className="grid grid-cols-3 gap-2 mt-1">
               {Array.from({ length: maxInstallments }, (_, i) => i + 1).map((n) => {
-                const data = getInstallmentData(n);
+                const data = getInstallmentData(n, interval, total);
                 const isSelected = installments === n;
+                const lastDay = n * parseInt(interval);
                 return (
                   <button
                     key={n}
@@ -102,6 +112,7 @@ type BoletoInterval = "15" | "30";
                     <p className="text-xs font-medium tabular-nums mt-1">
                       R$ {data.installmentValue.toFixed(2)}
                     </p>
+                    <p className="text-[10px] text-muted-foreground">{lastDay}d{data.ratePercent > 0 ? ` (+${data.ratePercent}%)` : ""}</p>
                   </button>
                 );
               })}
@@ -115,12 +126,12 @@ type BoletoInterval = "15" | "30";
             <span className="font-medium">{installments}x de R$ {installmentValue.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Intervalo</span>
-            <span className="font-medium">{interval} dias</span>
+            <span className="text-muted-foreground">Prazo total</span>
+            <span className="font-medium">{installments * parseInt(interval)} dias</span>
           </div>
           {jurosTotal > 0.01 && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Juros ({interestPerInstallment}% por parcela)</span>
+              <span className="text-muted-foreground">Juros ({ratePercent}% sobre total)</span>
               <span className="font-medium text-destructive">+ R$ {jurosTotal.toFixed(2)}</span>
             </div>
           )}
