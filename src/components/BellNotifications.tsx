@@ -82,7 +82,7 @@ export function BellNotifications() {
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
