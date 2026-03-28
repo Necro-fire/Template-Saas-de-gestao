@@ -244,7 +244,7 @@ export default function Vendas() {
                                 <span className="text-muted-foreground">{s.method}:</span>
                                 {info.hasInterest ? (
                                   <span className="text-primary font-medium">
-                                    {formatCurrency(s.amount)} c/ juros {info.rate}% {formatCurrency(info.finalTotal)}
+                                    {formatCurrency(info.originalTotal)} c/ juros {info.rate}% {formatCurrency(info.finalTotal)}
                                     {info.installments && ` (${info.installments}x ${formatCurrency(info.installmentValue!)})`}
                                   </span>
                                 ) : (
