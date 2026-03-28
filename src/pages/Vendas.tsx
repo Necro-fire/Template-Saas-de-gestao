@@ -236,6 +236,38 @@ export default function Vendas() {
                     </div>
                     <div>
                       {(() => {
+                        const splits = splitsByVenda[sale.id];
+                        const hasSplits = splits && splits.length > 1;
+
+                        if (hasSplits && !isCancelled) {
+                          // Calculate total with interest for credit card portions
+                          let totalWithInterest = 0;
+                          const details: string[] = [];
+                          for (const s of splits) {
+                            const info = parsePaymentDisplay(s.method, s.amount);
+                            totalWithInterest += info.hasInterest ? info.finalTotal : s.amount;
+                            if (info.hasInterest) {
+                              details.push(`${s.method}: ${formatCurrency(info.finalTotal)} (s/ juros ${formatCurrency(s.amount)})`);
+                            }
+                          }
+                          const baseTotal = splits.reduce((sum, s) => sum + s.amount, 0);
+                          const hasAnyInterest = totalWithInterest > baseTotal;
+
+                          return (
+                            <>
+                              <p className="text-ui font-medium tabular-nums text-primary">
+                                {formatCurrency(hasAnyInterest ? totalWithInterest : baseTotal)}
+                              </p>
+                              {hasAnyInterest && (
+                                <p className="text-[10px] text-muted-foreground tabular-nums line-through">
+                                  {formatCurrency(baseTotal)}
+                                </p>
+                              )}
+                            </>
+                          );
+                        }
+
+                        // Single payment or no splits data
                         const info = parsePaymentDisplay(sale.payment_method, Number(sale.total));
                         if (info.hasInterest && !isCancelled) {
                           return (
