@@ -27,22 +27,43 @@ export default function Vendas() {
   const { data: sales } = useVendas();
   // Fetch all payment splits (caixa_movimentacoes) keyed by venda_id
   const [splitsByVenda, setSplitsByVenda] = useState<Record<string, { method: string; amount: number }[]>>({});
+  const [boletoMetaByVenda, setBoletoMetaByVenda] = useState<Record<string, BoletoMetaInfo>>({});
 
   useEffect(() => {
     if (sales.length === 0) return;
-    (supabase as any)
-      .from("caixa_movimentacoes")
-      .select("venda_id, forma_pagamento, valor")
-      .eq("tipo", "venda")
-      .then(({ data }: { data: any[] | null }) => {
-        const map: Record<string, { method: string; amount: number }[]> = {};
-        (data || []).forEach((row: any) => {
-          if (!row.venda_id) return;
-          if (!map[row.venda_id]) map[row.venda_id] = [];
-          map[row.venda_id].push({ method: row.forma_pagamento, amount: Number(row.valor) });
-        });
-        setSplitsByVenda(map);
+
+    Promise.all([
+      (supabase as any)
+        .from("caixa_movimentacoes")
+        .select("venda_id, forma_pagamento, valor")
+        .eq("tipo", "venda"),
+      (supabase as any)
+        .from("boleto_alertas")
+        .select("venda_id, total_parcelas, intervalo_dias"),
+    ]).then(([splitsRes, boletoRes]: [{ data: any[] | null }, { data: any[] | null }]) => {
+      const splitMap: Record<string, { method: string; amount: number }[]> = {};
+      (splitsRes.data || []).forEach((row: any) => {
+        if (!row.venda_id) return;
+        if (!splitMap[row.venda_id]) splitMap[row.venda_id] = [];
+        splitMap[row.venda_id].push({ method: row.forma_pagamento, amount: Number(row.valor) });
       });
+
+      const boletoMap: Record<string, BoletoMetaInfo> = {};
+      (boletoRes.data || []).forEach((row: any) => {
+        if (!row.venda_id) return;
+        const installments = Number(row.total_parcelas || 0);
+        const intervalDays = Number(row.intervalo_dias || 0);
+        if (!installments || !intervalDays) return;
+
+        const existing = boletoMap[row.venda_id];
+        if (!existing || installments > existing.installments) {
+          boletoMap[row.venda_id] = { installments, intervalDays };
+        }
+      });
+
+      setSplitsByVenda(splitMap);
+      setBoletoMetaByVenda(boletoMap);
+    });
   }, [sales]);
   const { preset, range, onChange } = useDateRangeFilter();
   const [search, setSearch] = useState("");
