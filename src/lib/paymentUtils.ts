@@ -85,12 +85,12 @@ export function parsePaymentDisplay(
     const ratePercent = getBoletoInterest(installments, intervalDays);
 
     if (ratePercent > 0) {
-      const originalTotal = total / (1 + ratePercent / 100);
-      const installmentValue = total / installments;
+      const finalTotal = total * (1 + ratePercent / 100);
+      const installmentValue = finalTotal / installments;
       return {
         label: `Boleto ${installments}x/${intervalDays}d`,
-        originalTotal,
-        finalTotal: total,
+        originalTotal: total,
+        finalTotal,
         hasInterest: true,
         installments,
         installmentValue,
