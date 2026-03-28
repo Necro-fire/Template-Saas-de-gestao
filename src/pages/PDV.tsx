@@ -549,43 +549,6 @@ export default function PDV() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Credit Card Installment Modal */}
-      <CreditCardInstallmentDialog
-        open={showCreditCardModal}
-        onOpenChange={(open) => {
-          setShowCreditCardModal(open);
-          if (!open) {
-            setSplitInstallmentEntryId(null);
-            setSplitInstallmentAmount(0);
-          }
-        }}
-        total={splitInstallmentEntryId ? splitInstallmentAmount : subtotal}
-        onConfirm={(installments, finalTotal) => {
-          if (splitInstallmentEntryId) {
-            // Update the split payment entry with installment info
-            setPaymentEntries(prev =>
-              prev.map(e => e.id === splitInstallmentEntryId
-                ? { ...e, installments, finalTotal }
-                : e
-              )
-            );
-            setSplitInstallmentEntryId(null);
-            setSplitInstallmentAmount(0);
-          } else {
-            setCreditCardInfo({ installments, finalTotal });
-          }
-        }}
-      />
-
-      {/* Boleto Config Modal */}
-      <BoletoConfigDialog
-        open={showBoletoModal}
-        onOpenChange={setShowBoletoModal}
-        total={subtotal}
-        onConfirm={(interval, installments, finalTotal) => {
-          setBoletoInfo({ interval, installments, finalTotal });
-        }}
-      />
 
       {/* Product Image Zoom */}
       <ProductImageDialog
