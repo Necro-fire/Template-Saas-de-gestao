@@ -213,6 +213,9 @@ export default function PDV() {
             if (e.method === "cartao" && e.installments) {
               return `Cartão ${e.installments}x`;
             }
+            if (e.method === "boleto" && e.boletoInstallments && e.boletoInterval) {
+              return `Boleto ${e.boletoInstallments}x/${e.boletoInterval}d`;
+            }
             const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", prazo: "Prazo" }[e.method] || e.method;
             return label;
           }).join("/")
@@ -220,9 +223,12 @@ export default function PDV() {
 
       let saleTotal = subtotal;
       if (isSplitPayment) {
-        // Sum up: for credit card entries with installments, use finalTotal; otherwise use amount
+        // Sum up: for credit card/boleto entries with finalTotal, use finalTotal; otherwise use amount
         saleTotal = paymentEntries.reduce((sum, e) => {
-          return sum + (e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount);
+          if ((e.method === "cartao" || e.method === "boleto") && e.finalTotal) {
+            return sum + e.finalTotal;
+          }
+          return sum + e.amount;
         }, 0);
       } else if (paymentMethod === "cartao" && creditCardInfo) {
         finalMethod = `Cartão de Crédito ${creditCardInfo.installments}x`;
@@ -237,8 +243,10 @@ export default function PDV() {
 
       const splits = isSplitPayment
         ? paymentEntries.map(e => ({
-            method: e.method,
-            amount: e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount,
+            method: e.method === "cartao" && e.installments ? `Cartão ${e.installments}x` 
+                  : e.method === "boleto" && e.boletoInstallments && e.boletoInterval ? `Boleto ${e.boletoInstallments}x/${e.boletoInterval}d`
+                  : e.method,
+            amount: (e.method === "cartao" || e.method === "boleto") && e.finalTotal ? e.finalTotal : e.amount,
           }))
         : undefined;
 
