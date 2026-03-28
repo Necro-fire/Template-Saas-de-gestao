@@ -122,16 +122,28 @@ export default function Vendas() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {["dinheiro", "pix", "cartão de crédito", "cartão de débito"].map((method) => {
-            const methodSales = filtered.filter((s) => s.payment_method.toLowerCase().includes(method));
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Dinheiro", key: "dinheiro" },
+            { label: "Pix", key: "pix" },
+            { label: "Cartão de Crédito", key: "cartão de crédito" },
+            { label: "Cartão de Débito", key: "cartão de débito" },
+            { label: "Boleto", key: "boleto" },
+          ].map(({ label, key }) => {
+            const allSales = filterByDateRange(sales, range);
+            const methodSales = allSales.filter((s) => s.payment_method.toLowerCase().includes(key));
             const methodTotal = methodSales.reduce((acc, s) => acc + Number(s.total), 0);
+            const isActive = paymentFilter === key;
             return (
-              <Card key={method} className="border-border/50">
+              <Card
+                key={key}
+                onClick={() => setPaymentFilter(isActive ? null : key)}
+                className={`border-border/50 cursor-pointer transition-all hover:border-primary/50 ${isActive ? "ring-2 ring-primary border-primary" : ""}`}
+              >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    {getPaymentIcon(method)}
-                    <span className="text-xs capitalize">{method}</span>
+                    {getPaymentIcon(key)}
+                    <span className="text-xs">{label}</span>
                   </div>
                   <p className="text-sm font-semibold tabular-nums">R$ {methodTotal.toFixed(2)}</p>
                   <p className="text-[11px] text-muted-foreground">{methodSales.length} venda{methodSales.length !== 1 ? "s" : ""}</p>
