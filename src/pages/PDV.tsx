@@ -440,34 +440,18 @@ export default function PDV() {
                 setPaymentMethod(method);
                 setCreditCardInfo(null);
                 setBoletoInfo(null);
-                if (method === "cartao" && cart.length > 0) {
-                  setShowCreditCardModal(true);
-                } else if (method === "boleto" && cart.length > 0) {
-                  setShowBoletoModal(true);
-                }
               }}
               entries={paymentEntries}
               onEntriesChange={setPaymentEntries}
-              onOpenInstallments={(entryId, entryAmount) => {
-                setSplitInstallmentEntryId(entryId);
-                setSplitInstallmentAmount(entryAmount);
-                setShowCreditCardModal(true);
+              onCreditCardConfirm={(installments, finalTotal) => {
+                setCreditCardInfo({ installments, finalTotal });
               }}
+              onBoletoConfirm={(interval, installments, finalTotal) => {
+                setBoletoInfo({ interval, installments, finalTotal });
+              }}
+              creditCardInfo={creditCardInfo}
+              boletoInfo={boletoInfo}
             />
-
-            {/* Show credit card / boleto info badge */}
-            {!isSplitPayment && paymentMethod === "cartao" && creditCardInfo && (
-              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
-                <span className="text-muted-foreground">{creditCardInfo.installments}x de R$ {(creditCardInfo.finalTotal / creditCardInfo.installments).toFixed(2)} (total R$ {creditCardInfo.finalTotal.toFixed(2)})</span>
-                <button className="text-primary text-xs underline" onClick={() => setShowCreditCardModal(true)}>Alterar</button>
-              </div>
-            )}
-            {!isSplitPayment && paymentMethod === "boleto" && boletoInfo && (
-              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
-                <span className="text-muted-foreground">{boletoInfo.installments}x a cada {boletoInfo.interval} dias</span>
-                <button className="text-primary text-xs underline" onClick={() => setShowBoletoModal(true)}>Alterar</button>
-              </div>
-            )}
 
             <Separator />
             <div className="space-y-1">
