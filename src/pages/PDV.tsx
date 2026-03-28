@@ -608,10 +608,27 @@ export default function PDV() {
       {/* Boleto Config Modal */}
       <BoletoConfigDialog
         open={showBoletoModal}
-        onOpenChange={setShowBoletoModal}
-        total={subtotal}
+        onOpenChange={(open) => {
+          setShowBoletoModal(open);
+          if (!open) {
+            setSplitBoletoEntryId(null);
+            setSplitBoletoAmount(0);
+          }
+        }}
+        total={splitBoletoEntryId ? splitBoletoAmount : subtotal}
         onConfirm={(interval, installments, finalTotal) => {
-          setBoletoInfo({ interval, installments, finalTotal });
+          if (splitBoletoEntryId) {
+            setPaymentEntries(prev =>
+              prev.map(e => e.id === splitBoletoEntryId
+                ? { ...e, boletoInterval: interval, boletoInstallments: installments, finalTotal }
+                : e
+              )
+            );
+            setSplitBoletoEntryId(null);
+            setSplitBoletoAmount(0);
+          } else {
+            setBoletoInfo({ interval, installments, finalTotal });
+          }
         }}
       />
 
