@@ -13,6 +13,8 @@ export interface PaymentEntry {
   amount: number;
   installments?: number;
   finalTotal?: number;
+  boletoInterval?: string;
+  boletoInstallments?: number;
 }
 
 const PAYMENT_METHODS = [
