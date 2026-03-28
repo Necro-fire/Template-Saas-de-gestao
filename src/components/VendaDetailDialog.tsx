@@ -248,31 +248,83 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               Pagamento
             </h4>
             {(() => {
-              if (isSplitPayment(venda.payment_method)) {
-                const methods = parseSplitMethods(venda.payment_method);
+              const hasSplits = paymentSplits.length > 1;
+              
+              if (hasSplits) {
+                // Show each split with its own value and interest calculation
                 return (
-                  <div className="space-y-1.5">
-                    {methods.map((method, i) => {
-                      const info = parsePaymentDisplay(method, 0);
+                  <div className="space-y-2">
+                    {paymentSplits.map((split, i) => {
+                      const info = parsePaymentDisplay(split.method, split.amount);
                       return (
-                        <div key={i} className="flex items-center gap-2">
-                          {getPaymentIcon(method)}
-                          <Badge variant="outline" className="capitalize">{method}</Badge>
-                          {info.hasInterest && (
-                            <span className="text-[10px] text-muted-foreground">({info.rate}% juros)</span>
-                          )}
+                        <div key={i} className="flex items-center justify-between bg-secondary/50 rounded px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            {getPaymentIcon(split.method)}
+                            <span className="text-sm font-medium">{split.method}</span>
+                          </div>
+                          <div className="text-right">
+                            {info.hasInterest ? (
+                              <>
+                                <p className="text-sm font-semibold tabular-nums text-primary">
+                                  {formatCurrency(info.finalTotal)}
+                                  <span className="text-[10px] font-normal text-muted-foreground ml-1">c/ juros</span>
+                                </p>
+                                <p className="text-[10px] tabular-nums text-muted-foreground line-through">
+                                  {formatCurrency(info.originalTotal)}
+                                </p>
+                                {info.installments && info.installmentValue && (
+                                  <p className="text-[10px] text-muted-foreground">
+                                    {info.installments}x de {formatCurrency(info.installmentValue)} ({info.rate}%)
+                                  </p>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-sm font-semibold tabular-nums">{formatCurrency(split.amount)}</p>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
+                    {/* Total line */}
+                    <div className="flex items-center justify-between px-3 pt-1 border-t border-border/50">
+                      <span className="text-xs text-muted-foreground">Total</span>
+                      <span className="text-sm font-bold tabular-nums text-primary">
+                        {formatCurrency(paymentSplits.reduce((sum, s) => {
+                          const info = parsePaymentDisplay(s.method, s.amount);
+                          return sum + (info.hasInterest ? info.finalTotal : s.amount);
+                        }, 0))}
+                      </span>
+                    </div>
                   </div>
                 );
               }
 
+              // Single payment method
+              if (paymentSplits.length === 1) {
+                const split = paymentSplits[0];
+                const info = parsePaymentDisplay(split.method, split.amount);
+                return (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{split.method}</Badge>
+                    </div>
+                    {info.hasInterest && info.installments && info.installmentValue && (
+                      <div className="text-xs text-muted-foreground bg-secondary rounded px-2 py-1.5 space-y-0.5">
+                        <p>{info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                        <p>Juros: {info.rate}% (+{formatCurrency(info.finalTotal - info.originalTotal)})</p>
+                        <p className="font-medium text-foreground">Total: {formatCurrency(info.finalTotal)}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Fallback: no caixa data, use payment_method string
               const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
               return (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="capitalize">{venda.payment_method}</Badge>
+                    <Badge variant="outline">{venda.payment_method}</Badge>
                   </div>
                   {info.hasInterest && info.installments && info.installmentValue && (
                     <div className="text-xs text-muted-foreground bg-secondary rounded px-2 py-1.5 space-y-0.5">
