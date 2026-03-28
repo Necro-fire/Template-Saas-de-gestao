@@ -32,7 +32,7 @@ export function BellNotifications() {
     }
   };
 
-  const count = pendentes.length;
+  const count = pendentes.length + upcoming.length;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
