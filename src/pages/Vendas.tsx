@@ -237,7 +237,7 @@ export default function Vendas() {
 
                         if (hasSplits && !isCancelled) {
                           return splits.map((s, idx) => {
-                            const info = parsePaymentDisplay(s.method, s.amount);
+                            const info = parseSplitPaymentDisplay(s.method, s.amount, sale.payment_method);
                             return (
                               <div key={idx} className="flex items-center gap-1.5 text-caption">
                                 {getPaymentIcon(s.method)}
