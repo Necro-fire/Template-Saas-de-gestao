@@ -28,6 +28,7 @@ export default function Vendas() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [boletoFilter, setBoletoFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState<string | null>(null);
   const [selectedVenda, setSelectedVenda] = useState<DbVenda | null>(null);
 
   const filtered = useMemo(() => {
@@ -46,8 +47,11 @@ export default function Vendas() {
     if (boletoFilter !== "all") {
       result = result.filter(s => (s as any).status_boleto === boletoFilter);
     }
+    if (paymentFilter) {
+      result = result.filter(s => s.payment_method.toLowerCase().includes(paymentFilter));
+    }
     return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [sales, range, search, statusFilter, boletoFilter]);
+  }, [sales, range, search, statusFilter, boletoFilter, paymentFilter]);
 
   const totalRevenue = filtered.reduce((acc, s) => acc + Number(s.total), 0);
 
