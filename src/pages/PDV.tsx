@@ -18,8 +18,7 @@ import { useBlocker } from "react-router-dom";
 import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
 import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
 import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
-import { BoletoConfigDialog } from "@/components/pdv/BoletoConfigDialog";
-import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
+import { type BoletoInterval } from "@/lib/paymentUtils";
 import {
   AlertDialog,
   AlertDialogAction,
