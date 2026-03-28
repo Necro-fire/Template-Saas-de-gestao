@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Split, CreditCard } from "lucide-react";
+import { Plus, Trash2, Split, CreditCard, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -13,6 +13,8 @@ export interface PaymentEntry {
   amount: number;
   installments?: number;
   finalTotal?: number;
+  boletoInterval?: string;
+  boletoInstallments?: number;
 }
 
 const PAYMENT_METHODS = [
@@ -38,6 +40,7 @@ interface SplitPaymentPanelProps {
   entries: PaymentEntry[];
   onEntriesChange: (entries: PaymentEntry[]) => void;
   onOpenInstallments?: (entryId: string, entryAmount: number) => void;
+  onOpenBoleto?: (entryId: string, entryAmount: number) => void;
 }
 
 export function SplitPaymentPanel({
@@ -49,6 +52,7 @@ export function SplitPaymentPanel({
   entries,
   onEntriesChange,
   onOpenInstallments,
+  onOpenBoleto,
 }: SplitPaymentPanelProps) {
   const addEntry = () => {
     const usedMethods = entries.map(e => e.method);
@@ -142,8 +146,16 @@ export function SplitPaymentPanel({
             <div className="flex items-center gap-2">
               <Select value={entry.method} onValueChange={(v) => {
                 updateEntry(entry.id, "method", v);
-                // Clear installment info when method changes
-                if (v !== "cartao") {
+                // Clear installment/boleto info when method changes
+                if (v !== "cartao" && v !== "boleto") {
+                  onEntriesChange(
+                    entries.map(e => e.id === entry.id ? { ...e, method: v, installments: undefined, finalTotal: undefined, boletoInterval: undefined, boletoInstallments: undefined } : e)
+                  );
+                } else if (v === "cartao") {
+                  onEntriesChange(
+                    entries.map(e => e.id === entry.id ? { ...e, method: v, boletoInterval: undefined, boletoInstallments: undefined } : e)
+                  );
+                } else if (v === "boleto") {
                   onEntriesChange(
                     entries.map(e => e.id === entry.id ? { ...e, method: v, installments: undefined, finalTotal: undefined } : e)
                   );
@@ -174,6 +186,17 @@ export function SplitPaymentPanel({
                   <CreditCard className="h-3 w-3" />
                 </Button>
               )}
+              {entry.method === "boleto" && onOpenBoleto && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-primary"
+                  title="Configurar Boleto"
+                  onClick={() => onOpenBoleto(entry.id, entry.amount)}
+                >
+                  <Banknote className="h-3 w-3" />
+                </Button>
+              )}
               {entries.length > 1 && (
                 <Button
                   variant="ghost"
@@ -193,6 +216,19 @@ export function SplitPaymentPanel({
                 <button
                   className="text-primary text-xs underline"
                   onClick={() => onOpenInstallments?.(entry.id, entry.amount)}
+                >
+                  Alterar
+                </button>
+              </div>
+            )}
+            {entry.method === "boleto" && entry.boletoInterval && entry.boletoInstallments && entry.finalTotal && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded px-2 py-1 ml-1">
+                <span className="text-muted-foreground">
+                  {entry.boletoInstallments}x a cada {entry.boletoInterval} dias (total R$ {entry.finalTotal.toFixed(2)})
+                </span>
+                <button
+                  className="text-primary text-xs underline"
+                  onClick={() => onOpenBoleto?.(entry.id, entry.amount)}
                 >
                   Alterar
                 </button>

@@ -56,6 +56,8 @@ export default function PDV() {
   const [boletoInfo, setBoletoInfo] = useState<{ interval: string; installments: number; finalTotal: number } | null>(null);
   const [splitInstallmentEntryId, setSplitInstallmentEntryId] = useState<string | null>(null);
   const [splitInstallmentAmount, setSplitInstallmentAmount] = useState(0);
+  const [splitBoletoEntryId, setSplitBoletoEntryId] = useState<string | null>(null);
+  const [splitBoletoAmount, setSplitBoletoAmount] = useState(0);
   const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
@@ -458,6 +460,11 @@ export default function PDV() {
                 setSplitInstallmentAmount(entryAmount);
                 setShowCreditCardModal(true);
               }}
+              onOpenBoleto={(entryId, entryAmount) => {
+                setSplitBoletoEntryId(entryId);
+                setSplitBoletoAmount(entryAmount);
+                setShowBoletoModal(true);
+              }}
             />
 
             {/* Show credit card / boleto info badge */}
@@ -601,10 +608,27 @@ export default function PDV() {
       {/* Boleto Config Modal */}
       <BoletoConfigDialog
         open={showBoletoModal}
-        onOpenChange={setShowBoletoModal}
-        total={subtotal}
+        onOpenChange={(open) => {
+          setShowBoletoModal(open);
+          if (!open) {
+            setSplitBoletoEntryId(null);
+            setSplitBoletoAmount(0);
+          }
+        }}
+        total={splitBoletoEntryId ? splitBoletoAmount : subtotal}
         onConfirm={(interval, installments, finalTotal) => {
-          setBoletoInfo({ interval, installments, finalTotal });
+          if (splitBoletoEntryId) {
+            setPaymentEntries(prev =>
+              prev.map(e => e.id === splitBoletoEntryId
+                ? { ...e, boletoInterval: interval, boletoInstallments: installments, finalTotal }
+                : e
+              )
+            );
+            setSplitBoletoEntryId(null);
+            setSplitBoletoAmount(0);
+          } else {
+            setBoletoInfo({ interval, installments, finalTotal });
+          }
         }}
       />
 
