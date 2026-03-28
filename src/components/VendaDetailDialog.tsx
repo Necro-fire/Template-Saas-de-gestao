@@ -255,7 +255,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                 return (
                   <div className="space-y-2">
                     {paymentSplits.map((split, i) => {
-                      const info = parsePaymentDisplay(split.method, split.amount);
+                      const info = parseSplitPaymentDisplay(split.method, split.amount, venda.payment_method);
                       return (
                         <div key={i} className="bg-secondary/50 rounded px-3 py-2">
                           <div className="flex items-center justify-between">
