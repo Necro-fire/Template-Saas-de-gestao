@@ -53,6 +53,7 @@ interface PaymentSplitInfo {
 export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDialogProps) {
   const [items, setItems] = useState<VendaItemWithStatus[]>([]);
   const [paymentSplits, setPaymentSplits] = useState<PaymentSplitInfo[]>([]);
+  const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
