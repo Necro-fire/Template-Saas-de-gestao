@@ -257,31 +257,26 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                     {paymentSplits.map((split, i) => {
                       const info = parsePaymentDisplay(split.method, split.amount);
                       return (
-                        <div key={i} className="flex items-center justify-between bg-secondary/50 rounded px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            {getPaymentIcon(split.method)}
-                            <span className="text-sm font-medium">{split.method}</span>
+                        <div key={i} className="bg-secondary/50 rounded px-3 py-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {getPaymentIcon(split.method)}
+                              <span className="text-sm font-medium">{split.method}</span>
+                            </div>
+                            <span className="text-sm font-semibold tabular-nums text-primary">
+                              {info.hasInterest ? formatCurrency(info.finalTotal) : formatCurrency(split.amount)}
+                            </span>
                           </div>
-                          <div className="text-right">
-                            {info.hasInterest ? (
-                              <>
-                                <p className="text-sm font-semibold tabular-nums text-primary">
-                                  {formatCurrency(info.finalTotal)}
-                                  <span className="text-[10px] font-normal text-muted-foreground ml-1">c/ juros</span>
-                                </p>
-                                <p className="text-[10px] tabular-nums text-muted-foreground line-through">
-                                  {formatCurrency(info.originalTotal)}
-                                </p>
-                                {info.installments && info.installmentValue && (
-                                  <p className="text-[10px] text-muted-foreground">
-                                    {info.installments}x de {formatCurrency(info.installmentValue)} ({info.rate}%)
-                                  </p>
-                                )}
-                              </>
-                            ) : (
-                              <p className="text-sm font-semibold tabular-nums">{formatCurrency(split.amount)}</p>
-                            )}
-                          </div>
+                          {info.hasInterest && info.installments && info.installmentValue ? (
+                            <div className="mt-1 text-xs text-muted-foreground space-y-0.5 pl-6">
+                              <p>Valor sem juros: {formatCurrency(info.originalTotal)}</p>
+                              <p>{info.installments}x com {info.rate}% de juros</p>
+                              <p>Valor final: {formatCurrency(info.finalTotal)}</p>
+                              <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                            </div>
+                          ) : (
+                            <p className="mt-0.5 text-xs text-muted-foreground pl-6">Sem juros</p>
+                          )}
                         </div>
                       );
                     })}
