@@ -18,6 +18,7 @@ import { parsePaymentDisplay, formatCurrency } from "@/lib/paymentUtils";
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
   if (key.includes("pix")) return <QrCode className="h-3.5 w-3.5" />;
+  if (key.includes("boleto")) return <FileText className="h-3.5 w-3.5" />;
   if (key.includes("cart") || key.includes("debit") || key.includes("credit") || key.includes("débito") || key.includes("crédito")) return <CreditCard className="h-3.5 w-3.5" />;
   return <Banknote className="h-3.5 w-3.5" />;
 }
