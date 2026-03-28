@@ -17,8 +17,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useBlocker } from "react-router-dom";
 import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
 import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
+import { CreditCardInstallmentDialog } from "@/components/pdv/CreditCardInstallmentDialog";
+import { BoletoConfigDialog } from "@/components/pdv/BoletoConfigDialog";
 import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
-import { type BoletoInterval } from "@/lib/paymentUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,8 +50,12 @@ export default function PDV() {
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
   const [origin, setOrigin] = useState<"stock" | "bag">("stock");
+  const [showCreditCardModal, setShowCreditCardModal] = useState(false);
+  const [showBoletoModal, setShowBoletoModal] = useState(false);
   const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
   const [boletoInfo, setBoletoInfo] = useState<{ interval: string; installments: number; finalTotal: number } | null>(null);
+  const [splitInstallmentEntryId, setSplitInstallmentEntryId] = useState<string | null>(null);
+  const [splitInstallmentAmount, setSplitInstallmentAmount] = useState(0);
   const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
@@ -206,9 +211,6 @@ export default function PDV() {
             if (e.method === "cartao" && e.installments) {
               return `Cartão ${e.installments}x`;
             }
-            if (e.method === "boleto" && e.installments && e.boletoInterval) {
-              return `Boleto ${e.installments}x/${e.boletoInterval}d`;
-            }
             const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", prazo: "Prazo" }[e.method] || e.method;
             return label;
           }).join("/")
@@ -216,11 +218,9 @@ export default function PDV() {
 
       let saleTotal = subtotal;
       if (isSplitPayment) {
+        // Sum up: for credit card entries with installments, use finalTotal; otherwise use amount
         saleTotal = paymentEntries.reduce((sum, e) => {
-          if ((e.method === "cartao" || e.method === "boleto") && e.finalTotal) {
-            return sum + e.finalTotal;
-          }
-          return sum + e.amount;
+          return sum + (e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount);
         }, 0);
       } else if (paymentMethod === "cartao" && creditCardInfo) {
         finalMethod = `Cartão de Crédito ${creditCardInfo.installments}x`;
@@ -230,12 +230,13 @@ export default function PDV() {
         saleTotal = boletoInfo.finalTotal;
       }
 
+      const discount = saleTotal > subtotal ? 0 : 0;
       const saleDiscount = 0;
 
       const splits = isSplitPayment
         ? paymentEntries.map(e => ({
             method: e.method,
-            amount: (e.method === "cartao" || e.method === "boleto") && e.finalTotal ? e.finalTotal : e.amount,
+            amount: e.method === "cartao" && e.finalTotal ? e.finalTotal : e.amount,
           }))
         : undefined;
 
@@ -444,18 +445,34 @@ export default function PDV() {
                 setPaymentMethod(method);
                 setCreditCardInfo(null);
                 setBoletoInfo(null);
+                if (method === "cartao" && cart.length > 0) {
+                  setShowCreditCardModal(true);
+                } else if (method === "boleto" && cart.length > 0) {
+                  setShowBoletoModal(true);
+                }
               }}
               entries={paymentEntries}
               onEntriesChange={setPaymentEntries}
-              onCreditCardConfirm={(installments, finalTotal) => {
-                setCreditCardInfo({ installments, finalTotal });
+              onOpenInstallments={(entryId, entryAmount) => {
+                setSplitInstallmentEntryId(entryId);
+                setSplitInstallmentAmount(entryAmount);
+                setShowCreditCardModal(true);
               }}
-              onBoletoConfirm={(interval, installments, finalTotal) => {
-                setBoletoInfo({ interval, installments, finalTotal });
-              }}
-              creditCardInfo={creditCardInfo}
-              boletoInfo={boletoInfo}
             />
+
+            {/* Show credit card / boleto info badge */}
+            {!isSplitPayment && paymentMethod === "cartao" && creditCardInfo && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
+                <span className="text-muted-foreground">{creditCardInfo.installments}x de R$ {(creditCardInfo.finalTotal / creditCardInfo.installments).toFixed(2)} (total R$ {creditCardInfo.finalTotal.toFixed(2)})</span>
+                <button className="text-primary text-xs underline" onClick={() => setShowCreditCardModal(true)}>Alterar</button>
+              </div>
+            )}
+            {!isSplitPayment && paymentMethod === "boleto" && boletoInfo && (
+              <div className="flex items-center justify-between text-caption bg-secondary rounded-md px-3 py-1.5">
+                <span className="text-muted-foreground">{boletoInfo.installments}x a cada {boletoInfo.interval} dias</span>
+                <button className="text-primary text-xs underline" onClick={() => setShowBoletoModal(true)}>Alterar</button>
+              </div>
+            )}
 
             <Separator />
             <div className="space-y-1">
@@ -553,6 +570,43 @@ export default function PDV() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Credit Card Installment Modal */}
+      <CreditCardInstallmentDialog
+        open={showCreditCardModal}
+        onOpenChange={(open) => {
+          setShowCreditCardModal(open);
+          if (!open) {
+            setSplitInstallmentEntryId(null);
+            setSplitInstallmentAmount(0);
+          }
+        }}
+        total={splitInstallmentEntryId ? splitInstallmentAmount : subtotal}
+        onConfirm={(installments, finalTotal) => {
+          if (splitInstallmentEntryId) {
+            // Update the split payment entry with installment info
+            setPaymentEntries(prev =>
+              prev.map(e => e.id === splitInstallmentEntryId
+                ? { ...e, installments, finalTotal }
+                : e
+              )
+            );
+            setSplitInstallmentEntryId(null);
+            setSplitInstallmentAmount(0);
+          } else {
+            setCreditCardInfo({ installments, finalTotal });
+          }
+        }}
+      />
+
+      {/* Boleto Config Modal */}
+      <BoletoConfigDialog
+        open={showBoletoModal}
+        onOpenChange={setShowBoletoModal}
+        total={subtotal}
+        onConfirm={(interval, installments, finalTotal) => {
+          setBoletoInfo({ interval, installments, finalTotal });
+        }}
+      />
 
       {/* Product Image Zoom */}
       <ProductImageDialog

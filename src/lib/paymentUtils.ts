@@ -13,27 +13,6 @@ export const INTEREST_RATES: Record<number, number> = {
   12: 12.40,
 };
 
-// Boleto constants
-export const BOLETO_MAX_INSTALLMENTS = { "15": 6, "30": 3 } as const;
-export const BOLETO_RATE_PER_PERIOD = { "15": 3, "30": 6 } as const;
-export type BoletoInterval = "15" | "30";
-
-export function getBoletoInstallmentData(n: number, interval: BoletoInterval, total: number) {
-  const intervalDays = parseInt(interval);
-  const lastPaymentDay = n * intervalDays;
-
-  if (lastPaymentDay <= 30) {
-    return { finalTotal: total, installmentValue: total / n, ratePercent: 0 };
-  }
-
-  const daysOver30 = lastPaymentDay - 30;
-  const periodsOver = Math.ceil(daysOver30 / intervalDays);
-  const ratePercent = periodsOver * BOLETO_RATE_PER_PERIOD[interval];
-  const finalTotal = total * (1 + ratePercent / 100);
-
-  return { finalTotal, installmentValue: finalTotal / n, ratePercent };
-}
-
 export const PAYMENT_LABELS: Record<string, string> = {
   pix: "Pix",
   dinheiro: "Dinheiro",
