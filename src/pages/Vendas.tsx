@@ -13,7 +13,7 @@ import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { parsePaymentDisplay, formatCurrency } from "@/lib/paymentUtils";
+import { parsePaymentDisplay, parseSplitPaymentDisplay, formatCurrency } from "@/lib/paymentUtils";
 
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
@@ -237,14 +237,14 @@ export default function Vendas() {
 
                         if (hasSplits && !isCancelled) {
                           return splits.map((s, idx) => {
-                            const info = parsePaymentDisplay(s.method, s.amount);
+                            const info = parseSplitPaymentDisplay(s.method, s.amount, sale.payment_method);
                             return (
                               <div key={idx} className="flex items-center gap-1.5 text-caption">
                                 {getPaymentIcon(s.method)}
                                 <span className="text-muted-foreground">{s.method}:</span>
                                 {info.hasInterest ? (
                                   <span className="text-primary font-medium">
-                                    {formatCurrency(s.amount)} c/ juros {info.rate}% {formatCurrency(info.finalTotal)}
+                                    {formatCurrency(info.originalTotal)} c/ juros {info.rate}% {formatCurrency(info.finalTotal)}
                                     {info.installments && ` (${info.installments}x ${formatCurrency(info.installmentValue!)})`}
                                   </span>
                                 ) : (
