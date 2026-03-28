@@ -230,61 +230,48 @@ export default function Vendas() {
                   </div>
                   <div className="text-right flex items-center gap-3">
                     <Badge variant="outline" className="text-caption">{getFilialName(sale.filial_id)}</Badge>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      {getPaymentIcon(sale.payment_method)}
-                      <span className="text-caption capitalize hidden sm:inline">{sale.payment_method}</span>
-                    </div>
-                    <div>
+                    <div className="flex flex-col items-end gap-0.5">
                       {(() => {
                         const splits = splitsByVenda[sale.id];
                         const hasSplits = splits && splits.length > 1;
 
                         if (hasSplits && !isCancelled) {
-                          // Calculate total with interest for credit card portions
-                          let totalWithInterest = 0;
-                          const details: string[] = [];
-                          for (const s of splits) {
+                          return splits.map((s, idx) => {
                             const info = parsePaymentDisplay(s.method, s.amount);
-                            totalWithInterest += info.hasInterest ? info.finalTotal : s.amount;
-                            if (info.hasInterest) {
-                              details.push(`${s.method}: ${formatCurrency(info.finalTotal)} (s/ juros ${formatCurrency(s.amount)})`);
-                            }
-                          }
-                          const baseTotal = splits.reduce((sum, s) => sum + s.amount, 0);
-                          const hasAnyInterest = totalWithInterest > baseTotal;
-
-                          return (
-                            <>
-                              <p className="text-ui font-medium tabular-nums text-primary">
-                                {formatCurrency(hasAnyInterest ? totalWithInterest : baseTotal)}
-                              </p>
-                              {hasAnyInterest && (
-                                <p className="text-[10px] text-muted-foreground tabular-nums line-through">
-                                  {formatCurrency(baseTotal)}
-                                </p>
-                              )}
-                            </>
-                          );
+                            return (
+                              <div key={idx} className="flex items-center gap-1.5 text-caption">
+                                {getPaymentIcon(s.method)}
+                                <span className="text-muted-foreground">{s.method}:</span>
+                                {info.hasInterest ? (
+                                  <>
+                                    <span className="text-muted-foreground">{formatCurrency(s.amount)}</span>
+                                    <span className="text-primary font-medium">c/ juros {formatCurrency(info.finalTotal)}</span>
+                                  </>
+                                ) : (
+                                  <span className="font-medium text-primary">{formatCurrency(s.amount)}</span>
+                                )}
+                              </div>
+                            );
+                          });
                         }
 
-                        // Single payment or no splits data
+                        // Single payment
                         const info = parsePaymentDisplay(sale.payment_method, Number(sale.total));
-                        if (info.hasInterest && !isCancelled) {
-                          return (
-                            <>
-                              <p className="text-ui font-medium tabular-nums text-primary">
-                                {formatCurrency(info.finalTotal)}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground tabular-nums line-through">
-                                {formatCurrency(info.originalTotal)}
-                              </p>
-                            </>
-                          );
-                        }
                         return (
-                          <p className={`text-ui font-medium tabular-nums ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
-                            {formatCurrency(Number(sale.total))}
-                          </p>
+                          <div className="flex items-center gap-1.5 text-caption">
+                            {getPaymentIcon(sale.payment_method)}
+                            <span className="text-muted-foreground hidden sm:inline">{sale.payment_method}:</span>
+                            {info.hasInterest && !isCancelled ? (
+                              <>
+                                <span className="text-muted-foreground">{formatCurrency(info.originalTotal)}</span>
+                                <span className="text-primary font-medium">c/ juros {formatCurrency(info.finalTotal)}</span>
+                              </>
+                            ) : (
+                              <span className={`font-medium ${isCancelled ? "line-through text-muted-foreground" : "text-primary"}`}>
+                                {formatCurrency(Number(sale.total))}
+                              </span>
+                            )}
+                          </div>
                         );
                       })()}
                       <p className="text-caption text-muted-foreground">
