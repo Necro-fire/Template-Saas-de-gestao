@@ -56,6 +56,8 @@ export default function PDV() {
   const [boletoInfo, setBoletoInfo] = useState<{ interval: string; installments: number; finalTotal: number } | null>(null);
   const [splitInstallmentEntryId, setSplitInstallmentEntryId] = useState<string | null>(null);
   const [splitInstallmentAmount, setSplitInstallmentAmount] = useState(0);
+  const [splitBoletoEntryId, setSplitBoletoEntryId] = useState<string | null>(null);
+  const [splitBoletoAmount, setSplitBoletoAmount] = useState(0);
   const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { selectedFilial, setSelectedFilial } = useFilial();
