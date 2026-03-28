@@ -257,8 +257,9 @@ export default function Vendas() {
                         const hasSplits = splits && splits.length > 1;
 
                         if (hasSplits && !isCancelled) {
+                          const boletoMeta = boletoMetaByVenda[sale.id];
                           return splits.map((s, idx) => {
-                            const info = parseSplitPaymentDisplay(s.method, s.amount, sale.payment_method);
+                            const info = parseSplitPaymentDisplay(s.method, s.amount, sale.payment_method, boletoMeta);
                             return (
                               <div key={idx} className="flex items-center gap-1.5 text-caption">
                                 {getPaymentIcon(s.method)}
@@ -277,7 +278,7 @@ export default function Vendas() {
                         }
 
                         // Single payment
-                        const info = parsePaymentDisplay(sale.payment_method, Number(sale.total));
+                        const info = parsePaymentDisplay(sale.payment_method, Number(sale.total), boletoMetaByVenda[sale.id]);
                         return (
                           <div className="flex items-center gap-1.5 text-caption">
                             {getPaymentIcon(sale.payment_method)}
