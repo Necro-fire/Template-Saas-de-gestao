@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { parsePaymentDisplay, parseSplitPaymentDisplay, isSplitPayment, parseSplitMethods, formatCurrency } from "@/lib/paymentUtils";
+import { parsePaymentDisplay, parseSplitPaymentDisplay, isSplitPayment, parseSplitMethods, formatCurrency, type BoletoMetaInfo } from "@/lib/paymentUtils";
 import type { DbVenda, DbVendaItem } from "@/hooks/useSupabaseData";
 
 interface VendaDetailDialogProps {
@@ -53,6 +53,7 @@ interface PaymentSplitInfo {
 export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDialogProps) {
   const [items, setItems] = useState<VendaItemWithStatus[]>([]);
   const [paymentSplits, setPaymentSplits] = useState<PaymentSplitInfo[]>([]);
+  const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -68,7 +69,6 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
     if (!venda || !open) return;
     setLoading(true);
 
-    // Fetch items and payment splits in parallel
     Promise.all([
       (supabase as any)
         .from("venda_items")
@@ -79,13 +79,31 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         .select("forma_pagamento, valor")
         .eq("venda_id", venda.id)
         .eq("tipo", "venda"),
-    ]).then(([itemsRes, splitsRes]) => {
+      (supabase as any)
+        .from("boleto_alertas")
+        .select("total_parcelas, intervalo_dias")
+        .eq("venda_id", venda.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]).then(([itemsRes, splitsRes, boletoRes]) => {
       setItems(itemsRes.data || []);
+
       const splits: PaymentSplitInfo[] = (splitsRes.data || []).map((s: any) => ({
         method: s.forma_pagamento,
         amount: Number(s.valor),
       }));
       setPaymentSplits(splits);
+
+      const boletoRow = boletoRes.data?.[0];
+      if (boletoRow?.total_parcelas && boletoRow?.intervalo_dias) {
+        setBoletoMeta({
+          installments: Number(boletoRow.total_parcelas),
+          intervalDays: Number(boletoRow.intervalo_dias),
+        });
+      } else {
+        setBoletoMeta(null);
+      }
+
       setLoading(false);
     });
   }, [venda, open]);
@@ -209,7 +227,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             <div>
               <p className="text-muted-foreground text-xs">Valor</p>
               {(() => {
-                const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
+                const info = parsePaymentDisplay(venda.payment_method, Number(venda.total), boletoMeta);
                 if (info.hasInterest && !isCancelled) {
                   return (
                     <div>
@@ -255,7 +273,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                 return (
                   <div className="space-y-2">
                     {paymentSplits.map((split, i) => {
-                      const info = parseSplitPaymentDisplay(split.method, split.amount, venda.payment_method);
+                      const info = parseSplitPaymentDisplay(split.method, split.amount, venda.payment_method, boletoMeta);
                       return (
                         <div key={i} className="bg-secondary/50 rounded px-3 py-2">
                           <div className="flex items-center justify-between">
@@ -296,7 +314,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               // Single payment method
               if (paymentSplits.length === 1) {
                 const split = paymentSplits[0];
-                const info = parsePaymentDisplay(split.method, split.amount);
+                const info = parsePaymentDisplay(split.method, split.amount, boletoMeta);
                 return (
                   <div className="bg-secondary/50 rounded px-3 py-2">
                     <div className="flex items-center gap-2 mb-1">
@@ -320,7 +338,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               }
 
               // Fallback: no caixa data, use payment_method string
-              const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
+              const info = parsePaymentDisplay(venda.payment_method, Number(venda.total), boletoMeta);
               return (
                 <div className="bg-secondary/50 rounded px-3 py-2">
                   <div className="flex items-center gap-2 mb-1">

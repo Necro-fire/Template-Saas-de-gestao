@@ -19,6 +19,20 @@ const BOLETO_RATE_PER_PERIOD: Record<string, number> = {
   "30": 6,  // 6% per 30-day period after 30d
 };
 
+export interface BoletoMetaInfo {
+  installments: number;
+  intervalDays: number;
+}
+
+function parseBoletoMetaFromMethod(method: string): BoletoMetaInfo | null {
+  const match = method.match(/Boleto\s+(\d+)x\/(\d+)d/i);
+  if (!match) return null;
+  return {
+    installments: parseInt(match[1], 10),
+    intervalDays: parseInt(match[2], 10),
+  };
+}
+
 function getBoletoInterest(installments: number, intervalDays: number): number {
   const lastPaymentDay = installments * intervalDays;
   if (lastPaymentDay <= 30) return 0;
@@ -55,21 +69,22 @@ export interface PaymentDisplayInfo {
  *   "Boleto 4x/15d"
  *   "Cartão 3x/Pix" (split)
  */
-export function parsePaymentDisplay(paymentMethod: string, total: number): PaymentDisplayInfo {
-  const isCreditCard = paymentMethod.toLowerCase().includes("cartão de crédito") || 
+export function parsePaymentDisplay(
+  paymentMethod: string,
+  total: number,
+  fallbackBoletoMeta?: BoletoMetaInfo | null
+): PaymentDisplayInfo {
+  const isCreditCard = paymentMethod.toLowerCase().includes("cartão de crédito") ||
                         paymentMethod.toLowerCase().includes("cartao");
-  
-  // Check for boleto pattern: "Boleto 3x/30d"
-  const isBoleto = paymentMethod.toLowerCase().includes("boleto");
-  const boletoMatch = paymentMethod.match(/Boleto\s+(\d+)x\/(\d+)d/i);
 
-  if (isBoleto && boletoMatch) {
-    const installments = parseInt(boletoMatch[1]);
-    const intervalDays = parseInt(boletoMatch[2]);
+  const boletoMeta = parseBoletoMetaFromMethod(paymentMethod) ||
+    (paymentMethod.toLowerCase().includes("boleto") ? fallbackBoletoMeta ?? null : null);
+
+  if (boletoMeta) {
+    const { installments, intervalDays } = boletoMeta;
     const ratePercent = getBoletoInterest(installments, intervalDays);
-    
+
     if (ratePercent > 0) {
-      // total stored in DB already includes interest, reverse-calculate original
       const originalTotal = total / (1 + ratePercent / 100);
       const installmentValue = total / installments;
       return {
@@ -82,7 +97,7 @@ export function parsePaymentDisplay(paymentMethod: string, total: number): Payme
         rate: ratePercent,
       };
     }
-    
+
     return {
       label: `Boleto ${installments}x/${intervalDays}d`,
       originalTotal: total,
@@ -93,9 +108,8 @@ export function parsePaymentDisplay(paymentMethod: string, total: number): Payme
     };
   }
 
-  // Extract installments from "Cartão de Crédito 3x" pattern
   const installmentMatch = paymentMethod.match(/(\d+)x/);
-  const installments = installmentMatch ? parseInt(installmentMatch[1]) : undefined;
+  const installments = installmentMatch ? parseInt(installmentMatch[1], 10) : undefined;
 
   if (isCreditCard && installments && INTEREST_RATES[installments]) {
     const rate = INTEREST_RATES[installments];
@@ -122,52 +136,71 @@ export function parsePaymentDisplay(paymentMethod: string, total: number): Payme
 
 /**
  * Extract installment info from the parent venda payment_method for a given split method.
- * E.g., vendaPaymentMethod="Pix/Cartão 8x", splitMethod="cartao" → 8
- * E.g., vendaPaymentMethod="Cartão de Crédito 5x", splitMethod="Cartão de Crédito 5x" → 5
  */
 export function extractInstallmentsForSplit(vendaPaymentMethod: string, splitMethod: string): number | undefined {
   const splitKey = splitMethod.toLowerCase();
   const isCard = splitKey.includes("cartao") || splitKey.includes("cartão") || splitKey.includes("crédito") || splitKey.includes("credit");
   if (!isCard) return undefined;
 
-  // Try to find installments from the split method itself first
   const directMatch = splitMethod.match(/(\d+)x/);
-  if (directMatch) return parseInt(directMatch[1]);
+  if (directMatch) return parseInt(directMatch[1], 10);
 
-  // Otherwise extract from the parent venda payment_method
-  // Split by "/" and find the card segment
   const segments = vendaPaymentMethod.split("/");
   for (const seg of segments) {
     const segLower = seg.toLowerCase().trim();
     if (segLower.includes("cartao") || segLower.includes("cartão") || segLower.includes("crédito")) {
       const match = seg.match(/(\d+)x/);
-      if (match) return parseInt(match[1]);
+      if (match) return parseInt(match[1], 10);
     }
   }
 
-  // Try full string match
   const fullMatch = vendaPaymentMethod.match(/(\d+)x/);
-  if (fullMatch) return parseInt(fullMatch[1]);
+  if (fullMatch) return parseInt(fullMatch[1], 10);
 
   return undefined;
 }
 
 /**
+ * Parse boleto meta for split lines from either split method or parent venda method.
+ */
+export function extractBoletoMetaForSplit(
+  vendaPaymentMethod: string,
+  splitMethod: string,
+  fallbackBoletoMeta?: BoletoMetaInfo | null
+): BoletoMetaInfo | null {
+  const direct = parseBoletoMetaFromMethod(splitMethod);
+  if (direct) return direct;
+
+  if (splitMethod.toLowerCase().includes("boleto")) {
+    const segments = vendaPaymentMethod.split("/");
+    for (const seg of segments) {
+      const segMeta = parseBoletoMetaFromMethod(seg.trim());
+      if (segMeta) return segMeta;
+    }
+
+    const parentMeta = parseBoletoMetaFromMethod(vendaPaymentMethod);
+    if (parentMeta) return parentMeta;
+
+    return fallbackBoletoMeta ?? null;
+  }
+
+  return null;
+}
+
+/**
  * Parse a split payment with context from the parent venda.
- * The split amount may already include interest, so we reverse-calculate the original.
  */
 export function parseSplitPaymentDisplay(
   splitMethod: string,
   splitAmount: number,
-  vendaPaymentMethod: string
+  vendaPaymentMethod: string,
+  fallbackBoletoMeta?: BoletoMetaInfo | null
 ): PaymentDisplayInfo {
-  // Check if this split is a boleto with installment info
-  const boletoMatch = splitMethod.match(/Boleto\s+(\d+)x\/(\d+)d/i);
-  if (boletoMatch) {
-    const installments = parseInt(boletoMatch[1]);
-    const intervalDays = parseInt(boletoMatch[2]);
+  const boletoMeta = extractBoletoMetaForSplit(vendaPaymentMethod, splitMethod, fallbackBoletoMeta);
+  if (boletoMeta) {
+    const { installments, intervalDays } = boletoMeta;
     const ratePercent = getBoletoInterest(installments, intervalDays);
-    
+
     if (ratePercent > 0) {
       const originalTotal = splitAmount / (1 + ratePercent / 100);
       const installmentValue = splitAmount / installments;
@@ -181,7 +214,7 @@ export function parseSplitPaymentDisplay(
         rate: ratePercent,
       };
     }
-    
+
     return {
       label: `Boleto ${installments}x/${intervalDays}d`,
       originalTotal: splitAmount,
@@ -192,45 +225,7 @@ export function parseSplitPaymentDisplay(
     };
   }
 
-  // Also check from vendaPaymentMethod if splitMethod is just "boleto"
-  if (splitMethod.toLowerCase().includes("boleto")) {
-    // Try to find boleto segment in vendaPaymentMethod
-    const segments = vendaPaymentMethod.split("/");
-    for (const seg of segments) {
-      const segBoletoMatch = seg.match(/Boleto\s+(\d+)x\/(\d+)d/i);
-      if (segBoletoMatch) {
-        const installments = parseInt(segBoletoMatch[1]);
-        const intervalDays = parseInt(segBoletoMatch[2]);
-        const ratePercent = getBoletoInterest(installments, intervalDays);
-        
-        if (ratePercent > 0) {
-          const originalTotal = splitAmount / (1 + ratePercent / 100);
-          const installmentValue = splitAmount / installments;
-          return {
-            label: `Boleto ${installments}x/${intervalDays}d`,
-            originalTotal,
-            finalTotal: splitAmount,
-            hasInterest: true,
-            installments,
-            installmentValue,
-            rate: ratePercent,
-          };
-        }
-        
-        return {
-          label: `Boleto ${installments}x/${intervalDays}d`,
-          originalTotal: splitAmount,
-          finalTotal: splitAmount,
-          hasInterest: false,
-          installments,
-          installmentValue: splitAmount / installments,
-        };
-      }
-    }
-  }
-
   const installments = extractInstallmentsForSplit(vendaPaymentMethod, splitMethod);
-
   if (installments && INTEREST_RATES[installments]) {
     const rate = INTEREST_RATES[installments];
     const originalTotal = splitAmount / (1 + rate / 100);
