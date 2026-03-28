@@ -460,6 +460,11 @@ export default function PDV() {
                 setSplitInstallmentAmount(entryAmount);
                 setShowCreditCardModal(true);
               }}
+              onOpenBoleto={(entryId, entryAmount) => {
+                setSplitBoletoEntryId(entryId);
+                setSplitBoletoAmount(entryAmount);
+                setShowBoletoModal(true);
+              }}
             />
 
             {/* Show credit card / boleto info badge */}
