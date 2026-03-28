@@ -40,6 +40,7 @@ interface SplitPaymentPanelProps {
   entries: PaymentEntry[];
   onEntriesChange: (entries: PaymentEntry[]) => void;
   onOpenInstallments?: (entryId: string, entryAmount: number) => void;
+  onOpenBoleto?: (entryId: string, entryAmount: number) => void;
 }
 
 export function SplitPaymentPanel({
