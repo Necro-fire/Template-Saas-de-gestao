@@ -18,6 +18,7 @@ import { parsePaymentDisplay, formatCurrency } from "@/lib/paymentUtils";
 function getPaymentIcon(method: string) {
   const key = method.toLowerCase();
   if (key.includes("pix")) return <QrCode className="h-3.5 w-3.5" />;
+  if (key.includes("boleto")) return <FileText className="h-3.5 w-3.5" />;
   if (key.includes("cart") || key.includes("debit") || key.includes("credit") || key.includes("débito") || key.includes("crédito")) return <CreditCard className="h-3.5 w-3.5" />;
   return <Banknote className="h-3.5 w-3.5" />;
 }
@@ -28,6 +29,7 @@ export default function Vendas() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [boletoFilter, setBoletoFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState<string | null>(null);
   const [selectedVenda, setSelectedVenda] = useState<DbVenda | null>(null);
 
   const filtered = useMemo(() => {
@@ -46,8 +48,11 @@ export default function Vendas() {
     if (boletoFilter !== "all") {
       result = result.filter(s => (s as any).status_boleto === boletoFilter);
     }
+    if (paymentFilter) {
+      result = result.filter(s => s.payment_method.toLowerCase().includes(paymentFilter));
+    }
     return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [sales, range, search, statusFilter, boletoFilter]);
+  }, [sales, range, search, statusFilter, boletoFilter, paymentFilter]);
 
   const totalRevenue = filtered.reduce((acc, s) => acc + Number(s.total), 0);
 
@@ -118,16 +123,28 @@ export default function Vendas() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {["dinheiro", "pix", "cartão de crédito", "cartão de débito"].map((method) => {
-            const methodSales = filtered.filter((s) => s.payment_method.toLowerCase().includes(method));
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Dinheiro", key: "dinheiro" },
+            { label: "Pix", key: "pix" },
+            { label: "Cartão de Crédito", key: "cartão de crédito" },
+            { label: "Cartão de Débito", key: "cartão de débito" },
+            { label: "Boleto", key: "boleto" },
+          ].map(({ label, key }) => {
+            const allSales = filterByDateRange(sales, range);
+            const methodSales = allSales.filter((s) => s.payment_method.toLowerCase().includes(key));
             const methodTotal = methodSales.reduce((acc, s) => acc + Number(s.total), 0);
+            const isActive = paymentFilter === key;
             return (
-              <Card key={method} className="border-border/50">
+              <Card
+                key={key}
+                onClick={() => setPaymentFilter(isActive ? null : key)}
+                className={`border-border/50 cursor-pointer transition-all hover:border-primary/50 ${isActive ? "ring-2 ring-primary border-primary" : ""}`}
+              >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    {getPaymentIcon(method)}
-                    <span className="text-xs capitalize">{method}</span>
+                    {getPaymentIcon(key)}
+                    <span className="text-xs">{label}</span>
                   </div>
                   <p className="text-sm font-semibold tabular-nums">R$ {methodTotal.toFixed(2)}</p>
                   <p className="text-[11px] text-muted-foreground">{methodSales.length} venda{methodSales.length !== 1 ? "s" : ""}</p>
