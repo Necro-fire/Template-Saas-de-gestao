@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { parsePaymentDisplay, isSplitPayment, parseSplitMethods, formatCurrency } from "@/lib/paymentUtils";
+import { parsePaymentDisplay, parseSplitPaymentDisplay, isSplitPayment, parseSplitMethods, formatCurrency } from "@/lib/paymentUtils";
 import type { DbVenda, DbVendaItem } from "@/hooks/useSupabaseData";
 
 interface VendaDetailDialogProps {
