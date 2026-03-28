@@ -52,6 +52,7 @@ export function SplitPaymentPanel({
   entries,
   onEntriesChange,
   onOpenInstallments,
+  onOpenBoleto,
 }: SplitPaymentPanelProps) {
   const addEntry = () => {
     const usedMethods = entries.map(e => e.method);
