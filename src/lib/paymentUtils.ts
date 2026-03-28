@@ -19,6 +19,20 @@ const BOLETO_RATE_PER_PERIOD: Record<string, number> = {
   "30": 6,  // 6% per 30-day period after 30d
 };
 
+export interface BoletoMetaInfo {
+  installments: number;
+  intervalDays: number;
+}
+
+function parseBoletoMetaFromMethod(method: string): BoletoMetaInfo | null {
+  const match = method.match(/Boleto\s+(\d+)x\/(\d+)d/i);
+  if (!match) return null;
+  return {
+    installments: parseInt(match[1], 10),
+    intervalDays: parseInt(match[2], 10),
+  };
+}
+
 function getBoletoInterest(installments: number, intervalDays: number): number {
   const lastPaymentDay = installments * intervalDays;
   if (lastPaymentDay <= 30) return 0;
