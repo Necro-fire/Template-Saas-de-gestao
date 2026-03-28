@@ -338,7 +338,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               }
 
               // Fallback: no caixa data, use payment_method string
-              const info = parsePaymentDisplay(venda.payment_method, Number(venda.total));
+              const info = parsePaymentDisplay(venda.payment_method, Number(venda.total), boletoMeta);
               return (
                 <div className="bg-secondary/50 rounded px-3 py-2">
                   <div className="flex items-center gap-2 mb-1">
