@@ -53,6 +53,56 @@ export type Database = {
         }
         Relationships: []
       }
+      boleto_alertas: {
+        Row: {
+          created_at: string
+          data_vencimento: string
+          filial_id: string
+          id: string
+          intervalo_dias: number
+          parcela_numero: number
+          status: string
+          total_parcelas: number
+          updated_at: string
+          valor_parcela: number
+          venda_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento?: string
+          filial_id?: string
+          id?: string
+          intervalo_dias?: number
+          parcela_numero?: number
+          status?: string
+          total_parcelas?: number
+          updated_at?: string
+          valor_parcela?: number
+          venda_id: string
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string
+          filial_id?: string
+          id?: string
+          intervalo_dias?: number
+          parcela_numero?: number
+          status?: string
+          total_parcelas?: number
+          updated_at?: string
+          valor_parcela?: number
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boleto_alertas_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caixa_movimentacoes: {
         Row: {
           caixa_id: string

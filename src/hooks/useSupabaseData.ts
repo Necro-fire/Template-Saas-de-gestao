@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { createBoletoAlertas } from "@/hooks/useBoletoAlertas";
 import { useFilial } from "@/contexts/FilialContext";
 
 export interface DbProduct {
@@ -331,6 +332,32 @@ export async function createVenda(
         usuario_nome: userName || "",
       });
     }
+  }
+
+  // Auto-create boleto alerts
+  try {
+    // Check main payment method
+    const mainIsBoleto = paymentMethod.toLowerCase().includes("boleto");
+    if (mainIsBoleto) {
+      const boletoMatch = paymentMethod.match(/(\d+)x\/(\d+)d/);
+      const parcelas = boletoMatch ? parseInt(boletoMatch[1]) : 1;
+      const intervalo = boletoMatch ? parseInt(boletoMatch[2]) : 30;
+      await createBoletoAlertas(venda.id, filialId, total, parcelas, intervalo);
+    }
+
+    // Check splits for boleto portions
+    if (paymentSplits && paymentSplits.length > 0) {
+      for (const split of paymentSplits) {
+        if (split.method.toLowerCase().includes("boleto") && !mainIsBoleto) {
+          const boletoMatch = split.method.match(/(\d+)x\/(\d+)d/);
+          const parcelas = boletoMatch ? parseInt(boletoMatch[1]) : 1;
+          const intervalo = boletoMatch ? parseInt(boletoMatch[2]) : 30;
+          await createBoletoAlertas(venda.id, filialId, split.amount, parcelas, intervalo);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao criar alertas de boleto:", e);
   }
 
   return venda;
