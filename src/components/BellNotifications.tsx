@@ -53,7 +53,7 @@ export function BellNotifications() {
             {count > 0 ? `${count} boleto${count !== 1 ? "s" : ""} pendente${count !== 1 ? "s" : ""}` : "Nenhuma notificação"}
           </p>
         </div>
-        <ScrollArea className="max-h-80">
+        <div className="max-h-80 overflow-y-auto overscroll-contain" onWheel={(e) => e.stopPropagation()}>
           {pendentes.length === 0 && upcoming.length === 0 && (
             <div className="p-6 text-center text-muted-foreground text-sm">
               Nenhum boleto pendente
@@ -82,7 +82,7 @@ export function BellNotifications() {
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
