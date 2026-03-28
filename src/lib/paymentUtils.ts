@@ -73,13 +73,10 @@ export function parsePaymentDisplay(paymentMethod: string, total: number): Payme
   const isCreditCard = paymentMethod.toLowerCase().includes("cartão de crédito") || 
                         paymentMethod.toLowerCase().includes("cartao");
   
-  // Check for boleto pattern: "Boleto 3x/30d"
-  const isBoleto = paymentMethod.toLowerCase().includes("boleto");
-  const boletoMatch = paymentMethod.match(/Boleto\s+(\d+)x\/(\d+)d/i);
+  const boletoMeta = parseBoletoMetaFromMethod(paymentMethod);
 
-  if (isBoleto && boletoMatch) {
-    const installments = parseInt(boletoMatch[1]);
-    const intervalDays = parseInt(boletoMatch[2]);
+  if (boletoMeta) {
+    const { installments, intervalDays } = boletoMeta;
     const ratePercent = getBoletoInterest(installments, intervalDays);
     
     if (ratePercent > 0) {
