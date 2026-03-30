@@ -25,6 +25,7 @@ import CertificadoDigital from "./pages/CertificadoDigital";
 import Cargos from "./pages/Cargos";
 import TrafegoFiliais from "./pages/TrafegoFiliais";
 import ProdutosConsignados from "./pages/ProdutosConsignados";
+import Fornecedores from "./pages/Fornecedores";
 
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
