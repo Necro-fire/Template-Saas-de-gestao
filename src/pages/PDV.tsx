@@ -342,12 +342,7 @@ export default function PDV() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="origin-toggle" className="text-caption text-muted-foreground">
-                    {origin === "stock" ? "Estoque" : "Mala"}
-                  </Label>
-                  <Switch id="origin-toggle" checked={origin === "bag"} onCheckedChange={(checked) => setOrigin(checked ? "bag" : "stock")} />
-                </div>
+                <Badge variant="secondary" className="text-caption">Estoque</Badge>
               </div>
             </div>
             <div className="relative">
