@@ -247,18 +247,27 @@ export default function PDV() {
 
     setSubmitting(true);
     try {
-      // Use cartGrouped computed above for sale items
-      const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
-        const info = getAtacadoInfo(product, count, totalCartCount);
-        return {
-          produto_id: product.id,
-          product_code: product.referencia,
-          product_model: product.referencia,
-          quantity: count,
-          unit_price: info.price,
-          custo_unitario: (product as any).custo ?? 0,
-        };
-      });
+      // Build sale items grouped by product with discount allocation
+      const grouped = new Map<string, { product: DbProduct; count: number; totalPrice: number }>();
+      for (const item of cart) {
+        const disc = discountAllocation.get(item.cartId);
+        const price = disc ? disc.discountedPrice : Number(item.product.retail_price);
+        const existing = grouped.get(item.product.id);
+        if (existing) {
+          existing.count++;
+          existing.totalPrice += price;
+        } else {
+          grouped.set(item.product.id, { product: item.product, count: 1, totalPrice: price });
+        }
+      }
+      const items = Array.from(grouped.values()).map(({ product, count, totalPrice }) => ({
+        produto_id: product.id,
+        product_code: product.referencia,
+        product_model: product.referencia,
+        quantity: count,
+        unit_price: Math.round((totalPrice / count) * 100) / 100,
+        custo_unitario: (product as any).custo ?? 0,
+      }));
 
       // Determine final method string and total with interest
       let finalMethod = isSplitPayment
