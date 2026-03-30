@@ -70,13 +70,15 @@ export default function PDV() {
   const { data: clients } = useClients();
   const { data: descontosAtacado } = useDescontosAtacado();
 
-  // Calculate atacado discount for a product given quantity in cart
-  const getAtacadoInfo = useCallback((product: DbProduct, qtyInCart: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
+  // Calculate atacado discount for a product
+  // qtyOfProduct = quantity of THIS product in cart
+  // totalCartQty = total items in entire cart (all products)
+  const getAtacadoInfo = useCallback((product: DbProduct, qtyOfProduct: number, totalCartQty: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
     const retailPrice = Number(product.retail_price);
     const originalPrice = retailPrice;
 
-    // 1. Check product-level wholesale first
-    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyInCart >= product.wholesale_min_qty) {
+    // 1. Check product-level wholesale first (uses per-product qty)
+    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyOfProduct >= product.wholesale_min_qty) {
       return {
         isAtacado: true,
         price: Number(product.wholesale_price),
@@ -85,10 +87,11 @@ export default function PDV() {
       };
     }
 
-    // 2. Check descontos_atacado rules
+    // 2. Check descontos_atacado rules (uses total cart qty for global/category rules)
     for (const desc of descontosAtacado) {
       if (desc.status !== "active") continue;
-      if (qtyInCart < desc.quantidade_minima) continue;
+      // Global and category rules use total cart quantity
+      if (totalCartQty < desc.quantidade_minima) continue;
 
       let matches = false;
       if (desc.tipo_desconto === "todos") {
