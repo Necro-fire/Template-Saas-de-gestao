@@ -23,6 +23,8 @@ import ConfiguracaoFiscal from "./pages/ConfiguracaoFiscal";
 import Empresas from "./pages/Empresas";
 import CertificadoDigital from "./pages/CertificadoDigital";
 import Cargos from "./pages/Cargos";
+import TrafegoFiliais from "./pages/TrafegoFiliais";
+import ProdutosConsignados from "./pages/ProdutosConsignados";
 
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
