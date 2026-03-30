@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle } from "lucide-react";
+import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
