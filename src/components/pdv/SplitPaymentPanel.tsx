@@ -23,7 +23,7 @@ const PAYMENT_METHODS = [
   { value: "cartao", label: "Cartão de Crédito" },
   { value: "debito", label: "Cartão de Débito" },
   { value: "boleto", label: "Boleto" },
-  { value: "prazo", label: "Prazo" },
+  { value: "consignado", label: "Consignado" },
 ];
 
 let entryCounter = 0;

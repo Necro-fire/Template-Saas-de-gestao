@@ -129,18 +129,17 @@ export default function PDV() {
   }, [applicableRules, lastRuleSignature]);
 
   // Compute discount allocation: Map<cartId, { discountedPrice, ruleLabel }>
+  // When a rule is triggered (cart has >= quantidade_minima matching items), apply discount to ALL matching items
   const discountAllocation = useMemo(() => {
     const allocation = new Map<string, { discountedPrice: number; ruleLabel: string }>();
     const claimed = new Set<string>();
 
     for (const rule of selectedDiscountRules) {
       const matching = cart
-        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule))
-        .sort((a, b) => Number(b.product.retail_price) - Number(a.product.retail_price));
-      const count = Math.min(rule.quantidade_minima, matching.length);
+        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule));
 
-      for (let i = 0; i < count; i++) {
-        const item = matching[i];
+      // Apply discount to ALL matching items (not just quantidade_minima)
+      for (const item of matching) {
         const price = Number(item.product.retail_price);
         let discounted: number;
         if (rule.tipo_valor === "percentual") {
