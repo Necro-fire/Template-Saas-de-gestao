@@ -186,12 +186,15 @@ export default function PDV() {
         return prev;
       }
       const newQty = qtyInCart + 1;
-      if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
-        toast.success(`Atacado aplicado para ${product.referencia}!`, { duration: 3000 });
+      // Check if atacado will be triggered with new quantity
+      const infoBefore = getAtacadoInfo(product, qtyInCart);
+      const infoAfter = getAtacadoInfo(product, newQty);
+      if (!infoBefore.isAtacado && infoAfter.isAtacado) {
+        toast.success(`🏷️ Atacado aplicado para ${product.referencia}! ${infoAfter.discountLabel}`, { duration: 3000 });
       }
       return [...prev, { cartId: nextCartId(), product }];
     });
-  }, []);
+  }, [getAtacadoInfo]);
 
   // Auto-add on exact barcode match
   const handleSearchChange = useCallback((value: string) => {
