@@ -467,7 +467,15 @@ export default function PDV() {
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-ui font-semibold">Sacola</h2>
-              {hasAnyWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
+              {hasAnyWholesale && (
+                <div className="flex items-center gap-1 ml-auto flex-wrap">
+                  {selectedDiscountRules.map(rule => (
+                    <Badge key={rule.id} className="bg-success text-success-foreground text-caption">
+                      {rule.tipo_valor === "percentual" ? `-${rule.valor_desconto}%` : `-R$${rule.valor_desconto.toFixed(2)}`} ({rule.quantidade_minima}un)
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
             <ClientSearchPanel
               clients={clients}
