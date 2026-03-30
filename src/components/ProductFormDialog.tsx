@@ -496,23 +496,25 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           {/* 1. Identificação */}
           <fieldset className="space-y-3 rounded-lg border p-3">
             <legend className="text-sm font-semibold px-1">Identificação</legend>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="referencia">Código da peça *</Label>
-                <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+            {!isAcessorio && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="referencia">Código da peça *</Label>
+                  <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+                </div>
+                <div>
+                  <Label>Classificação *</Label>
+                  <Select value={classificacao} onValueChange={setClassificacao}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {CLASSIFICACOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label>Classificação *</Label>
-                <Select value={classificacao} onValueChange={setClassificacao}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {CLASSIFICACOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            )}
             <div>
-              <Label htmlFor="ncm">Código NCM *</Label>
+              <Label htmlFor="ncm">{isAcessorio ? "Código do Acessório (NCM) *" : "Código NCM *"}</Label>
               <Input
                 id="ncm"
                 value={ncm}
