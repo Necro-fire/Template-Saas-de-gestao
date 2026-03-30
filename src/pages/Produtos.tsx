@@ -225,26 +225,15 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
-                    <div className="flex gap-0.5 ml-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Imprimir etiqueta"
-                        onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
-                      >
-                        <Printer className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Imprimir etiqueta joia"
-                        onClick={(e) => { e.stopPropagation(); handlePrintJewelryLabel(product); }}
-                      >
-                        <Tag className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 ml-1"
+                      title="Imprimir etiqueta"
+                      onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               );
