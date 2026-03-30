@@ -251,9 +251,14 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
           </div>
 
           {venda.discount > 0 && (
-            <div className="text-sm">
-              <p className="text-muted-foreground text-xs">Desconto aplicado</p>
-              <p className="font-medium text-destructive">- {formatCurrency(Number(venda.discount))}</p>
+            <div className="bg-success/10 border border-success/20 rounded-lg p-3 flex items-start gap-3">
+              <Tag className="h-4 w-4 text-success mt-0.5 shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-success">Desconto atacado aplicado</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  Economia: <span className="font-semibold">{formatCurrency(Number(venda.discount))}</span>
+                </p>
+              </div>
             </div>
           )}
 
