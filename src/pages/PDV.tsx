@@ -19,6 +19,7 @@ import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaym
 import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
 import { CreditCardInstallmentDialog } from "@/components/pdv/CreditCardInstallmentDialog";
 import { BoletoConfigDialog } from "@/components/pdv/BoletoConfigDialog";
+import { DiscountRuleDialog } from "@/components/pdv/DiscountRuleDialog";
 import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
 import {
   AlertDialog,
