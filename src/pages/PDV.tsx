@@ -68,53 +68,105 @@ export default function PDV() {
 
   const { data: products } = useProducts();
   const { data: clients } = useClients();
+  const { data: descontosAtacado } = useDescontosAtacado();
 
-  const getPrice = (product: DbProduct) => {
-    // Count how many of this product are in cart
-    const qtyInCart = cart.filter(i => i.product.id === product.id).length;
-    const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-    if (hasWholesale && qtyInCart >= product.wholesale_min_qty) {
-      return Number(product.wholesale_price);
+  // Calculate atacado discount for a product given quantity in cart
+  const getAtacadoInfo = useCallback((product: DbProduct, qtyInCart: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
+    const retailPrice = Number(product.retail_price);
+    const originalPrice = retailPrice;
+
+    // 1. Check product-level wholesale first
+    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyInCart >= product.wholesale_min_qty) {
+      return {
+        isAtacado: true,
+        price: Number(product.wholesale_price),
+        originalPrice,
+        discountLabel: `Atacado (${product.wholesale_min_qty}+ un.)`,
+      };
     }
-    return Number(product.retail_price);
-  };
 
-  const subtotal = useMemo(() => {
-    // Group by product to check wholesale thresholds
-    const grouped = new Map<string, { product: DbProduct; count: number }>();
-    for (const item of cart) {
-      const existing = grouped.get(item.product.id);
-      if (existing) {
-        existing.count++;
-      } else {
-        grouped.set(item.product.id, { product: item.product, count: 1 });
+    // 2. Check descontos_atacado rules
+    for (const desc of descontosAtacado) {
+      if (desc.status !== "active") continue;
+      if (qtyInCart < desc.quantidade_minima) continue;
+
+      let matches = false;
+      if (desc.tipo_desconto === "todos") {
+        matches = true;
+      } else if (desc.tipo_desconto === "todas_armacoes") {
+        matches = !product.is_acessorio;
+      } else if (desc.tipo_desconto === "todos_acessorios") {
+        matches = product.is_acessorio;
+      } else if (desc.tipo_desconto === "armacao_especifica") {
+        matches = !product.is_acessorio && product.estilo === desc.categoria;
+      } else if (desc.tipo_desconto === "acessorio_especifico") {
+        matches = product.is_acessorio && (product.subcategoria_acessorio === desc.categoria || (product as any).categoria_acessorio === desc.categoria);
+      }
+
+      if (matches) {
+        let discountedPrice: number;
+        if (desc.tipo_valor === "percentual") {
+          discountedPrice = retailPrice * (1 - desc.valor_desconto / 100);
+        } else {
+          discountedPrice = Math.max(0, retailPrice - desc.valor_desconto);
+        }
+        discountedPrice = Math.round(discountedPrice * 100) / 100;
+        return {
+          isAtacado: true,
+          price: discountedPrice,
+          originalPrice,
+          discountLabel: desc.tipo_valor === "percentual"
+            ? `Atacado -${desc.valor_desconto}%`
+            : `Atacado -R$ ${desc.valor_desconto.toFixed(2)}`,
+        };
       }
     }
-    let total = 0;
-    for (const { product, count } of grouped.values()) {
-      const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-      const price = hasWholesale && count >= product.wholesale_min_qty
-        ? Number(product.wholesale_price)
-        : Number(product.retail_price);
-      total += price * count;
-    }
-    return total;
-  }, [cart]);
 
-  const hasAnyWholesale = useMemo(() => {
+    return { isAtacado: false, price: retailPrice, originalPrice, discountLabel: "" };
+  }, [descontosAtacado]);
+
+  // Build grouped cart info for pricing
+  const cartGrouped = useMemo(() => {
     const grouped = new Map<string, { product: DbProduct; count: number }>();
     for (const item of cart) {
       const existing = grouped.get(item.product.id);
       if (existing) existing.count++;
       else grouped.set(item.product.id, { product: item.product, count: 1 });
     }
-    for (const { product, count } of grouped.values()) {
-      if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && count >= product.wholesale_min_qty) {
-        return true;
-      }
+    return grouped;
+  }, [cart]);
+
+  const getPrice = (product: DbProduct) => {
+    const qtyInCart = cartGrouped.get(product.id)?.count || 0;
+    return getAtacadoInfo(product, qtyInCart).price;
+  };
+
+  const subtotal = useMemo(() => {
+    let total = 0;
+    for (const { product, count } of cartGrouped.values()) {
+      const info = getAtacadoInfo(product, count);
+      total += info.price * count;
+    }
+    return total;
+  }, [cartGrouped, getAtacadoInfo]);
+
+  // Total without atacado discounts (original prices)
+  const subtotalOriginal = useMemo(() => {
+    let total = 0;
+    for (const { product, count } of cartGrouped.values()) {
+      total += Number(product.retail_price) * count;
+    }
+    return total;
+  }, [cartGrouped]);
+
+  const totalSaved = subtotalOriginal - subtotal;
+
+  const hasAnyWholesale = useMemo(() => {
+    for (const { product, count } of cartGrouped.values()) {
+      if (getAtacadoInfo(product, count).isAtacado) return true;
     }
     return false;
-  }, [cart]);
+  }, [cartGrouped, getAtacadoInfo]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
