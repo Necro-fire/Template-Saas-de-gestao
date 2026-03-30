@@ -735,6 +735,15 @@ export default function PDV() {
         }}
       />
 
+      {/* Discount Rule Selection Dialog */}
+      <DiscountRuleDialog
+        open={showDiscountDialog}
+        onOpenChange={setShowDiscountDialog}
+        rules={applicableRules}
+        hasConflict={rulesHaveConflict}
+        onConfirm={(rules) => setSelectedDiscountRules(rules)}
+      />
+
       {/* Product Image Zoom */}
       <ProductImageDialog
         open={!!zoomImage}
