@@ -24,6 +24,7 @@ import {
   Clock,
 } from "lucide-react";
 import jotsLogo from "@/assets/jots-logo.png";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
