@@ -57,6 +57,8 @@ const managementNav = [
   { title: "Caixa", url: "/caixa", icon: Wallet, module: "caixa", action: "view" },
   { title: "Malas", url: "/malas", icon: Briefcase, module: "malas", action: "view" },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, module: "relatorios", action: "view" },
+  { title: "Tráfego entre Filiais", url: "/trafego-filiais", icon: ArrowLeftRight, module: "estoque", action: "view" },
+  { title: "Produtos Consignados", url: "/produtos-consignados", icon: PackageCheck, module: "vendas", action: "view" },
 ];
 
 const fiscalNav = [
