@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Trash2, ShoppingCart, Barcode, Keyboard, Tag } from "lucide-react";
+import { Trash2, ShoppingCart, Barcode, Keyboard, Tag, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -419,18 +419,23 @@ export default function PDV() {
                 {filteredProducts.map(product => (
                   <div key={product.id} className="rounded-md shadow-subtle bg-card p-3 text-left hover:shadow-card transition-all active:scale-[0.98] group">
                     <div
-                      className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden cursor-pointer"
-                      onClick={(e) => {
-                        if (product.image_url) {
-                          e.stopPropagation();
-                          setZoomImage({ url: product.image_url, name: product.referencia });
-                        } else {
-                          addToCart(product);
-                        }
-                      }}
+                      className="aspect-[3/2] rounded-sm bg-secondary flex items-center justify-center overflow-hidden relative"
+                      onClick={() => addToCart(product)}
                     >
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
+                        <>
+                          <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setZoomImage({ url: product.image_url, name: product.referencia });
+                            }}
+                            className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                            title="Ver imagem"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-foreground" />
+                          </button>
+                        </>
                       ) : (
                         <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
                       )}
