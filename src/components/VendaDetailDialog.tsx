@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle } from "lucide-react";
+import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -222,7 +222,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Origem</p>
-              <Badge variant="secondary">{venda.origin === "bag" ? "Mala" : "Estoque"}</Badge>
+              <Badge variant="secondary">Estoque</Badge>
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Valor</p>
@@ -251,9 +251,14 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
           </div>
 
           {venda.discount > 0 && (
-            <div className="text-sm">
-              <p className="text-muted-foreground text-xs">Desconto aplicado</p>
-              <p className="font-medium text-destructive">- {formatCurrency(Number(venda.discount))}</p>
+            <div className="bg-success/10 border border-success/20 rounded-lg p-3 flex items-start gap-3">
+              <Tag className="h-4 w-4 text-success mt-0.5 shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-success">Desconto atacado aplicado</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  Economia: <span className="font-semibold">{formatCurrency(Number(venda.discount))}</span>
+                </p>
+              </div>
             </div>
           )}
 

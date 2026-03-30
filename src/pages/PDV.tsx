@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Trash2, ShoppingCart, Barcode, Keyboard } from "lucide-react";
+import { Trash2, ShoppingCart, Barcode, Keyboard, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ import { useFilial } from "@/contexts/FilialContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { FilialSelector } from "@/components/FilialSelector";
 import { useProducts, useClients, createVenda, type DbProduct } from "@/hooks/useSupabaseData";
+import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBlocker } from "react-router-dom";
 import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaymentPanel";
@@ -49,7 +49,7 @@ export default function PDV() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
-  const [origin, setOrigin] = useState<"stock" | "bag">("stock");
+  const origin = "stock";
   const [showCreditCardModal, setShowCreditCardModal] = useState(false);
   const [showBoletoModal, setShowBoletoModal] = useState(false);
   const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
@@ -68,53 +68,105 @@ export default function PDV() {
 
   const { data: products } = useProducts();
   const { data: clients } = useClients();
+  const { data: descontosAtacado } = useDescontosAtacado();
 
-  const getPrice = (product: DbProduct) => {
-    // Count how many of this product are in cart
-    const qtyInCart = cart.filter(i => i.product.id === product.id).length;
-    const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-    if (hasWholesale && qtyInCart >= product.wholesale_min_qty) {
-      return Number(product.wholesale_price);
+  // Calculate atacado discount for a product given quantity in cart
+  const getAtacadoInfo = useCallback((product: DbProduct, qtyInCart: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
+    const retailPrice = Number(product.retail_price);
+    const originalPrice = retailPrice;
+
+    // 1. Check product-level wholesale first
+    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyInCart >= product.wholesale_min_qty) {
+      return {
+        isAtacado: true,
+        price: Number(product.wholesale_price),
+        originalPrice,
+        discountLabel: `Atacado (${product.wholesale_min_qty}+ un.)`,
+      };
     }
-    return Number(product.retail_price);
-  };
 
-  const subtotal = useMemo(() => {
-    // Group by product to check wholesale thresholds
-    const grouped = new Map<string, { product: DbProduct; count: number }>();
-    for (const item of cart) {
-      const existing = grouped.get(item.product.id);
-      if (existing) {
-        existing.count++;
-      } else {
-        grouped.set(item.product.id, { product: item.product, count: 1 });
+    // 2. Check descontos_atacado rules
+    for (const desc of descontosAtacado) {
+      if (desc.status !== "active") continue;
+      if (qtyInCart < desc.quantidade_minima) continue;
+
+      let matches = false;
+      if (desc.tipo_desconto === "todos") {
+        matches = true;
+      } else if (desc.tipo_desconto === "todas_armacoes") {
+        matches = !product.is_acessorio;
+      } else if (desc.tipo_desconto === "todos_acessorios") {
+        matches = product.is_acessorio;
+      } else if (desc.tipo_desconto === "armacao_especifica") {
+        matches = !product.is_acessorio && product.estilo === desc.categoria;
+      } else if (desc.tipo_desconto === "acessorio_especifico") {
+        matches = product.is_acessorio && (product.subcategoria_acessorio === desc.categoria || (product as any).categoria_acessorio === desc.categoria);
+      }
+
+      if (matches) {
+        let discountedPrice: number;
+        if (desc.tipo_valor === "percentual") {
+          discountedPrice = retailPrice * (1 - desc.valor_desconto / 100);
+        } else {
+          discountedPrice = Math.max(0, retailPrice - desc.valor_desconto);
+        }
+        discountedPrice = Math.round(discountedPrice * 100) / 100;
+        return {
+          isAtacado: true,
+          price: discountedPrice,
+          originalPrice,
+          discountLabel: desc.tipo_valor === "percentual"
+            ? `Atacado -${desc.valor_desconto}%`
+            : `Atacado -R$ ${desc.valor_desconto.toFixed(2)}`,
+        };
       }
     }
-    let total = 0;
-    for (const { product, count } of grouped.values()) {
-      const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-      const price = hasWholesale && count >= product.wholesale_min_qty
-        ? Number(product.wholesale_price)
-        : Number(product.retail_price);
-      total += price * count;
-    }
-    return total;
-  }, [cart]);
 
-  const hasAnyWholesale = useMemo(() => {
+    return { isAtacado: false, price: retailPrice, originalPrice, discountLabel: "" };
+  }, [descontosAtacado]);
+
+  // Build grouped cart info for pricing
+  const cartGrouped = useMemo(() => {
     const grouped = new Map<string, { product: DbProduct; count: number }>();
     for (const item of cart) {
       const existing = grouped.get(item.product.id);
       if (existing) existing.count++;
       else grouped.set(item.product.id, { product: item.product, count: 1 });
     }
-    for (const { product, count } of grouped.values()) {
-      if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && count >= product.wholesale_min_qty) {
-        return true;
-      }
+    return grouped;
+  }, [cart]);
+
+  const getPrice = (product: DbProduct) => {
+    const qtyInCart = cartGrouped.get(product.id)?.count || 0;
+    return getAtacadoInfo(product, qtyInCart).price;
+  };
+
+  const subtotal = useMemo(() => {
+    let total = 0;
+    for (const { product, count } of cartGrouped.values()) {
+      const info = getAtacadoInfo(product, count);
+      total += info.price * count;
+    }
+    return total;
+  }, [cartGrouped, getAtacadoInfo]);
+
+  // Total without atacado discounts (original prices)
+  const subtotalOriginal = useMemo(() => {
+    let total = 0;
+    for (const { product, count } of cartGrouped.values()) {
+      total += Number(product.retail_price) * count;
+    }
+    return total;
+  }, [cartGrouped]);
+
+  const totalSaved = subtotalOriginal - subtotal;
+
+  const hasAnyWholesale = useMemo(() => {
+    for (const { product, count } of cartGrouped.values()) {
+      if (getAtacadoInfo(product, count).isAtacado) return true;
     }
     return false;
-  }, [cart]);
+  }, [cartGrouped, getAtacadoInfo]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
@@ -134,12 +186,15 @@ export default function PDV() {
         return prev;
       }
       const newQty = qtyInCart + 1;
-      if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && newQty === product.wholesale_min_qty) {
-        toast.success(`Atacado aplicado para ${product.referencia}!`, { duration: 3000 });
+      // Check if atacado will be triggered with new quantity
+      const infoBefore = getAtacadoInfo(product, qtyInCart);
+      const infoAfter = getAtacadoInfo(product, newQty);
+      if (!infoBefore.isAtacado && infoAfter.isAtacado) {
+        toast.success(`🏷️ Atacado aplicado para ${product.referencia}! ${infoAfter.discountLabel}`, { duration: 3000 });
       }
       return [...prev, { cartId: nextCartId(), product }];
     });
-  }, []);
+  }, [getAtacadoInfo]);
 
   // Auto-add on exact barcode match
   const handleSearchChange = useCallback((value: string) => {
@@ -184,25 +239,15 @@ export default function PDV() {
 
     setSubmitting(true);
     try {
-      // Group cart items by product for the sale
-      const grouped = new Map<string, { product: DbProduct; count: number }>();
-      for (const item of cart) {
-        const existing = grouped.get(item.product.id);
-        if (existing) existing.count++;
-        else grouped.set(item.product.id, { product: item.product, count: 1 });
-      }
-
-      const items = Array.from(grouped.values()).map(({ product, count }) => {
-        const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-        const price = hasWholesale && count >= product.wholesale_min_qty
-          ? Number(product.wholesale_price)
-          : Number(product.retail_price);
+      // Use cartGrouped computed above for sale items
+      const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
+        const info = getAtacadoInfo(product, count);
         return {
           produto_id: product.id,
           product_code: product.referencia,
           product_model: product.referencia,
           quantity: count,
-          unit_price: price,
+          unit_price: info.price,
           custo_unitario: (product as any).custo ?? 0,
         };
       });
@@ -238,8 +283,8 @@ export default function PDV() {
         saleTotal = boletoInfo.finalTotal;
       }
 
-      const discount = saleTotal > subtotal ? 0 : 0;
-      const saleDiscount = 0;
+      // Record atacado discount
+      const saleDiscount = totalSaved > 0 ? totalSaved : 0;
 
       const splits = isSplitPayment
         ? paymentEntries.map(e => ({
@@ -342,12 +387,7 @@ export default function PDV() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="origin-toggle" className="text-caption text-muted-foreground">
-                    {origin === "stock" ? "Estoque" : "Mala"}
-                  </Label>
-                  <Switch id="origin-toggle" checked={origin === "bag"} onCheckedChange={(checked) => setOrigin(checked ? "bag" : "stock")} />
-                </div>
+                <Badge variant="secondary" className="text-caption">Estoque</Badge>
               </div>
             </div>
             <div className="relative">
@@ -388,7 +428,19 @@ export default function PDV() {
                       <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
-                        <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
+                        {(() => {
+                          const qtyInCart = cartGrouped.get(product.id)?.count || 0;
+                          const info = getAtacadoInfo(product, qtyInCart);
+                          if (info.isAtacado) {
+                            return (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {info.originalPrice.toFixed(0)}</span>
+                                <span className="text-ui font-medium tabular-nums text-success">R$ {info.price.toFixed(0)}</span>
+                              </div>
+                            );
+                          }
+                          return <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price).toFixed(0)}</span>;
+                        })()}
                       </div>
                     </button>
                   </div>
@@ -421,16 +473,29 @@ export default function PDV() {
 
           <div className="flex-1 overflow-auto p-4 pt-2">
             <AnimatePresence mode="popLayout">
-              {cart.map(item => (
+              {cart.map(item => {
+                const qtyInCart = cartGrouped.get(item.product.id)?.count || 0;
+                const info = getAtacadoInfo(item.product, qtyInCart);
+                return (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
                     <p className="text-ui font-medium truncate">{item.product.referencia}</p>
                     <p className="text-caption text-muted-foreground">{item.product.color}</p>
                   </div>
-                  <span className="text-ui font-medium tabular-nums text-primary w-16 text-right">R$ {Number(item.product.retail_price).toFixed(0)}</span>
+                  <div className="flex flex-col items-end w-20">
+                    {info.isAtacado ? (
+                      <>
+                        <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {info.originalPrice.toFixed(0)}</span>
+                        <span className="text-ui font-medium tabular-nums text-success">R$ {info.price.toFixed(0)}</span>
+                      </>
+                    ) : (
+                      <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(item.product.retail_price).toFixed(0)}</span>
+                    )}
+                  </div>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-3 w-3" /></Button>
                 </motion.div>
-              ))}
+                );
+              })}
             </AnimatePresence>
             {cart.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -493,8 +558,25 @@ export default function PDV() {
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
                 <span>{cart.length} {cart.length === 1 ? "item" : "itens"}</span>
-                {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
+                {hasAnyWholesale && (
+                  <span className="text-success flex items-center gap-1">
+                    <Tag className="h-3 w-3" />
+                    Atacado aplicado
+                  </span>
+                )}
               </div>
+              {hasAnyWholesale && totalSaved > 0 && (
+                <div className="flex justify-between text-caption">
+                  <span className="text-muted-foreground">Valor original</span>
+                  <span className="tabular-nums text-muted-foreground line-through">R$ {subtotalOriginal.toFixed(2)}</span>
+                </div>
+              )}
+              {hasAnyWholesale && totalSaved > 0 && (
+                <div className="flex justify-between text-caption">
+                  <span className="text-success">Economia atacado</span>
+                  <span className="tabular-nums text-success">- R$ {totalSaved.toFixed(2)}</span>
+                </div>
+              )}
               {(() => {
                 const displayTotal = !isSplitPayment && paymentMethod === "cartao" && creditCardInfo
                   ? creditCardInfo.finalTotal
