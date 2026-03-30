@@ -224,6 +224,15 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 ml-1"
+                      title="Imprimir etiqueta"
+                      onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               );
