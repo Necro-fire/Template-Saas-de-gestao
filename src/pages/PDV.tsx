@@ -436,7 +436,7 @@ export default function PDV() {
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         {(() => {
                           const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-                          const info = getAtacadoInfo(product, qtyInCart);
+                          const info = getAtacadoInfo(product, qtyInCart, totalCartCount);
                           if (info.isAtacado) {
                             return (
                               <div className="flex items-center gap-1.5">
