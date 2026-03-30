@@ -239,14 +239,7 @@ export default function PDV() {
 
     setSubmitting(true);
     try {
-      // Group cart items by product for the sale
-      const grouped = new Map<string, { product: DbProduct; count: number }>();
-      for (const item of cart) {
-        const existing = grouped.get(item.product.id);
-        if (existing) existing.count++;
-        else grouped.set(item.product.id, { product: item.product, count: 1 });
-      }
-
+      // Use cartGrouped computed above for sale items
       const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
         const info = getAtacadoInfo(product, count);
         return {
