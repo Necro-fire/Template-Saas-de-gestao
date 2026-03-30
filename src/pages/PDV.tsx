@@ -487,19 +487,19 @@ export default function PDV() {
           <div className="flex-1 overflow-auto p-4 pt-2">
             <AnimatePresence mode="popLayout">
               {cart.map(item => {
-                const qtyInCart = cartGrouped.get(item.product.id)?.count || 0;
-                const info = getAtacadoInfo(item.product, qtyInCart, totalCartCount);
+                const disc = discountAllocation.get(item.cartId);
                 return (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
                     <p className="text-ui font-medium truncate">{item.product.referencia}</p>
                     <p className="text-caption text-muted-foreground">{item.product.color}</p>
+                    {disc && <p className="text-[10px] text-success">{disc.ruleLabel}</p>}
                   </div>
                   <div className="flex flex-col items-end w-20">
-                    {info.isAtacado ? (
+                    {disc ? (
                       <>
-                        <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {info.originalPrice.toFixed(0)}</span>
-                        <span className="text-ui font-medium tabular-nums text-success">R$ {info.price.toFixed(0)}</span>
+                        <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {Number(item.product.retail_price).toFixed(0)}</span>
+                        <span className="text-ui font-medium tabular-nums text-success">R$ {disc.discountedPrice.toFixed(0)}</span>
                       </>
                     ) : (
                       <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(item.product.retail_price).toFixed(0)}</span>
