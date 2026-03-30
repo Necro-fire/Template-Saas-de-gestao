@@ -517,6 +517,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             </>
           )}
 
+          {venda.seller_name && (
             <>
               <Separator />
               <div className="text-sm">
