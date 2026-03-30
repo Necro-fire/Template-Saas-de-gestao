@@ -71,6 +71,10 @@ export default function PDV() {
   const { data: clients } = useClients();
   const { data: descontosAtacado } = useDescontosAtacado();
 
+  const [selectedDiscountRules, setSelectedDiscountRules] = useState<DescontoAtacado[]>([]);
+  const [showDiscountDialog, setShowDiscountDialog] = useState(false);
+  const [lastRuleSignature, setLastRuleSignature] = useState("");
+
   // Calculate atacado discount for a product
   // qtyOfProduct = quantity of THIS product in cart
   // totalCartQty = total items in entire cart (all products)
