@@ -176,12 +176,6 @@ export default function PDV() {
 
   const totalSaved = subtotalOriginal - subtotal;
 
-  const hasAnyWholesale = useMemo(() => {
-    for (const { product, count } of cartGrouped.values()) {
-      if (getAtacadoInfo(product, count, totalCartCount).isAtacado) return true;
-    }
-    return false;
-  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
