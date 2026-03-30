@@ -279,8 +279,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
   const handleSave = async () => {
     if (!classificacaoProduto) { toast.error("Selecione a classificação do produto"); return; }
-    if (!referencia.trim()) { toast.error("Informe o código da peça"); return; }
-    if (!classificacao) { toast.error("Selecione a classificação (C1-C10)"); return; }
+    if (!isAcessorio && !referencia.trim()) { toast.error("Informe o código da peça"); return; }
+    if (!isAcessorio && !classificacao) { toast.error("Selecione a classificação (C1-C10)"); return; }
     if (!price || price <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
@@ -290,18 +290,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       return;
     }
 
-    const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
-    for (const fId of filials) {
-      const { data: existing } = await (supabase as any)
-        .from("produtos")
-        .select("id")
-        .eq("referencia", referencia.trim())
-        .eq("classificacao", classificacao)
-        .eq("filial_id", fId)
-        .maybeSingle();
-      if (existing && (!isEditing || existing.id !== product?.id)) {
-        toast.error("Este produto já está cadastrado no sistema.");
-        return;
+    const effectiveReferencia = isAcessorio ? ncm : referencia.trim();
+    const effectiveClassificacao = isAcessorio ? "" : classificacao;
+
+    if (!isAcessorio) {
+      const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
+      for (const fId of filials) {
+        const { data: existing } = await (supabase as any)
+          .from("produtos")
+          .select("id")
+          .eq("referencia", effectiveReferencia)
+          .eq("classificacao", effectiveClassificacao)
+          .eq("filial_id", fId)
+          .maybeSingle();
+        if (existing && (!isEditing || existing.id !== product?.id)) {
+          toast.error("Este produto já está cadastrado no sistema.");
+          return;
+        }
       }
     }
 
@@ -354,9 +359,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       const buildBaseData = (codes?: { code: string; barcode: string }, fId?: string) => ({
         ...(codes ? { code: codes.code, barcode: codes.barcode } : {}),
-        referencia: referencia.trim(),
-        model: referencia.trim(),
-        classificacao,
+        referencia: effectiveReferencia,
+        model: effectiveReferencia,
+        classificacao: effectiveClassificacao,
         category: classificacaoProduto,
         retail_price: price,
         custo: custo || 0,
@@ -496,23 +501,25 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
           {/* 1. Identificação */}
           <fieldset className="space-y-3 rounded-lg border p-3">
             <legend className="text-sm font-semibold px-1">Identificação</legend>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="referencia">Código da peça *</Label>
-                <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+            {!isAcessorio && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="referencia">Código da peça *</Label>
+                  <Input id="referencia" value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Ex: ISA2387" className="mt-1.5" />
+                </div>
+                <div>
+                  <Label>Classificação *</Label>
+                  <Select value={classificacao} onValueChange={setClassificacao}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {CLASSIFICACOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label>Classificação *</Label>
-                <Select value={classificacao} onValueChange={setClassificacao}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {CLASSIFICACOES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            )}
             <div>
-              <Label htmlFor="ncm">Código NCM *</Label>
+              <Label htmlFor="ncm">{isAcessorio ? "Código do Acessório (NCM) *" : "Código NCM *"}</Label>
               <Input
                 id="ncm"
                 value={ncm}
