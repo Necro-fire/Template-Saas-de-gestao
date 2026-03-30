@@ -9,8 +9,10 @@ import { format, isPast, isToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
-function classifyBoleto(alerta: { status: string; data_vencimento: string }) {
+function classifyBoleto(alerta: { status: string; data_vencimento: string; parcela_numero?: number }) {
   if (alerta.status === "gerado") return "gerado";
+  // 1ª parcela NUNCA é classificada como futuro
+  if (alerta.parcela_numero === 1) return "pendente";
   const venc = new Date(alerta.data_vencimento);
   const now = new Date();
   if (isPast(venc) || isToday(venc) || isSameMonth(venc, now)) return "pendente";
