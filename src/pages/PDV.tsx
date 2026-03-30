@@ -200,17 +200,9 @@ export default function PDV() {
         toast.error(`Estoque insuficiente. Disponível: ${product.stock}`);
         return prev;
       }
-      const newQty = qtyInCart + 1;
-      const totalBefore = prev.length;
-      const totalAfter = prev.length + 1;
-      const infoBefore = getAtacadoInfo(product, qtyInCart, totalBefore);
-      const infoAfter = getAtacadoInfo(product, newQty, totalAfter);
-      if (!infoBefore.isAtacado && infoAfter.isAtacado) {
-        toast.success(`🏷️ Atacado aplicado para ${product.referencia}! ${infoAfter.discountLabel}`, { duration: 3000 });
-      }
       return [...prev, { cartId: nextCartId(), product }];
     });
-  }, [getAtacadoInfo]);
+  }, []);
 
   // Auto-add on exact barcode match
   const handleSearchChange = useCallback((value: string) => {
