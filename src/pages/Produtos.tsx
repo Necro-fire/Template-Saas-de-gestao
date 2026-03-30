@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer } from "lucide-react";
+import JsBarcode from "jsbarcode";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,36 @@ export default function Produtos() {
     setShowForm(open);
     if (!open) setEditingProduct(null);
   };
+
+  const handlePrintLabel = useCallback((product: DbProduct) => {
+    const canvas = document.createElement("canvas");
+    try {
+      JsBarcode(canvas, product.barcode || product.code, {
+        format: "CODE128",
+        width: 2,
+        height: 40,
+        displayValue: true,
+        fontSize: 10,
+        margin: 2,
+      });
+    } catch {
+      toast.error("Código de barras inválido");
+      return;
+    }
+    const barcodeDataUrl = canvas.toDataURL("image/png");
+    const printWindow = window.open("", "_blank", "width=400,height=200");
+    if (!printWindow) { toast.error("Popup bloqueado"); return; }
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Etiqueta</title><style>
+      @page { size: 95mm 12mm; margin: 0; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { width: 95mm; height: 12mm; display: flex; align-items: center; }
+      img { height: 10mm; width: auto; margin-left: 1mm; }
+    </style></head><body>
+      <img src="${barcodeDataUrl}" />
+    </body></html>`);
+    printWindow.document.close();
+    printWindow.onload = () => { printWindow.print(); printWindow.close(); };
+  }, []);
 
   return (
     <div>
@@ -193,6 +224,15 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 ml-1"
+                      title="Imprimir etiqueta"
+                      onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               );
