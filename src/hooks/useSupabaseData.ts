@@ -287,6 +287,7 @@ export async function createVenda(
 
   if (vendaError || !venda) throw new Error(vendaError?.message || "Erro ao criar venda");
 
+  const isConsignado = origin === "consignado";
   const vendaItems = items.map(i => ({
     venda_id: venda.id,
     produto_id: i.produto_id,
@@ -296,6 +297,7 @@ export async function createVenda(
     unit_price: i.unit_price,
     total: i.unit_price * i.quantity,
     custo_unitario: i.custo_unitario ?? 0,
+    status: isConsignado ? "consignado" : "active",
   }));
 
   const { error: itemsError } = await (supabase as any)
