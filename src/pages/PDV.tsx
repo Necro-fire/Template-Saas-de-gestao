@@ -50,7 +50,7 @@ export default function PDV() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
-  const origin = "stock";
+  const [origin, setOrigin] = useState("stock");
   const [showCreditCardModal, setShowCreditCardModal] = useState(false);
   const [showBoletoModal, setShowBoletoModal] = useState(false);
   const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
