@@ -191,9 +191,10 @@ export default function PDV() {
         return prev;
       }
       const newQty = qtyInCart + 1;
-      // Check if atacado will be triggered with new quantity
-      const infoBefore = getAtacadoInfo(product, qtyInCart);
-      const infoAfter = getAtacadoInfo(product, newQty);
+      const totalBefore = prev.length;
+      const totalAfter = prev.length + 1;
+      const infoBefore = getAtacadoInfo(product, qtyInCart, totalBefore);
+      const infoAfter = getAtacadoInfo(product, newQty, totalAfter);
       if (!infoBefore.isAtacado && infoAfter.isAtacado) {
         toast.success(`🏷️ Atacado aplicado para ${product.referencia}! ${infoAfter.discountLabel}`, { duration: 3000 });
       }
