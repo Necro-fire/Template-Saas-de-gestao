@@ -19,6 +19,7 @@ import { SplitPaymentPanel, type PaymentEntry } from "@/components/pdv/SplitPaym
 import { ClientSearchPanel } from "@/components/pdv/ClientSearchPanel";
 import { CreditCardInstallmentDialog } from "@/components/pdv/CreditCardInstallmentDialog";
 import { BoletoConfigDialog } from "@/components/pdv/BoletoConfigDialog";
+import { DiscountRuleDialog } from "@/components/pdv/DiscountRuleDialog";
 import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
 import {
   AlertDialog,
@@ -70,108 +71,111 @@ export default function PDV() {
   const { data: clients } = useClients();
   const { data: descontosAtacado } = useDescontosAtacado();
 
-  // Calculate atacado discount for a product
-  // qtyOfProduct = quantity of THIS product in cart
-  // totalCartQty = total items in entire cart (all products)
-  const getAtacadoInfo = useCallback((product: DbProduct, qtyOfProduct: number, totalCartQty: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
-    const retailPrice = Number(product.retail_price);
-    const originalPrice = retailPrice;
+  const [selectedDiscountRules, setSelectedDiscountRules] = useState<DescontoAtacado[]>([]);
+  const [showDiscountDialog, setShowDiscountDialog] = useState(false);
+  const [lastRuleSignature, setLastRuleSignature] = useState("");
 
-    // 1. Check product-level wholesale first (uses per-product qty)
-    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyOfProduct >= product.wholesale_min_qty) {
-      return {
-        isAtacado: true,
-        price: Number(product.wholesale_price),
-        originalPrice,
-        discountLabel: `Atacado (${product.wholesale_min_qty}+ un.)`,
-      };
-    }
+  // Helper: does a product match a discount rule?
+  const productMatchesRule = useCallback((product: DbProduct, rule: DescontoAtacado): boolean => {
+    if (rule.tipo_desconto === "todos") return true;
+    if (rule.tipo_desconto === "todas_armacoes") return !product.is_acessorio;
+    if (rule.tipo_desconto === "todos_acessorios") return product.is_acessorio;
+    if (rule.tipo_desconto === "armacao_especifica") return !product.is_acessorio && product.estilo === rule.categoria;
+    if (rule.tipo_desconto === "acessorio_especifico") return product.is_acessorio && (product.subcategoria_acessorio === rule.categoria || (product as any).categoria_acessorio === rule.categoria);
+    if (rule.tipo_desconto === "produto" && rule.produto_id) return product.id === rule.produto_id;
+    return false;
+  }, []);
 
-    // 2. Check descontos_atacado rules (uses total cart qty for global/category rules)
-    for (const desc of descontosAtacado) {
-      if (desc.status !== "active") continue;
-      // Global and category rules use total cart quantity
-      if (totalCartQty < desc.quantidade_minima) continue;
+  // Find all applicable rules based on cart contents
+  const applicableRules = useMemo(() => {
+    return descontosAtacado.filter(rule => {
+      if (rule.status !== "active") return false;
+      const matchingCount = cart.filter(item => productMatchesRule(item.product, rule)).length;
+      return matchingCount >= rule.quantidade_minima;
+    });
+  }, [cart, descontosAtacado, productMatchesRule]);
 
-      let matches = false;
-      if (desc.tipo_desconto === "todos") {
-        matches = true;
-      } else if (desc.tipo_desconto === "todas_armacoes") {
-        matches = !product.is_acessorio;
-      } else if (desc.tipo_desconto === "todos_acessorios") {
-        matches = product.is_acessorio;
-      } else if (desc.tipo_desconto === "armacao_especifica") {
-        matches = !product.is_acessorio && product.estilo === desc.categoria;
-      } else if (desc.tipo_desconto === "acessorio_especifico") {
-        matches = product.is_acessorio && (product.subcategoria_acessorio === desc.categoria || (product as any).categoria_acessorio === desc.categoria);
+  // Check conflict between all applicable rules
+  const rulesHaveConflict = useMemo(() => {
+    if (applicableRules.length < 2) return false;
+    const claimed = new Set<string>();
+    for (const rule of applicableRules) {
+      const matching = cart
+        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule))
+        .sort((a, b) => Number(b.product.retail_price) - Number(a.product.retail_price));
+      if (matching.length < rule.quantidade_minima) return true;
+      for (let i = 0; i < rule.quantidade_minima; i++) {
+        claimed.add(matching[i].cartId);
       }
+    }
+    return false;
+  }, [applicableRules, cart, productMatchesRule]);
 
-      if (matches) {
-        let discountedPrice: number;
-        if (desc.tipo_valor === "percentual") {
-          discountedPrice = retailPrice * (1 - desc.valor_desconto / 100);
+  // Auto-select rules or show dialog when applicable rules change
+  useEffect(() => {
+    const sig = applicableRules.map(r => r.id).sort().join(",");
+    if (sig === lastRuleSignature) return;
+    setLastRuleSignature(sig);
+
+    if (applicableRules.length === 0) {
+      setSelectedDiscountRules([]);
+    } else if (applicableRules.length === 1) {
+      setSelectedDiscountRules(applicableRules);
+      const r = applicableRules[0];
+      toast.success(`🏷️ Atacado aplicado: ${r.tipo_valor === "percentual" ? `-${r.valor_desconto}%` : `-R$${r.valor_desconto.toFixed(2)}`} (${r.quantidade_minima} un.)`, { duration: 3000 });
+    } else {
+      setShowDiscountDialog(true);
+    }
+  }, [applicableRules, lastRuleSignature]);
+
+  // Compute discount allocation: Map<cartId, { discountedPrice, ruleLabel }>
+  const discountAllocation = useMemo(() => {
+    const allocation = new Map<string, { discountedPrice: number; ruleLabel: string }>();
+    const claimed = new Set<string>();
+
+    for (const rule of selectedDiscountRules) {
+      const matching = cart
+        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule))
+        .sort((a, b) => Number(b.product.retail_price) - Number(a.product.retail_price));
+      const count = Math.min(rule.quantidade_minima, matching.length);
+
+      for (let i = 0; i < count; i++) {
+        const item = matching[i];
+        const price = Number(item.product.retail_price);
+        let discounted: number;
+        if (rule.tipo_valor === "percentual") {
+          discounted = price * (1 - rule.valor_desconto / 100);
         } else {
-          discountedPrice = Math.max(0, retailPrice - desc.valor_desconto);
+          discounted = Math.max(0, price - rule.valor_desconto);
         }
-        discountedPrice = Math.round(discountedPrice * 100) / 100;
-        return {
-          isAtacado: true,
-          price: discountedPrice,
-          originalPrice,
-          discountLabel: desc.tipo_valor === "percentual"
-            ? `Atacado -${desc.valor_desconto}%`
-            : `Atacado -R$ ${desc.valor_desconto.toFixed(2)}`,
-        };
+        allocation.set(item.cartId, {
+          discountedPrice: Math.round(discounted * 100) / 100,
+          ruleLabel: rule.tipo_valor === "percentual" ? `Atacado -${rule.valor_desconto}%` : `Atacado -R$${rule.valor_desconto.toFixed(2)}`,
+        });
+        claimed.add(item.cartId);
       }
     }
 
-    return { isAtacado: false, price: retailPrice, originalPrice, discountLabel: "" };
-  }, [descontosAtacado]);
+    return allocation;
+  }, [cart, selectedDiscountRules, productMatchesRule]);
 
-  // Build grouped cart info for pricing
-  const cartGrouped = useMemo(() => {
-    const grouped = new Map<string, { product: DbProduct; count: number }>();
-    for (const item of cart) {
-      const existing = grouped.get(item.product.id);
-      if (existing) existing.count++;
-      else grouped.set(item.product.id, { product: item.product, count: 1 });
-    }
-    return grouped;
-  }, [cart]);
-
-  const totalCartCount = useMemo(() => cart.length, [cart]);
-
-  const getPrice = (product: DbProduct) => {
-    const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-    return getAtacadoInfo(product, qtyInCart, totalCartCount).price;
-  };
+  const hasAnyWholesale = discountAllocation.size > 0;
 
   const subtotal = useMemo(() => {
     let total = 0;
-    for (const { product, count } of cartGrouped.values()) {
-      const info = getAtacadoInfo(product, count, totalCartCount);
-      total += info.price * count;
+    for (const item of cart) {
+      const disc = discountAllocation.get(item.cartId);
+      total += disc ? disc.discountedPrice : Number(item.product.retail_price);
     }
     return total;
-  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
+  }, [cart, discountAllocation]);
 
-  // Total without atacado discounts (original prices)
   const subtotalOriginal = useMemo(() => {
-    let total = 0;
-    for (const { product, count } of cartGrouped.values()) {
-      total += Number(product.retail_price) * count;
-    }
-    return total;
-  }, [cartGrouped]);
+    return cart.reduce((sum, item) => sum + Number(item.product.retail_price), 0);
+  }, [cart]);
 
   const totalSaved = subtotalOriginal - subtotal;
 
-  const hasAnyWholesale = useMemo(() => {
-    for (const { product, count } of cartGrouped.values()) {
-      if (getAtacadoInfo(product, count, totalCartCount).isAtacado) return true;
-    }
-    return false;
-  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
@@ -190,17 +194,9 @@ export default function PDV() {
         toast.error(`Estoque insuficiente. Disponível: ${product.stock}`);
         return prev;
       }
-      const newQty = qtyInCart + 1;
-      const totalBefore = prev.length;
-      const totalAfter = prev.length + 1;
-      const infoBefore = getAtacadoInfo(product, qtyInCart, totalBefore);
-      const infoAfter = getAtacadoInfo(product, newQty, totalAfter);
-      if (!infoBefore.isAtacado && infoAfter.isAtacado) {
-        toast.success(`🏷️ Atacado aplicado para ${product.referencia}! ${infoAfter.discountLabel}`, { duration: 3000 });
-      }
       return [...prev, { cartId: nextCartId(), product }];
     });
-  }, [getAtacadoInfo]);
+  }, []);
 
   // Auto-add on exact barcode match
   const handleSearchChange = useCallback((value: string) => {
@@ -245,18 +241,27 @@ export default function PDV() {
 
     setSubmitting(true);
     try {
-      // Use cartGrouped computed above for sale items
-      const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
-        const info = getAtacadoInfo(product, count, totalCartCount);
-        return {
-          produto_id: product.id,
-          product_code: product.referencia,
-          product_model: product.referencia,
-          quantity: count,
-          unit_price: info.price,
-          custo_unitario: (product as any).custo ?? 0,
-        };
-      });
+      // Build sale items grouped by product with discount allocation
+      const grouped = new Map<string, { product: DbProduct; count: number; totalPrice: number }>();
+      for (const item of cart) {
+        const disc = discountAllocation.get(item.cartId);
+        const price = disc ? disc.discountedPrice : Number(item.product.retail_price);
+        const existing = grouped.get(item.product.id);
+        if (existing) {
+          existing.count++;
+          existing.totalPrice += price;
+        } else {
+          grouped.set(item.product.id, { product: item.product, count: 1, totalPrice: price });
+        }
+      }
+      const items = Array.from(grouped.values()).map(({ product, count, totalPrice }) => ({
+        produto_id: product.id,
+        product_code: product.referencia,
+        product_model: product.referencia,
+        quantity: count,
+        unit_price: Math.round((totalPrice / count) * 100) / 100,
+        custo_unitario: (product as any).custo ?? 0,
+      }));
 
       // Determine final method string and total with interest
       let finalMethod = isSplitPayment
@@ -434,19 +439,7 @@ export default function PDV() {
                       <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
-                        {(() => {
-                          const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-                          const info = getAtacadoInfo(product, qtyInCart, totalCartCount);
-                          if (info.isAtacado) {
-                            return (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {info.originalPrice.toFixed(0)}</span>
-                                <span className="text-ui font-medium tabular-nums text-success">R$ {info.price.toFixed(0)}</span>
-                              </div>
-                            );
-                          }
-                          return <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price).toFixed(0)}</span>;
-                        })()}
+                        <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price).toFixed(0)}</span>
                       </div>
                     </button>
                   </div>
@@ -468,7 +461,15 @@ export default function PDV() {
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               <h2 className="text-ui font-semibold">Sacola</h2>
-              {hasAnyWholesale && <Badge className="bg-success text-success-foreground text-caption ml-auto">Atacado</Badge>}
+              {hasAnyWholesale && (
+                <div className="flex items-center gap-1 ml-auto flex-wrap">
+                  {selectedDiscountRules.map(rule => (
+                    <Badge key={rule.id} className="bg-success text-success-foreground text-caption">
+                      {rule.tipo_valor === "percentual" ? `-${rule.valor_desconto}%` : `-R$${rule.valor_desconto.toFixed(2)}`} ({rule.quantidade_minima}un)
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
             <ClientSearchPanel
               clients={clients}
@@ -480,19 +481,19 @@ export default function PDV() {
           <div className="flex-1 overflow-auto p-4 pt-2">
             <AnimatePresence mode="popLayout">
               {cart.map(item => {
-                const qtyInCart = cartGrouped.get(item.product.id)?.count || 0;
-                const info = getAtacadoInfo(item.product, qtyInCart, totalCartCount);
+                const disc = discountAllocation.get(item.cartId);
                 return (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
                     <p className="text-ui font-medium truncate">{item.product.referencia}</p>
                     <p className="text-caption text-muted-foreground">{item.product.color}</p>
+                    {disc && <p className="text-[10px] text-success">{disc.ruleLabel}</p>}
                   </div>
                   <div className="flex flex-col items-end w-20">
-                    {info.isAtacado ? (
+                    {disc ? (
                       <>
-                        <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {info.originalPrice.toFixed(0)}</span>
-                        <span className="text-ui font-medium tabular-nums text-success">R$ {info.price.toFixed(0)}</span>
+                        <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {Number(item.product.retail_price).toFixed(0)}</span>
+                        <span className="text-ui font-medium tabular-nums text-success">R$ {disc.discountedPrice.toFixed(0)}</span>
                       </>
                     ) : (
                       <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(item.product.retail_price).toFixed(0)}</span>
@@ -726,6 +727,15 @@ export default function PDV() {
             setBoletoInfo({ interval, installments, finalTotal });
           }
         }}
+      />
+
+      {/* Discount Rule Selection Dialog */}
+      <DiscountRuleDialog
+        open={showDiscountDialog}
+        onOpenChange={setShowDiscountDialog}
+        rules={applicableRules}
+        hasConflict={rulesHaveConflict}
+        onConfirm={(rules) => setSelectedDiscountRules(rules)}
       />
 
       {/* Product Image Zoom */}
