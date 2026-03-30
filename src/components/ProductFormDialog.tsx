@@ -290,18 +290,23 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       return;
     }
 
-    const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
-    for (const fId of filials) {
-      const { data: existing } = await (supabase as any)
-        .from("produtos")
-        .select("id")
-        .eq("referencia", referencia.trim())
-        .eq("classificacao", classificacao)
-        .eq("filial_id", fId)
-        .maybeSingle();
-      if (existing && (!isEditing || existing.id !== product?.id)) {
-        toast.error("Este produto já está cadastrado no sistema.");
-        return;
+    const effectiveReferencia = isAcessorio ? ncm : referencia.trim();
+    const effectiveClassificacao = isAcessorio ? "" : classificacao;
+
+    if (!isAcessorio) {
+      const filials = isEditing ? [filial] : (filial === "all" ? ["1", "2", "3"] : [filial]);
+      for (const fId of filials) {
+        const { data: existing } = await (supabase as any)
+          .from("produtos")
+          .select("id")
+          .eq("referencia", effectiveReferencia)
+          .eq("classificacao", effectiveClassificacao)
+          .eq("filial_id", fId)
+          .maybeSingle();
+        if (existing && (!isEditing || existing.id !== product?.id)) {
+          toast.error("Este produto já está cadastrado no sistema.");
+          return;
+        }
       }
     }
 
