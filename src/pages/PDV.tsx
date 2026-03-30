@@ -247,7 +247,7 @@ export default function PDV() {
     try {
       // Use cartGrouped computed above for sale items
       const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
-        const info = getAtacadoInfo(product, count);
+        const info = getAtacadoInfo(product, count, totalCartCount);
         return {
           produto_id: product.id,
           product_code: product.referencia,
