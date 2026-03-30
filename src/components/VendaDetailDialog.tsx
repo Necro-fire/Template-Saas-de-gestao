@@ -222,7 +222,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Origem</p>
-              <Badge variant="secondary">{venda.origin === "bag" ? "Mala" : "Estoque"}</Badge>
+              <Badge variant="secondary">Estoque</Badge>
             </div>
             <div>
               <p className="text-muted-foreground text-xs">Valor</p>
