@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, isPast, isToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle, Tag } from "lucide-react";
+import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle, Tag, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,6 +55,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   const [items, setItems] = useState<VendaItemWithStatus[]>([]);
   const [paymentSplits, setPaymentSplits] = useState<PaymentSplitInfo[]>([]);
   const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
+  const [boletos, setBoletos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -81,10 +83,9 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         .eq("tipo", "venda"),
       (supabase as any)
         .from("boleto_alertas")
-        .select("total_parcelas, intervalo_dias")
+        .select("*")
         .eq("venda_id", venda.id)
-        .order("created_at", { ascending: false })
-        .limit(1),
+        .order("parcela_numero", { ascending: true }),
     ]).then(([itemsRes, splitsRes, boletoRes]) => {
       setItems(itemsRes.data || []);
 
@@ -94,7 +95,10 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
       }));
       setPaymentSplits(splits);
 
-      const boletoRow = boletoRes.data?.[0];
+      const allBoletos = boletoRes.data || [];
+      setBoletos(allBoletos);
+
+      const boletoRow = allBoletos[0];
       if (boletoRow?.total_parcelas && boletoRow?.intervalo_dias) {
         setBoletoMeta({
           installments: Number(boletoRow.total_parcelas),
@@ -429,6 +433,89 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               <p className="text-sm text-muted-foreground py-4 text-center">Nenhum item encontrado</p>
             )}
           </div>
+
+
+          {/* Boletos */}
+          {boletos.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Boletos ({boletos.length})
+                </h4>
+                <div className="space-y-1.5">
+                  {boletos.map((b) => {
+                    const venc = new Date(b.data_vencimento);
+                    const isOverdue = isPast(venc) && !isToday(venc);
+                    const now = new Date();
+                    const displayStatus = b.status === "gerado" ? "gerado" :
+                      (isPast(venc) || isToday(venc) || isSameMonth(venc, now)) ? "pendente" : "futuro";
+
+                    return (
+                      <div key={b.id} className={`flex items-center justify-between p-2.5 rounded-md border ${
+                        displayStatus === "pendente" ? "bg-destructive/5 border-destructive/20" :
+                        displayStatus === "gerado" ? "bg-primary/5 border-primary/20" :
+                        "bg-secondary/30 border-border/50"
+                      }`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium">
+                            Parcela {b.parcela_numero}/{b.total_parcelas}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-[11px] flex items-center gap-1 ${
+                              displayStatus === "pendente" && isOverdue ? "text-destructive font-medium" :
+                              displayStatus === "pendente" ? "text-warning font-medium" : "text-muted-foreground"
+                            }`}>
+                              <Clock className="h-3 w-3" />
+                              {isOverdue ? "Vencido " : "Vence "}
+                              {format(venc, "dd/MM/yy", { locale: ptBR })}
+                            </span>
+                            <span className="text-[11px] font-bold">
+                              R$ {Number(b.valor_parcela).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={b.status}
+                            onValueChange={async (v) => {
+                              const { error } = await (supabase as any)
+                                .from("boleto_alertas")
+                                .update({ status: v, updated_at: new Date().toISOString() })
+                                .eq("id", b.id);
+                              if (error) {
+                                toast.error("Erro ao atualizar status");
+                              } else {
+                                toast.success("Status atualizado");
+                                setBoletos(prev => prev.map(x => x.id === b.id ? { ...x, status: v } : x));
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-7 text-[10px] px-2 w-auto min-w-[90px] border-border/50">
+                              <Badge
+                                variant={
+                                  displayStatus === "gerado" ? "default" :
+                                  displayStatus === "pendente" ? "destructive" : "secondary"
+                                }
+                                className="text-[10px] h-4 px-1.5"
+                              >
+                                {displayStatus === "gerado" ? "Gerado" : displayStatus === "pendente" ? "Pendente" : "Futuro"}
+                              </Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pendente">Pendente</SelectItem>
+                              <SelectItem value="gerado">Gerado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
 
           {venda.seller_name && (
             <>
