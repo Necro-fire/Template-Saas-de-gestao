@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import type { DescontoAtacado } from "@/hooks/useDescontosAtacado";
 
@@ -31,29 +31,13 @@ function getRuleLabel(rule: DescontoAtacado): string {
 }
 
 export function DiscountRuleDialog({ open, onOpenChange, rules, hasConflict, onConfirm }: DiscountRuleDialogProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedId, setSelectedId] = useState<string>("");
 
   useEffect(() => {
     if (open) {
-      setSelected(new Set(rules.length === 1 ? [rules[0].id] : []));
+      setSelectedId(rules.length === 1 ? rules[0].id : "");
     }
   }, [open, rules]);
-
-  const allSelected = rules.length > 0 && selected.size === rules.length;
-
-  const toggle = (id: string) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const selectAll = () => {
-    if (allSelected) setSelected(new Set());
-    else setSelected(new Set(rules.map(r => r.id)));
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,18 +48,15 @@ export function DiscountRuleDialog({ open, onOpenChange, rules, hasConflict, onC
             Foram identificadas {rules.length} regras de desconto aplicáveis. Selecione qual deseja aplicar:
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+        <RadioGroup value={selectedId} onValueChange={setSelectedId} className="space-y-3">
           {rules.map(rule => (
             <label
               key={rule.id}
               className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-secondary/50 transition-colors"
             >
-              <Checkbox
-                checked={selected.has(rule.id)}
-                onCheckedChange={() => toggle(rule.id)}
-              />
+              <RadioGroupItem value={rule.id} id={rule.id} />
               <div className="flex-1">
-                <span className="text-sm">{getRuleLabel(rule)}</span>
+                <Label htmlFor={rule.id} className="text-sm cursor-pointer">{getRuleLabel(rule)}</Label>
                 <div className="mt-1">
                   <Badge variant="secondary" className="text-[10px]">
                     {rule.quantidade_minima} produtos
@@ -84,39 +65,18 @@ export function DiscountRuleDialog({ open, onOpenChange, rules, hasConflict, onC
               </div>
             </label>
           ))}
-          {rules.length > 1 && (
-            <label
-              className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                hasConflict ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-secondary/50"
-              }`}
-            >
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={selectAll}
-                disabled={hasConflict}
-              />
-              <div>
-                <span className="text-sm font-medium">Aplicar todos</span>
-                {hasConflict && (
-                  <div className="flex items-center gap-1 mt-1 text-xs text-destructive">
-                    <AlertTriangle className="h-3 w-3" />
-                    Conflito de contagem — não é possível aplicar ambos
-                  </div>
-                )}
-              </div>
-            </label>
-          )}
-        </div>
+        </RadioGroup>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Sem desconto
           </Button>
           <Button
             onClick={() => {
-              onConfirm(rules.filter(r => selected.has(r.id)));
+              const selected = rules.find(r => r.id === selectedId);
+              onConfirm(selected ? [selected] : []);
               onOpenChange(false);
             }}
-            disabled={selected.size === 0}
+            disabled={!selectedId}
           >
             Aplicar
           </Button>
