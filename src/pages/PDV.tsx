@@ -311,7 +311,7 @@ export default function PDV() {
           }))
         : undefined;
 
-      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
+      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, saleOrigin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
 
       toast.success(`Venda finalizada! Total: R$ ${saleTotal.toFixed(2)}`);
       setCart([]);
