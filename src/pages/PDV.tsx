@@ -75,99 +75,104 @@ export default function PDV() {
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const [lastRuleSignature, setLastRuleSignature] = useState("");
 
-  // Calculate atacado discount for a product
-  // qtyOfProduct = quantity of THIS product in cart
-  // totalCartQty = total items in entire cart (all products)
-  const getAtacadoInfo = useCallback((product: DbProduct, qtyOfProduct: number, totalCartQty: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
-    const retailPrice = Number(product.retail_price);
-    const originalPrice = retailPrice;
+  // Helper: does a product match a discount rule?
+  const productMatchesRule = useCallback((product: DbProduct, rule: DescontoAtacado): boolean => {
+    if (rule.tipo_desconto === "todos") return true;
+    if (rule.tipo_desconto === "todas_armacoes") return !product.is_acessorio;
+    if (rule.tipo_desconto === "todos_acessorios") return product.is_acessorio;
+    if (rule.tipo_desconto === "armacao_especifica") return !product.is_acessorio && product.estilo === rule.categoria;
+    if (rule.tipo_desconto === "acessorio_especifico") return product.is_acessorio && (product.subcategoria_acessorio === rule.categoria || (product as any).categoria_acessorio === rule.categoria);
+    if (rule.tipo_desconto === "produto" && rule.produto_id) return product.id === rule.produto_id;
+    return false;
+  }, []);
 
-    // 1. Check product-level wholesale first (uses per-product qty)
-    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyOfProduct >= product.wholesale_min_qty) {
-      return {
-        isAtacado: true,
-        price: Number(product.wholesale_price),
-        originalPrice,
-        discountLabel: `Atacado (${product.wholesale_min_qty}+ un.)`,
-      };
-    }
+  // Find all applicable rules based on cart contents
+  const applicableRules = useMemo(() => {
+    return descontosAtacado.filter(rule => {
+      if (rule.status !== "active") return false;
+      const matchingCount = cart.filter(item => productMatchesRule(item.product, rule)).length;
+      return matchingCount >= rule.quantidade_minima;
+    });
+  }, [cart, descontosAtacado, productMatchesRule]);
 
-    // 2. Check descontos_atacado rules (uses total cart qty for global/category rules)
-    for (const desc of descontosAtacado) {
-      if (desc.status !== "active") continue;
-      // Global and category rules use total cart quantity
-      if (totalCartQty < desc.quantidade_minima) continue;
-
-      let matches = false;
-      if (desc.tipo_desconto === "todos") {
-        matches = true;
-      } else if (desc.tipo_desconto === "todas_armacoes") {
-        matches = !product.is_acessorio;
-      } else if (desc.tipo_desconto === "todos_acessorios") {
-        matches = product.is_acessorio;
-      } else if (desc.tipo_desconto === "armacao_especifica") {
-        matches = !product.is_acessorio && product.estilo === desc.categoria;
-      } else if (desc.tipo_desconto === "acessorio_especifico") {
-        matches = product.is_acessorio && (product.subcategoria_acessorio === desc.categoria || (product as any).categoria_acessorio === desc.categoria);
+  // Check conflict between all applicable rules
+  const rulesHaveConflict = useMemo(() => {
+    if (applicableRules.length < 2) return false;
+    const claimed = new Set<string>();
+    for (const rule of applicableRules) {
+      const matching = cart
+        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule))
+        .sort((a, b) => Number(b.product.retail_price) - Number(a.product.retail_price));
+      if (matching.length < rule.quantidade_minima) return true;
+      for (let i = 0; i < rule.quantidade_minima; i++) {
+        claimed.add(matching[i].cartId);
       }
+    }
+    return false;
+  }, [applicableRules, cart, productMatchesRule]);
 
-      if (matches) {
-        let discountedPrice: number;
-        if (desc.tipo_valor === "percentual") {
-          discountedPrice = retailPrice * (1 - desc.valor_desconto / 100);
+  // Auto-select rules or show dialog when applicable rules change
+  useEffect(() => {
+    const sig = applicableRules.map(r => r.id).sort().join(",");
+    if (sig === lastRuleSignature) return;
+    setLastRuleSignature(sig);
+
+    if (applicableRules.length === 0) {
+      setSelectedDiscountRules([]);
+    } else if (applicableRules.length === 1) {
+      setSelectedDiscountRules(applicableRules);
+      const r = applicableRules[0];
+      toast.success(`🏷️ Atacado aplicado: ${r.tipo_valor === "percentual" ? `-${r.valor_desconto}%` : `-R$${r.valor_desconto.toFixed(2)}`} (${r.quantidade_minima} un.)`, { duration: 3000 });
+    } else {
+      setShowDiscountDialog(true);
+    }
+  }, [applicableRules, lastRuleSignature]);
+
+  // Compute discount allocation: Map<cartId, { discountedPrice, ruleLabel }>
+  const discountAllocation = useMemo(() => {
+    const allocation = new Map<string, { discountedPrice: number; ruleLabel: string }>();
+    const claimed = new Set<string>();
+
+    for (const rule of selectedDiscountRules) {
+      const matching = cart
+        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule))
+        .sort((a, b) => Number(b.product.retail_price) - Number(a.product.retail_price));
+      const count = Math.min(rule.quantidade_minima, matching.length);
+
+      for (let i = 0; i < count; i++) {
+        const item = matching[i];
+        const price = Number(item.product.retail_price);
+        let discounted: number;
+        if (rule.tipo_valor === "percentual") {
+          discounted = price * (1 - rule.valor_desconto / 100);
         } else {
-          discountedPrice = Math.max(0, retailPrice - desc.valor_desconto);
+          discounted = Math.max(0, price - rule.valor_desconto);
         }
-        discountedPrice = Math.round(discountedPrice * 100) / 100;
-        return {
-          isAtacado: true,
-          price: discountedPrice,
-          originalPrice,
-          discountLabel: desc.tipo_valor === "percentual"
-            ? `Atacado -${desc.valor_desconto}%`
-            : `Atacado -R$ ${desc.valor_desconto.toFixed(2)}`,
-        };
+        allocation.set(item.cartId, {
+          discountedPrice: Math.round(discounted * 100) / 100,
+          ruleLabel: rule.tipo_valor === "percentual" ? `Atacado -${rule.valor_desconto}%` : `Atacado -R$${rule.valor_desconto.toFixed(2)}`,
+        });
+        claimed.add(item.cartId);
       }
     }
 
-    return { isAtacado: false, price: retailPrice, originalPrice, discountLabel: "" };
-  }, [descontosAtacado]);
+    return allocation;
+  }, [cart, selectedDiscountRules, productMatchesRule]);
 
-  // Build grouped cart info for pricing
-  const cartGrouped = useMemo(() => {
-    const grouped = new Map<string, { product: DbProduct; count: number }>();
-    for (const item of cart) {
-      const existing = grouped.get(item.product.id);
-      if (existing) existing.count++;
-      else grouped.set(item.product.id, { product: item.product, count: 1 });
-    }
-    return grouped;
-  }, [cart]);
-
-  const totalCartCount = useMemo(() => cart.length, [cart]);
-
-  const getPrice = (product: DbProduct) => {
-    const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-    return getAtacadoInfo(product, qtyInCart, totalCartCount).price;
-  };
+  const hasAnyWholesale = discountAllocation.size > 0;
 
   const subtotal = useMemo(() => {
     let total = 0;
-    for (const { product, count } of cartGrouped.values()) {
-      const info = getAtacadoInfo(product, count, totalCartCount);
-      total += info.price * count;
+    for (const item of cart) {
+      const disc = discountAllocation.get(item.cartId);
+      total += disc ? disc.discountedPrice : Number(item.product.retail_price);
     }
     return total;
-  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
+  }, [cart, discountAllocation]);
 
-  // Total without atacado discounts (original prices)
   const subtotalOriginal = useMemo(() => {
-    let total = 0;
-    for (const { product, count } of cartGrouped.values()) {
-      total += Number(product.retail_price) * count;
-    }
-    return total;
-  }, [cartGrouped]);
+    return cart.reduce((sum, item) => sum + Number(item.product.retail_price), 0);
+  }, [cart]);
 
   const totalSaved = subtotalOriginal - subtotal;
 
