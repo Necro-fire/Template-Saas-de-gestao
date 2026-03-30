@@ -20,6 +20,8 @@ import {
   LogOut,
   ArrowLeftRight,
   PackageCheck,
+  Truck,
+  Clock,
 } from "lucide-react";
 import jotsLogo from "@/assets/jots-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -55,7 +57,7 @@ const managementNav = [
   { title: "Vendas", url: "/vendas", icon: FileText, module: "vendas", action: "view" },
   { title: "Estoque", url: "/estoque", icon: Warehouse, module: "estoque", action: "view" },
   { title: "Caixa", url: "/caixa", icon: Wallet, module: "caixa", action: "view" },
-  { title: "Malas", url: "/malas", icon: Briefcase, module: "malas", action: "view" },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck, module: "estoque", action: "view" },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, module: "relatorios", action: "view" },
   { title: "Tráfego entre Filiais", url: "/trafego-filiais", icon: ArrowLeftRight, module: "estoque", action: "view" },
   { title: "Produtos Consignados", url: "/produtos-consignados", icon: PackageCheck, module: "vendas", action: "view" },
@@ -63,6 +65,11 @@ const managementNav = [
 
 const fiscalNav = [
   { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt, module: "fiscal", action: "view" },
+  { title: "Adicionar NF", url: "/adicionar-nf", icon: FilePlus, module: "fiscal", action: "manage" },
+];
+
+const comingSoonNav = [
+  { title: "Malas", url: "/malas", icon: Briefcase, module: "malas", action: "view" },
   { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus, module: "fiscal", action: "manage" },
   { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2, module: "fiscal", action: "manage" },
   { title: "Empresas", url: "/empresas", icon: Building2, module: "fiscal", action: "manage" },
@@ -142,6 +149,27 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3" />
+            Em Breve
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {comingSoonNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild disabled className="opacity-50 cursor-not-allowed">
+                    <span>
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
       </SidebarContent>
 
