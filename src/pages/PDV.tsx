@@ -139,19 +139,21 @@ export default function PDV() {
     return grouped;
   }, [cart]);
 
+  const totalCartCount = useMemo(() => cart.length, [cart]);
+
   const getPrice = (product: DbProduct) => {
     const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-    return getAtacadoInfo(product, qtyInCart).price;
+    return getAtacadoInfo(product, qtyInCart, totalCartCount).price;
   };
 
   const subtotal = useMemo(() => {
     let total = 0;
     for (const { product, count } of cartGrouped.values()) {
-      const info = getAtacadoInfo(product, count);
+      const info = getAtacadoInfo(product, count, totalCartCount);
       total += info.price * count;
     }
     return total;
-  }, [cartGrouped, getAtacadoInfo]);
+  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
 
   // Total without atacado discounts (original prices)
   const subtotalOriginal = useMemo(() => {
@@ -166,10 +168,10 @@ export default function PDV() {
 
   const hasAnyWholesale = useMemo(() => {
     for (const { product, count } of cartGrouped.values()) {
-      if (getAtacadoInfo(product, count).isAtacado) return true;
+      if (getAtacadoInfo(product, count, totalCartCount).isAtacado) return true;
     }
     return false;
-  }, [cartGrouped, getAtacadoInfo]);
+  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
