@@ -82,6 +82,12 @@ export default function ProdutosConsignados() {
 
   useEffect(() => {
     fetchConsigned();
+    const channel = supabase
+      .channel("consignados-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "venda_items" }, () => fetchConsigned())
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendas" }, () => fetchConsigned())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [fetchConsigned]);
 
   const handleAction = async () => {
