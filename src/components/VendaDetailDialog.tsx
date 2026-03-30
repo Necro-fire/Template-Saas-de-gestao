@@ -55,6 +55,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   const [items, setItems] = useState<VendaItemWithStatus[]>([]);
   const [paymentSplits, setPaymentSplits] = useState<PaymentSplitInfo[]>([]);
   const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
+  const [boletos, setBoletos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
