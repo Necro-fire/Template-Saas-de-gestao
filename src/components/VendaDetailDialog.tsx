@@ -83,10 +83,9 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         .eq("tipo", "venda"),
       (supabase as any)
         .from("boleto_alertas")
-        .select("total_parcelas, intervalo_dias")
+        .select("*")
         .eq("venda_id", venda.id)
-        .order("created_at", { ascending: false })
-        .limit(1),
+        .order("parcela_numero", { ascending: true }),
     ]).then(([itemsRes, splitsRes, boletoRes]) => {
       setItems(itemsRes.data || []);
 
