@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Tag } from "lucide-react";
 import JsBarcode from "jsbarcode";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
