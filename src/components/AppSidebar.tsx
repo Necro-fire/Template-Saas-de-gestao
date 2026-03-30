@@ -55,7 +55,7 @@ const managementNav = [
   { title: "Vendas", url: "/vendas", icon: FileText, module: "vendas", action: "view" },
   { title: "Estoque", url: "/estoque", icon: Warehouse, module: "estoque", action: "view" },
   { title: "Caixa", url: "/caixa", icon: Wallet, module: "caixa", action: "view" },
-  { title: "Malas", url: "/malas", icon: Briefcase, module: "malas", action: "view" },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck, module: "estoque", action: "view" },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, module: "relatorios", action: "view" },
   { title: "Tráfego entre Filiais", url: "/trafego-filiais", icon: ArrowLeftRight, module: "estoque", action: "view" },
   { title: "Produtos Consignados", url: "/produtos-consignados", icon: PackageCheck, module: "vendas", action: "view" },
@@ -63,6 +63,11 @@ const managementNav = [
 
 const fiscalNav = [
   { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt, module: "fiscal", action: "view" },
+  { title: "Adicionar NF", url: "/adicionar-nf", icon: FilePlus, module: "fiscal", action: "manage" },
+];
+
+const comingSoonNav = [
+  { title: "Malas", url: "/malas", icon: Briefcase, module: "malas", action: "view" },
   { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus, module: "fiscal", action: "manage" },
   { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2, module: "fiscal", action: "manage" },
   { title: "Empresas", url: "/empresas", icon: Building2, module: "fiscal", action: "manage" },
