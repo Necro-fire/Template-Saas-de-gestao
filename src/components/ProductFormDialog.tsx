@@ -359,9 +359,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       const buildBaseData = (codes?: { code: string; barcode: string }, fId?: string) => ({
         ...(codes ? { code: codes.code, barcode: codes.barcode } : {}),
-        referencia: referencia.trim(),
-        model: referencia.trim(),
-        classificacao,
+        referencia: effectiveReferencia,
+        model: effectiveReferencia,
+        classificacao: effectiveClassificacao,
         category: classificacaoProduto,
         retail_price: price,
         custo: custo || 0,
