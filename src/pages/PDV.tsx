@@ -262,6 +262,12 @@ export default function PDV() {
         custo_unitario: (product as any).custo ?? 0,
       }));
 
+      // Determine origin based on payment method
+      const isConsignado = isSplitPayment 
+        ? paymentEntries.some(e => e.method === "consignado")
+        : paymentMethod === "consignado";
+      const saleOrigin = isConsignado ? "consignado" : "stock";
+
       // Determine final method string and total with interest
       let finalMethod = isSplitPayment
         ? paymentEntries.map(e => {
@@ -271,7 +277,7 @@ export default function PDV() {
             if (e.method === "boleto" && e.boletoInstallments && e.boletoInterval) {
               return `Boleto ${e.boletoInstallments}x/${e.boletoInterval}d`;
             }
-            const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", prazo: "Prazo" }[e.method] || e.method;
+            const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", consignado: "Consignado" }[e.method] || e.method;
             return label;
           }).join("/")
         : paymentMethod;
