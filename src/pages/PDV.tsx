@@ -290,8 +290,8 @@ export default function PDV() {
         saleTotal = boletoInfo.finalTotal;
       }
 
-      const discount = saleTotal > subtotal ? 0 : 0;
-      const saleDiscount = 0;
+      // Record atacado discount
+      const saleDiscount = totalSaved > 0 ? totalSaved : 0;
 
       const splits = isSplitPayment
         ? paymentEntries.map(e => ({
