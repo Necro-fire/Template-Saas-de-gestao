@@ -18,6 +18,8 @@ import {
   Shield,
   KeyRound,
   LogOut,
+  ArrowLeftRight,
+  PackageCheck,
 } from "lucide-react";
 import jotsLogo from "@/assets/jots-logo.png";
 import { NavLink } from "@/components/NavLink";
