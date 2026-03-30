@@ -247,17 +247,14 @@ export default function PDV() {
         else grouped.set(item.product.id, { product: item.product, count: 1 });
       }
 
-      const items = Array.from(grouped.values()).map(({ product, count }) => {
-        const hasWholesale = product.wholesale_price > 0 && product.wholesale_min_qty > 0;
-        const price = hasWholesale && count >= product.wholesale_min_qty
-          ? Number(product.wholesale_price)
-          : Number(product.retail_price);
+      const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
+        const info = getAtacadoInfo(product, count);
         return {
           produto_id: product.id,
           product_code: product.referencia,
           product_model: product.referencia,
           quantity: count,
-          unit_price: price,
+          unit_price: info.price,
           custo_unitario: (product as any).custo ?? 0,
         };
       });
