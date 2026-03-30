@@ -50,7 +50,7 @@ export default function PDV() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
-  const origin = "stock";
+  const [origin, setOrigin] = useState("stock");
   const [showCreditCardModal, setShowCreditCardModal] = useState(false);
   const [showBoletoModal, setShowBoletoModal] = useState(false);
   const [creditCardInfo, setCreditCardInfo] = useState<{ installments: number; finalTotal: number } | null>(null);
@@ -129,18 +129,17 @@ export default function PDV() {
   }, [applicableRules, lastRuleSignature]);
 
   // Compute discount allocation: Map<cartId, { discountedPrice, ruleLabel }>
+  // When a rule is triggered (cart has >= quantidade_minima matching items), apply discount to ALL matching items
   const discountAllocation = useMemo(() => {
     const allocation = new Map<string, { discountedPrice: number; ruleLabel: string }>();
     const claimed = new Set<string>();
 
     for (const rule of selectedDiscountRules) {
       const matching = cart
-        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule))
-        .sort((a, b) => Number(b.product.retail_price) - Number(a.product.retail_price));
-      const count = Math.min(rule.quantidade_minima, matching.length);
+        .filter(item => !claimed.has(item.cartId) && productMatchesRule(item.product, rule));
 
-      for (let i = 0; i < count; i++) {
-        const item = matching[i];
+      // Apply discount to ALL matching items (not just quantidade_minima)
+      for (const item of matching) {
         const price = Number(item.product.retail_price);
         let discounted: number;
         if (rule.tipo_valor === "percentual") {
@@ -263,6 +262,12 @@ export default function PDV() {
         custo_unitario: (product as any).custo ?? 0,
       }));
 
+      // Determine origin based on payment method
+      const isConsignado = isSplitPayment 
+        ? paymentEntries.some(e => e.method === "consignado")
+        : paymentMethod === "consignado";
+      const saleOrigin = isConsignado ? "consignado" : "stock";
+
       // Determine final method string and total with interest
       let finalMethod = isSplitPayment
         ? paymentEntries.map(e => {
@@ -272,7 +277,7 @@ export default function PDV() {
             if (e.method === "boleto" && e.boletoInstallments && e.boletoInterval) {
               return `Boleto ${e.boletoInstallments}x/${e.boletoInterval}d`;
             }
-            const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", prazo: "Prazo" }[e.method] || e.method;
+            const label = { pix: "Pix", dinheiro: "Dinheiro", cartao: "Cartão", debito: "Débito", boleto: "Boleto", consignado: "Consignado" }[e.method] || e.method;
             return label;
           }).join("/")
         : paymentMethod;
@@ -306,7 +311,7 @@ export default function PDV() {
           }))
         : undefined;
 
-      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, origin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
+      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, saleOrigin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
 
       toast.success(`Venda finalizada! Total: R$ ${saleTotal.toFixed(2)}`);
       setCart([]);
