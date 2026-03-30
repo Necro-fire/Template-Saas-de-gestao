@@ -558,8 +558,25 @@ export default function PDV() {
             <div className="space-y-1">
               <div className="flex justify-between text-caption text-muted-foreground">
                 <span>{cart.length} {cart.length === 1 ? "item" : "itens"}</span>
-                {hasAnyWholesale && <span className="text-success">Atacado aplicado</span>}
+                {hasAnyWholesale && (
+                  <span className="text-success flex items-center gap-1">
+                    <Tag className="h-3 w-3" />
+                    Atacado aplicado
+                  </span>
+                )}
               </div>
+              {hasAnyWholesale && totalSaved > 0 && (
+                <div className="flex justify-between text-caption">
+                  <span className="text-muted-foreground">Valor original</span>
+                  <span className="tabular-nums text-muted-foreground line-through">R$ {subtotalOriginal.toFixed(2)}</span>
+                </div>
+              )}
+              {hasAnyWholesale && totalSaved > 0 && (
+                <div className="flex justify-between text-caption">
+                  <span className="text-success">Economia atacado</span>
+                  <span className="tabular-nums text-success">- R$ {totalSaved.toFixed(2)}</span>
+                </div>
+              )}
               {(() => {
                 const displayTotal = !isSplitPayment && paymentMethod === "cartao" && creditCardInfo
                   ? creditCardInfo.finalTotal
