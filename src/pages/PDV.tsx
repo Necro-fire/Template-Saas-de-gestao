@@ -428,7 +428,19 @@ export default function PDV() {
                       <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
-                        <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price)}</span>
+                        {(() => {
+                          const qtyInCart = cartGrouped.get(product.id)?.count || 0;
+                          const info = getAtacadoInfo(product, qtyInCart);
+                          if (info.isAtacado) {
+                            return (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {info.originalPrice.toFixed(0)}</span>
+                                <span className="text-ui font-medium tabular-nums text-success">R$ {info.price.toFixed(0)}</span>
+                              </div>
+                            );
+                          }
+                          return <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price).toFixed(0)}</span>;
+                        })()}
                       </div>
                     </button>
                   </div>
