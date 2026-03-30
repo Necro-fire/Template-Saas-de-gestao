@@ -70,13 +70,15 @@ export default function PDV() {
   const { data: clients } = useClients();
   const { data: descontosAtacado } = useDescontosAtacado();
 
-  // Calculate atacado discount for a product given quantity in cart
-  const getAtacadoInfo = useCallback((product: DbProduct, qtyInCart: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
+  // Calculate atacado discount for a product
+  // qtyOfProduct = quantity of THIS product in cart
+  // totalCartQty = total items in entire cart (all products)
+  const getAtacadoInfo = useCallback((product: DbProduct, qtyOfProduct: number, totalCartQty: number): { isAtacado: boolean; price: number; originalPrice: number; discountLabel: string } => {
     const retailPrice = Number(product.retail_price);
     const originalPrice = retailPrice;
 
-    // 1. Check product-level wholesale first
-    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyInCart >= product.wholesale_min_qty) {
+    // 1. Check product-level wholesale first (uses per-product qty)
+    if (product.wholesale_price > 0 && product.wholesale_min_qty > 0 && qtyOfProduct >= product.wholesale_min_qty) {
       return {
         isAtacado: true,
         price: Number(product.wholesale_price),
@@ -85,10 +87,11 @@ export default function PDV() {
       };
     }
 
-    // 2. Check descontos_atacado rules
+    // 2. Check descontos_atacado rules (uses total cart qty for global/category rules)
     for (const desc of descontosAtacado) {
       if (desc.status !== "active") continue;
-      if (qtyInCart < desc.quantidade_minima) continue;
+      // Global and category rules use total cart quantity
+      if (totalCartQty < desc.quantidade_minima) continue;
 
       let matches = false;
       if (desc.tipo_desconto === "todos") {
@@ -136,19 +139,21 @@ export default function PDV() {
     return grouped;
   }, [cart]);
 
+  const totalCartCount = useMemo(() => cart.length, [cart]);
+
   const getPrice = (product: DbProduct) => {
     const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-    return getAtacadoInfo(product, qtyInCart).price;
+    return getAtacadoInfo(product, qtyInCart, totalCartCount).price;
   };
 
   const subtotal = useMemo(() => {
     let total = 0;
     for (const { product, count } of cartGrouped.values()) {
-      const info = getAtacadoInfo(product, count);
+      const info = getAtacadoInfo(product, count, totalCartCount);
       total += info.price * count;
     }
     return total;
-  }, [cartGrouped, getAtacadoInfo]);
+  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
 
   // Total without atacado discounts (original prices)
   const subtotalOriginal = useMemo(() => {
@@ -163,10 +168,10 @@ export default function PDV() {
 
   const hasAnyWholesale = useMemo(() => {
     for (const { product, count } of cartGrouped.values()) {
-      if (getAtacadoInfo(product, count).isAtacado) return true;
+      if (getAtacadoInfo(product, count, totalCartCount).isAtacado) return true;
     }
     return false;
-  }, [cartGrouped, getAtacadoInfo]);
+  }, [cartGrouped, getAtacadoInfo, totalCartCount]);
 
   const filteredProducts = useMemo(() => {
     const active = products.filter(p => p.status === "active" && p.stock > 0);
@@ -186,9 +191,10 @@ export default function PDV() {
         return prev;
       }
       const newQty = qtyInCart + 1;
-      // Check if atacado will be triggered with new quantity
-      const infoBefore = getAtacadoInfo(product, qtyInCart);
-      const infoAfter = getAtacadoInfo(product, newQty);
+      const totalBefore = prev.length;
+      const totalAfter = prev.length + 1;
+      const infoBefore = getAtacadoInfo(product, qtyInCart, totalBefore);
+      const infoAfter = getAtacadoInfo(product, newQty, totalAfter);
       if (!infoBefore.isAtacado && infoAfter.isAtacado) {
         toast.success(`🏷️ Atacado aplicado para ${product.referencia}! ${infoAfter.discountLabel}`, { duration: 3000 });
       }
@@ -241,7 +247,7 @@ export default function PDV() {
     try {
       // Use cartGrouped computed above for sale items
       const items = Array.from(cartGrouped.values()).map(({ product, count }) => {
-        const info = getAtacadoInfo(product, count);
+        const info = getAtacadoInfo(product, count, totalCartCount);
         return {
           produto_id: product.id,
           product_code: product.referencia,
@@ -430,7 +436,7 @@ export default function PDV() {
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         {(() => {
                           const qtyInCart = cartGrouped.get(product.id)?.count || 0;
-                          const info = getAtacadoInfo(product, qtyInCart);
+                          const info = getAtacadoInfo(product, qtyInCart, totalCartCount);
                           if (info.isAtacado) {
                             return (
                               <div className="flex items-center gap-1.5">
@@ -475,7 +481,7 @@ export default function PDV() {
             <AnimatePresence mode="popLayout">
               {cart.map(item => {
                 const qtyInCart = cartGrouped.get(item.product.id)?.count || 0;
-                const info = getAtacadoInfo(item.product, qtyInCart);
+                const info = getAtacadoInfo(item.product, qtyInCart, totalCartCount);
                 return (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
