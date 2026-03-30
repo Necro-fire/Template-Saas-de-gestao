@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Tag } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer } from "lucide-react";
 import JsBarcode from "jsbarcode";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
@@ -114,79 +114,6 @@ export default function Produtos() {
     printWindow.onload = () => { printWindow.print(); printWindow.close(); };
   }, []);
 
-  const handlePrintJewelryLabel = useCallback((product: DbProduct) => {
-    const rawCode = (product.barcode || product.code || "0").replace(/\D/g, "");
-    const code9 = rawCode.padStart(9, "0").slice(-9);
-
-    const canvas = document.createElement("canvas");
-    try {
-      JsBarcode(canvas, code9, {
-        format: "CODE128",
-        width: 1.5,
-        height: 28,
-        displayValue: true,
-        fontSize: 7,
-        margin: 0,
-        textMargin: 1,
-      });
-    } catch {
-      toast.error("Código de barras inválido");
-      return;
-    }
-    const barcodeDataUrl = canvas.toDataURL("image/png");
-    const logoText = product.referencia || product.model || "MARCA";
-
-    const printWindow = window.open("", "_blank", "width=500,height=150");
-    if (!printWindow) { toast.error("Popup bloqueado"); return; }
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Etiqueta Joia</title><style>
-      @page { size: 95mm 12mm; margin: 0; }
-      @media print {
-        html, body { width: 95mm; height: 12mm; margin: 0; padding: 0; }
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body {
-        width: 95mm; height: 12mm;
-        font-family: Arial, Helvetica, sans-serif;
-        display: flex; align-items: stretch;
-        overflow: hidden;
-      }
-      .print-area {
-        width: 60mm; height: 12mm;
-        display: flex; align-items: center;
-        padding: 0.5mm;
-      }
-      .logo-section {
-        width: 24mm; height: 11mm;
-        display: flex; align-items: center; justify-content: center;
-        padding: 0 1mm;
-        overflow: hidden;
-      }
-      .logo-section span {
-        font-size: 6pt; font-weight: bold;
-        text-align: center; line-height: 1.1;
-        word-break: break-word;
-        max-width: 22mm;
-      }
-      .barcode-section {
-        width: 36mm; height: 11mm;
-        display: flex; align-items: center; justify-content: center;
-      }
-      .barcode-section img {
-        max-height: 10mm; max-width: 34mm;
-        object-fit: contain;
-      }
-      .tail { width: 35mm; height: 12mm; }
-    </style></head><body>
-      <div class="print-area">
-        <div class="logo-section"><span>${logoText}</span></div>
-        <div class="barcode-section"><img src="${barcodeDataUrl}" /></div>
-      </div>
-      <div class="tail"></div>
-    </body></html>`);
-    printWindow.document.close();
-    printWindow.onload = () => { printWindow.print(); printWindow.close(); };
-  }, []);
 
   return (
     <div>
@@ -298,26 +225,15 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
-                    <div className="flex gap-0.5 ml-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Imprimir etiqueta"
-                        onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
-                      >
-                        <Printer className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Imprimir etiqueta joia"
-                        onClick={(e) => { e.stopPropagation(); handlePrintJewelryLabel(product); }}
-                      >
-                        <Tag className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 ml-1"
+                      title="Imprimir etiqueta"
+                      onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               );
