@@ -95,7 +95,10 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
       }));
       setPaymentSplits(splits);
 
-      const boletoRow = boletoRes.data?.[0];
+      const allBoletos = boletoRes.data || [];
+      setBoletos(allBoletos);
+
+      const boletoRow = allBoletos[0];
       if (boletoRow?.total_parcelas && boletoRow?.intervalo_dias) {
         setBoletoMeta({
           installments: Number(boletoRow.total_parcelas),
