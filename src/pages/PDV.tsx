@@ -512,29 +512,55 @@ export default function PDV() {
 
           <div className="flex-1 overflow-auto p-4 pt-2">
             <AnimatePresence mode="popLayout">
-              {cart.map(item => {
-                const disc = discountAllocation.get(item.cartId);
-                return (
-                <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-ui font-medium truncate">{item.product.model || item.product.referencia}</p>
-                    <p className="text-caption text-muted-foreground">{item.product.color}</p>
-                    {disc && <p className="text-[10px] text-success">{disc.ruleLabel}</p>}
-                  </div>
-                  <div className="flex flex-col items-end w-20">
-                    {disc ? (
-                      <>
-                        <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {Number(item.product.retail_price).toFixed(0)}</span>
-                        <span className="text-ui font-medium tabular-nums text-success">R$ {disc.discountedPrice.toFixed(0)}</span>
-                      </>
-                    ) : (
-                      <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(item.product.retail_price).toFixed(0)}</span>
-                    )}
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.cartId)}><Trash2 className="h-3 w-3" /></Button>
-                </motion.div>
-                );
-              })}
+              {(() => {
+                // Group cart items by product ID for display
+                const grouped: { productId: string; product: DbProduct; cartIds: string[]; qty: number; totalOriginal: number; totalDiscounted: number; ruleLabel?: string }[] = [];
+                const seen = new Map<string, number>();
+                for (const item of cart) {
+                  const disc = discountAllocation.get(item.cartId);
+                  const idx = seen.get(item.product.id);
+                  if (idx !== undefined) {
+                    const g = grouped[idx];
+                    g.cartIds.push(item.cartId);
+                    g.qty++;
+                    g.totalOriginal += Number(item.product.retail_price);
+                    g.totalDiscounted += disc ? disc.discountedPrice : Number(item.product.retail_price);
+                    if (disc && !g.ruleLabel) g.ruleLabel = disc.ruleLabel;
+                  } else {
+                    seen.set(item.product.id, grouped.length);
+                    grouped.push({
+                      productId: item.product.id,
+                      product: item.product,
+                      cartIds: [item.cartId],
+                      qty: 1,
+                      totalOriginal: Number(item.product.retail_price),
+                      totalDiscounted: disc ? disc.discountedPrice : Number(item.product.retail_price),
+                      ruleLabel: disc?.ruleLabel,
+                    });
+                  }
+                }
+                return grouped.map(g => (
+                  <motion.div key={g.productId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
+                    <Badge variant="outline" className="text-caption tabular-nums shrink-0 w-7 h-7 flex items-center justify-center rounded-full">{g.qty}</Badge>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-ui font-medium truncate">{g.product.model || g.product.referencia}</p>
+                      <p className="text-caption text-muted-foreground">{g.product.color}</p>
+                      {g.ruleLabel && <p className="text-[10px] text-success">{g.ruleLabel}</p>}
+                    </div>
+                    <div className="flex flex-col items-end w-24">
+                      {g.ruleLabel ? (
+                        <>
+                          <span className="text-caption tabular-nums text-muted-foreground line-through">R$ {g.totalOriginal.toFixed(0)}</span>
+                          <span className="text-ui font-medium tabular-nums text-success">R$ {g.totalDiscounted.toFixed(0)}</span>
+                        </>
+                      ) : (
+                        <span className="text-ui font-medium tabular-nums text-primary">R$ {g.totalDiscounted.toFixed(0)}</span>
+                      )}
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(g.cartIds[g.cartIds.length - 1])}><Trash2 className="h-3 w-3" /></Button>
+                  </motion.div>
+                ));
+              })()}
             </AnimatePresence>
             {cart.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
