@@ -812,8 +812,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </Select>
               </div>
 
-              {/* Tipo */}
-              {categoriaAcessorio && tiposAcessorio.length > 0 && (
+              {/* Tipo — hidden when only "Padrão" exists */}
+              {categoriaAcessorio && tiposAcessorio.length > 0 && !(tiposAcessorio.length === 1 && tiposAcessorio[0].nome === "Padrão") && (
                 <div>
                   <Label>Tipo *</Label>
                   <Select
