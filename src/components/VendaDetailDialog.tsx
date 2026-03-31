@@ -282,6 +282,36 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                 return (
                   <div className="space-y-2">
                     {paymentSplits.map((split, i) => {
+                      const isBoleto = split.method.toLowerCase().includes("boleto");
+                      const hasBoletoData = isBoleto && boletos.length > 0;
+
+                      // For boleto: use stored boleto data as single source of truth
+                      if (hasBoletoData) {
+                        const boletoTotal = boletos.reduce((s, b) => s + Number(b.valor_parcela), 0);
+                        const baseAmount = split.amount; // user-typed value = base without interest
+                        const hasJuros = Math.abs(boletoTotal - baseAmount) > 0.01;
+                        return (
+                          <div key={i} className="bg-secondary/50 rounded px-3 py-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {getPaymentIcon(split.method)}
+                                <span className="text-sm font-medium">{split.method}</span>
+                              </div>
+                              <span className="text-sm font-semibold tabular-nums text-primary">
+                                {formatCurrency(hasJuros ? boletoTotal : baseAmount)}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground space-y-0.5 pl-6">
+                              <p>Valor sem juros: {formatCurrency(baseAmount)}</p>
+                              {hasJuros && <p>Juros: 6%</p>}
+                              {boletos.map((b) => (
+                                <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
                       const info = parseSplitPaymentDisplay(split.method, split.amount, venda.payment_method, boletoMeta);
                       return (
                         <div key={i} className="bg-secondary/50 rounded px-3 py-2">
@@ -299,14 +329,9 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                               <p>Valor sem juros: {formatCurrency(info.originalTotal)}</p>
                               <p>{info.installments}x com {info.rate}% de juros</p>
                               <p>Valor final: {formatCurrency(info.finalTotal)}</p>
-                              {/* Show individual parcels from boleto_alertas */}
-                              {split.method.toLowerCase().includes("boleto") && boletos.length > 0 ? (
-                                boletos.map((b) => (
-                                  <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
-                                ))
-                              ) : info.installmentValue ? (
+                              {info.installmentValue && (
                                 <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
-                              ) : null}
+                              )}
                             </div>
                           ) : (
                             <p className="mt-0.5 text-xs text-muted-foreground pl-6">Sem juros</p>
@@ -318,9 +343,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                     <div className="flex items-center justify-between px-3 pt-1 border-t border-border/50">
                       <span className="text-xs text-muted-foreground">Total</span>
                       <span className="text-sm font-bold tabular-nums text-primary">
-                        {formatCurrency(paymentSplits.reduce((sum, s) => {
-                          return sum + s.amount;
-                        }, 0))}
+                        {formatCurrency(paymentSplits.reduce((sum, s) => sum + s.amount, 0))}
                       </span>
                     </div>
                   </div>
