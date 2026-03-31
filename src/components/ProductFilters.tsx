@@ -420,4 +420,5 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
 interface ProductFiltersProps {
   filters: ProductFilterValues;
   onChange: (filters: ProductFilterValues) => void;
+  products?: { lens_size: number; bridge_size: number; temple_size: number; is_acessorio: boolean; status: string }[];
 }
