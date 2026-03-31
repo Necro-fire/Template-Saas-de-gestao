@@ -15,13 +15,36 @@ const COLORS = [
   "hsl(var(--accent))",
 ];
 
+function normalizePaymentMethod(method: string): string | null {
+  const m = method.toLowerCase().trim();
+  if (m.includes("dinheiro")) return "Dinheiro";
+  if (m.includes("pix")) return "Pix";
+  if (m.includes("débito") || m.includes("debito")) return "Cartão de Débito";
+  if (m.includes("crédito") || m.includes("credito") || (m.includes("cartão") && !m.includes("débito") && !m.includes("debito")) || (m.includes("cartao") && !m.includes("debito"))) return "Cartão de Crédito";
+  if (m.includes("boleto")) return "Boleto";
+  return null;
+}
+
+function normalizeSplitMethods(paymentMethod: string): string[] {
+  if (paymentMethod.includes("/")) {
+    return paymentMethod.split("/").map(p => p.trim());
+  }
+  return [paymentMethod];
+}
+
 export function PaymentDonutChart({ sales }: PaymentDonutChartProps) {
   const data = useMemo(() => {
     const activeSales = sales.filter(s => s.status !== "cancelada");
     const map: Record<string, number> = {};
     activeSales.forEach(s => {
-      const method = s.payment_method || "Outros";
-      map[method] = (map[method] || 0) + Number(s.total);
+      const methods = normalizeSplitMethods(s.payment_method || "");
+      // For split payments, distribute evenly across recognized methods
+      const normalized = methods.map(m => normalizePaymentMethod(m)).filter(Boolean) as string[];
+      if (normalized.length === 0) return;
+      const share = Number(s.total) / normalized.length;
+      normalized.forEach(nm => {
+        map[nm] = (map[nm] || 0) + share;
+      });
     });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
