@@ -353,6 +353,33 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
               // Single payment method
               if (paymentSplits.length === 1) {
                 const split = paymentSplits[0];
+                const isBoleto = split.method.toLowerCase().includes("boleto");
+                const hasBoletoData = isBoleto && boletos.length > 0;
+
+                if (hasBoletoData) {
+                  const boletoTotal = boletos.reduce((s, b) => s + Number(b.valor_parcela), 0);
+                  const baseAmount = split.amount;
+                  const hasJuros = Math.abs(boletoTotal - baseAmount) > 0.01;
+                  return (
+                    <div className="bg-secondary/50 rounded px-3 py-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        {getPaymentIcon(split.method)}
+                        <Badge variant="outline">{split.method}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-0.5 pl-6">
+                        <p>Valor sem juros: {formatCurrency(baseAmount)}</p>
+                        {hasJuros && <p>Juros: 6%</p>}
+                        {boletos.map((b) => (
+                          <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
+                        ))}
+                        {hasJuros && (
+                          <p>Total c/ juros: <span className="font-medium text-primary">{formatCurrency(boletoTotal)}</span></p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
                 const info = parsePaymentDisplay(split.method, split.amount, boletoMeta);
                 return (
                   <div className="bg-secondary/50 rounded px-3 py-2">
@@ -365,13 +392,9 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                         <p>Valor sem juros: {formatCurrency(info.originalTotal)}</p>
                         <p>{info.installments}x com {info.rate}% de juros</p>
                         <p>Valor final: <span className="font-medium text-primary">{formatCurrency(info.finalTotal)}</span></p>
-                        {boletos.length > 0 ? (
-                          boletos.map((b) => (
-                            <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
-                          ))
-                        ) : info.installmentValue ? (
+                        {info.installmentValue && (
                           <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
-                        ) : null}
+                        )}
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground pl-6">
