@@ -22,18 +22,25 @@ type BoletoInterval = "15" | "30";
 
 function getInstallmentData(n: number, interval: BoletoInterval, total: number) {
   const intervalDays = parseInt(interval);
-  const lastPaymentDay = n * intervalDays;
+  const JUROS_RATE = 0.06; // 6%
+  const valorBase = total / n;
 
-  if (lastPaymentDay <= 30) {
-    return { finalTotal: total, installmentValue: total / n, ratePercent: 0 };
+  // 15d: interest from 3rd installment; 30d: interest from 2nd installment
+  const firstInterestInstallment = intervalDays <= 15 ? 3 : 2;
+
+  let finalTotal = 0;
+  let installmentsWithInterest = 0;
+  for (let i = 1; i <= n; i++) {
+    if (i >= firstInterestInstallment) {
+      finalTotal += valorBase * (1 + JUROS_RATE);
+      installmentsWithInterest++;
+    } else {
+      finalTotal += valorBase;
+    }
   }
 
-  const daysOver30 = lastPaymentDay - 30;
-  const periodsOver = Math.ceil(daysOver30 / intervalDays);
-  const ratePercent = periodsOver * RATE_PER_PERIOD[interval];
-  const finalTotal = total * (1 + ratePercent / 100);
-
-  return { finalTotal, installmentValue: finalTotal / n, ratePercent };
+  const ratePercent = installmentsWithInterest > 0 ? 6 : 0;
+  return { finalTotal, installmentValue: finalTotal / n, ratePercent, installmentsWithInterest };
 }
 
 interface BoletoConfigDialogProps {

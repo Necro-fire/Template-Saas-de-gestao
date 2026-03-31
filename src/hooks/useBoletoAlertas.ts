@@ -92,12 +92,17 @@ export async function createBoletoAlertas(
   const valorBase = valorBoleto / totalParcelas;
   const JUROS_RATE = 0.06; // 6%
 
+  // 15d: interest from 3rd installment (1st & 2nd no interest)
+  // 30d: interest from 2nd installment (1st no interest)
+  const firstInterestInstallment = intervaloDias <= 15 ? 3 : 2;
+
   for (let i = 1; i <= totalParcelas; i++) {
     const vencimento = new Date(now);
     vencimento.setDate(vencimento.getDate() + i * intervaloDias);
 
-    // 1ª parcela sem juros, demais com 6%
-    const valorParcela = i === 1 ? valorBase : Math.round(valorBase * (1 + JUROS_RATE) * 100) / 100;
+    const valorParcela = i < firstInterestInstallment
+      ? valorBase
+      : Math.round(valorBase * (1 + JUROS_RATE) * 100) / 100;
 
     alertas.push({
       venda_id: vendaId,
