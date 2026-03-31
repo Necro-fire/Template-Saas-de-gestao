@@ -84,6 +84,7 @@ export function PaymentDonutChart({ sales }: PaymentDonutChartProps) {
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                     fontSize: "12px",
+                    color: "#FFFFFF",
                   }}
                   formatter={(value: number) => [`R$ ${value.toFixed(2)}`, ""]}
                 />
