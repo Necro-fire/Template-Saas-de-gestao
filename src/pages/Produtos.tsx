@@ -164,17 +164,18 @@ export default function Produtos() {
 
                   <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.model} className="w-full h-full object-cover" />
+                      <img src={product.image_url} alt={product.model || product.referencia} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-muted-foreground/30 text-title font-bold">{product.referencia}</span>
+                      <span className="text-muted-foreground/30 text-title font-bold">{product.model || product.referencia}</span>
                     )}
                   </div>
                   <div className="mt-3 flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <h3 className="text-ui font-semibold truncate">
-                        {product.referencia}
+                        {product.model || product.referencia}
                         {(product as any).classificacao && <span className="ml-1 text-primary">({(product as any).classificacao})</span>}
                       </h3>
+                      <p className="text-[10px] font-mono text-muted-foreground/60">{product.referencia}</p>
                       <p className="text-[10px] font-mono text-muted-foreground/60">{product.barcode}</p>
                       {!(product as any).is_acessorio && (product.cor_armacao || product.color) && (
                         <p className="text-caption text-muted-foreground">
