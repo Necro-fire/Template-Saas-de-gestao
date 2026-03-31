@@ -382,7 +382,10 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
 
                 if (hasBoletoData) {
                   const boletoTotal = boletos.reduce((s, b) => s + Number(b.valor_parcela), 0);
-                  const baseAmount = split.amount;
+                  const firstParcela = boletos.find((b: any) => b.parcela_numero === 1);
+                  const basePerParcela = firstParcela ? Number(firstParcela.valor_parcela) : 0;
+                  const totalParcelas = firstParcela ? Number(firstParcela.total_parcelas) : boletos.length;
+                  const baseAmount = basePerParcela * totalParcelas;
                   const hasJuros = Math.abs(boletoTotal - baseAmount) > 0.01;
                   return (
                     <div className="bg-secondary/50 rounded px-3 py-2">
