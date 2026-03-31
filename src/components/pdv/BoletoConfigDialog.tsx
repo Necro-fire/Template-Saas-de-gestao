@@ -20,7 +20,7 @@ const RATE_PER_PERIOD = {
 
 type BoletoInterval = "15" | "30";
 
-function getInstallmentData(n: number, interval: BoletoInterval, total: number) {
+function getInstallmentValues(n: number, interval: BoletoInterval, total: number) {
   const intervalDays = parseInt(interval);
   const JUROS_RATE = 0.06; // 6%
   const valorBase = total / n;
@@ -28,19 +28,23 @@ function getInstallmentData(n: number, interval: BoletoInterval, total: number) 
   // 15d: interest from 3rd installment; 30d: interest from 2nd installment
   const firstInterestInstallment = intervalDays <= 15 ? 3 : 2;
 
+  const parcelas: number[] = [];
   let finalTotal = 0;
   let installmentsWithInterest = 0;
   for (let i = 1; i <= n; i++) {
     if (i >= firstInterestInstallment) {
-      finalTotal += valorBase * (1 + JUROS_RATE);
+      const val = Math.round(valorBase * (1 + JUROS_RATE) * 100) / 100;
+      parcelas.push(val);
+      finalTotal += val;
       installmentsWithInterest++;
     } else {
-      finalTotal += valorBase;
+      parcelas.push(Math.round(valorBase * 100) / 100);
+      finalTotal += Math.round(valorBase * 100) / 100;
     }
   }
 
   const ratePercent = installmentsWithInterest > 0 ? 6 : 0;
-  return { finalTotal, installmentValue: finalTotal / n, ratePercent, installmentsWithInterest };
+  return { finalTotal, parcelas, ratePercent, installmentsWithInterest };
 }
 
 interface BoletoConfigDialogProps {

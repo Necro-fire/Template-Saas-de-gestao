@@ -44,7 +44,7 @@ function getBoletoInstallmentValues(installments: number, intervalDays: number, 
   for (let i = 1; i <= installments; i++) {
     const val = i >= firstInterestInstallment
       ? Math.round(valorBase * (1 + JUROS_RATE) * 100) / 100
-      : valorBase;
+      : Math.round(valorBase * 100) / 100;
     values.push(val);
     finalTotal += val;
   }
