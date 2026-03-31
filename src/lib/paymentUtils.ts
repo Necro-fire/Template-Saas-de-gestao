@@ -33,13 +33,29 @@ function parseBoletoMetaFromMethod(method: string): BoletoMetaInfo | null {
   };
 }
 
-function getBoletoInterest(installments: number, intervalDays: number): number {
-  const lastPaymentDay = installments * intervalDays;
-  if (lastPaymentDay <= 30) return 0;
-  const daysOver30 = lastPaymentDay - 30;
-  const periodsOver = Math.ceil(daysOver30 / intervalDays);
-  const ratePerPeriod = BOLETO_RATE_PER_PERIOD[String(intervalDays)] || 0;
-  return periodsOver * ratePerPeriod;
+function getBoletoInstallmentValues(installments: number, intervalDays: number, total: number): { values: number[]; finalTotal: number } {
+  const JUROS_RATE = 0.06;
+  const valorBase = total / installments;
+  // 15d: interest from 3rd installment; 30d: interest from 2nd installment
+  const firstInterestInstallment = intervalDays <= 15 ? 3 : 2;
+
+  const values: number[] = [];
+  let finalTotal = 0;
+  for (let i = 1; i <= installments; i++) {
+    const val = i >= firstInterestInstallment
+      ? Math.round(valorBase * (1 + JUROS_RATE) * 100) / 100
+      : valorBase;
+    values.push(val);
+    finalTotal += val;
+  }
+  return { values, finalTotal };
+}
+
+// Keep backward compat - returns total interest rate percentage (approximate)
+function getBoletoInterestRate(installments: number, intervalDays: number): number {
+  const firstInterestInstallment = intervalDays <= 15 ? 3 : 2;
+  const withInterest = Math.max(0, installments - firstInterestInstallment + 1);
+  return withInterest > 0 ? 6 : 0;
 }
 
 export const PAYMENT_LABELS: Record<string, string> = {
@@ -82,18 +98,17 @@ export function parsePaymentDisplay(
 
   if (boletoMeta) {
     const { installments, intervalDays } = boletoMeta;
-    const ratePercent = getBoletoInterest(installments, intervalDays);
+    const { values, finalTotal } = getBoletoInstallmentValues(installments, intervalDays, total);
+    const ratePercent = getBoletoInterestRate(installments, intervalDays);
 
     if (ratePercent > 0) {
-      const finalTotal = total * (1 + ratePercent / 100);
-      const installmentValue = finalTotal / installments;
       return {
         label: `Boleto ${installments}x/${intervalDays}d`,
         originalTotal: total,
         finalTotal,
         hasInterest: true,
         installments,
-        installmentValue,
+        installmentValue: finalTotal / installments,
         rate: ratePercent,
       };
     }
@@ -199,18 +214,16 @@ export function parseSplitPaymentDisplay(
   const boletoMeta = extractBoletoMetaForSplit(vendaPaymentMethod, splitMethod, fallbackBoletoMeta);
   if (boletoMeta) {
     const { installments, intervalDays } = boletoMeta;
-    const ratePercent = getBoletoInterest(installments, intervalDays);
+    const ratePercent = getBoletoInterestRate(installments, intervalDays);
 
     if (ratePercent > 0) {
-      const originalTotal = splitAmount / (1 + ratePercent / 100);
-      const installmentValue = splitAmount / installments;
       return {
         label: `Boleto ${installments}x/${intervalDays}d`,
-        originalTotal,
+        originalTotal: splitAmount,
         finalTotal: splitAmount,
         hasInterest: true,
         installments,
-        installmentValue,
+        installmentValue: splitAmount / installments,
         rate: ratePercent,
       };
     }
