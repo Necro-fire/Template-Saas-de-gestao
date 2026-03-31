@@ -308,7 +308,11 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                       // For boleto: use stored boleto data as single source of truth
                       if (hasBoletoData) {
                         const boletoTotal = boletos.reduce((s, b) => s + Number(b.valor_parcela), 0);
-                        const baseAmount = split.amount; // user-typed value = base without interest
+                        // Base amount = first parcela value (never has interest) × total parcelas
+                        const firstParcela = boletos.find((b: any) => b.parcela_numero === 1);
+                        const basePerParcela = firstParcela ? Number(firstParcela.valor_parcela) : 0;
+                        const totalParcelas = firstParcela ? Number(firstParcela.total_parcelas) : boletos.length;
+                        const baseAmount = basePerParcela * totalParcelas;
                         const hasJuros = Math.abs(boletoTotal - baseAmount) > 0.01;
                         return (
                           <div key={i} className="bg-secondary/50 rounded px-3 py-2">
