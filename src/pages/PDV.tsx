@@ -303,12 +303,23 @@ export default function PDV() {
       const saleDiscount = totalSaved > 0 ? totalSaved : 0;
 
       const splits = isSplitPayment
-        ? paymentEntries.map(e => ({
-            method: e.method === "cartao" && e.installments ? `Cartão ${e.installments}x` 
-                  : e.method === "boleto" && e.boletoInstallments && e.boletoInterval ? `Boleto ${e.boletoInstallments}x/${e.boletoInterval}d`
-                  : e.method,
-            amount: (e.method === "cartao" || e.method === "boleto") && e.finalTotal ? e.finalTotal : e.amount,
-          }))
+        ? paymentEntries.map(e => {
+            const method = e.method === "cartao" && e.installments
+              ? `Cartão ${e.installments}x`
+              : e.method === "boleto" && e.boletoInstallments && e.boletoInterval
+                ? `Boleto ${e.boletoInstallments}x/${e.boletoInterval}d`
+                : e.method;
+
+            const finalAmount = (e.method === "cartao" || e.method === "boleto") && e.finalTotal
+              ? e.finalTotal
+              : e.amount;
+
+            return {
+              method,
+              amount: e.amount,
+              finalAmount,
+            };
+          })
         : undefined;
 
       await createVenda(items, selectedClient, client?.store_name || "", finalMethod, saleOrigin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
