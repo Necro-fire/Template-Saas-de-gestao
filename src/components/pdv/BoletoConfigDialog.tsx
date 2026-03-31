@@ -20,7 +20,7 @@ const RATE_PER_PERIOD = {
 
 type BoletoInterval = "15" | "30";
 
-function getInstallmentData(n: number, interval: BoletoInterval, total: number) {
+function getInstallmentValues(n: number, interval: BoletoInterval, total: number) {
   const intervalDays = parseInt(interval);
   const JUROS_RATE = 0.06; // 6%
   const valorBase = total / n;
@@ -28,19 +28,23 @@ function getInstallmentData(n: number, interval: BoletoInterval, total: number) 
   // 15d: interest from 3rd installment; 30d: interest from 2nd installment
   const firstInterestInstallment = intervalDays <= 15 ? 3 : 2;
 
+  const parcelas: number[] = [];
   let finalTotal = 0;
   let installmentsWithInterest = 0;
   for (let i = 1; i <= n; i++) {
     if (i >= firstInterestInstallment) {
-      finalTotal += valorBase * (1 + JUROS_RATE);
+      const val = Math.round(valorBase * (1 + JUROS_RATE) * 100) / 100;
+      parcelas.push(val);
+      finalTotal += val;
       installmentsWithInterest++;
     } else {
-      finalTotal += valorBase;
+      parcelas.push(Math.round(valorBase * 100) / 100);
+      finalTotal += Math.round(valorBase * 100) / 100;
     }
   }
 
   const ratePercent = installmentsWithInterest > 0 ? 6 : 0;
-  return { finalTotal, installmentValue: finalTotal / n, ratePercent, installmentsWithInterest };
+  return { finalTotal, parcelas, ratePercent, installmentsWithInterest };
 }
 
 interface BoletoConfigDialogProps {
@@ -63,7 +67,7 @@ export function BoletoConfigDialog({ open, onOpenChange, total, onConfirm }: Bol
     }
   };
 
-  const { finalTotal, installmentValue, ratePercent } = getInstallmentData(installments, interval, total);
+  const { finalTotal, parcelas, ratePercent } = getInstallmentValues(installments, interval, total);
   const jurosTotal = finalTotal - total;
 
   return (
@@ -98,7 +102,7 @@ export function BoletoConfigDialog({ open, onOpenChange, total, onConfirm }: Bol
             <Label className="text-sm">Número de parcelas</Label>
             <div className="grid grid-cols-3 gap-2 mt-1">
               {Array.from({ length: maxInstallments }, (_, i) => i + 1).map((n) => {
-                const data = getInstallmentData(n, interval, total);
+                const data = getInstallmentValues(n, interval, total);
                 const isSelected = installments === n;
                 const lastDay = n * parseInt(interval);
                 return (
@@ -117,7 +121,7 @@ export function BoletoConfigDialog({ open, onOpenChange, total, onConfirm }: Bol
                       {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
                     </div>
                     <p className="text-xs font-medium tabular-nums mt-1">
-                      R$ {data.installmentValue.toFixed(2)}
+                      R$ {(data.finalTotal / n).toFixed(2)}
                     </p>
                     <p className="text-[10px] text-muted-foreground">{lastDay}d{data.ratePercent > 0 ? ` (+${data.ratePercent}%)` : ""}</p>
                   </button>
@@ -128,17 +132,19 @@ export function BoletoConfigDialog({ open, onOpenChange, total, onConfirm }: Bol
         </div>
 
         <div className="rounded-lg bg-secondary p-3 space-y-1">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Parcelas</span>
-            <span className="font-medium">{installments}x de R$ {installmentValue.toFixed(2)}</span>
-          </div>
+          {parcelas.map((val, i) => (
+            <div key={i} className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Parcela {i + 1}</span>
+              <span className="font-medium tabular-nums">R$ {val.toFixed(2)}</span>
+            </div>
+          ))}
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Prazo total</span>
             <span className="font-medium">{installments * parseInt(interval)} dias</span>
           </div>
           {jurosTotal > 0.01 && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Juros ({ratePercent}% sobre total)</span>
+              <span className="text-muted-foreground">Juros ({ratePercent}%)</span>
               <span className="font-medium text-destructive">+ R$ {jurosTotal.toFixed(2)}</span>
             </div>
           )}
