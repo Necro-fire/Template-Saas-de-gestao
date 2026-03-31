@@ -335,6 +335,18 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                   </div>
                   <FilterSelect label="Tipo de Haste" value={draft.tipoHaste}
                     onValueChange={(v) => setDraft({ ...draft, tipoHaste: v })} options={["Comum", ...TIPOS_HASTE]} />
+                  {availableSizes.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-caption">Tamanho da Armação</Label>
+                      <Select value={draft.tamanhoArmacao} onValueChange={(v) => setDraft({ ...draft, tamanhoArmacao: v })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          {availableSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </>
               )}
 
