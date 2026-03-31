@@ -367,12 +367,18 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                     {getPaymentIcon(venda.payment_method)}
                     <Badge variant="outline">{venda.payment_method}</Badge>
                   </div>
-                  {info.hasInterest && info.installments && info.installmentValue ? (
+                  {info.hasInterest && info.installments ? (
                     <div className="text-xs text-muted-foreground space-y-0.5 pl-6">
                       <p>Valor sem juros: {formatCurrency(info.originalTotal)}</p>
                       <p>{info.installments}x com {info.rate}% de juros</p>
                       <p>Valor final: <span className="font-medium text-primary">{formatCurrency(info.finalTotal)}</span></p>
-                      <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                      {boletos.length > 0 ? (
+                        boletos.map((b) => (
+                          <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
+                        ))
+                      ) : info.installmentValue ? (
+                        <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                      ) : null}
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground pl-6">
