@@ -294,12 +294,19 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                               {info.hasInterest ? formatCurrency(info.finalTotal) : formatCurrency(split.amount)}
                             </span>
                           </div>
-                          {info.hasInterest && info.installments && info.installmentValue ? (
+                          {info.hasInterest && info.installments ? (
                             <div className="mt-1 text-xs text-muted-foreground space-y-0.5 pl-6">
                               <p>Valor sem juros: {formatCurrency(info.originalTotal)}</p>
                               <p>{info.installments}x com {info.rate}% de juros</p>
                               <p>Valor final: {formatCurrency(info.finalTotal)}</p>
-                              <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                              {/* Show individual parcels from boleto_alertas */}
+                              {split.method.toLowerCase().includes("boleto") && boletos.length > 0 ? (
+                                boletos.map((b) => (
+                                  <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
+                                ))
+                              ) : info.installmentValue ? (
+                                <p>Parcelas: {info.installments}x de {formatCurrency(info.installmentValue)}</p>
+                              ) : null}
                             </div>
                           ) : (
                             <p className="mt-0.5 text-xs text-muted-foreground pl-6">Sem juros</p>
