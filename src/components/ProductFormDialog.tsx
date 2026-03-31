@@ -777,7 +777,6 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   value={categoriaAcessorio}
                   onValueChange={(v) => {
                     setCategoriaAcessorio(v);
-                    setTipoAcessorio("");
                     setVariacaoAcessorio("");
                     setCorAcessorio("");
                     setMaterialAcessorio("");
@@ -795,6 +794,13 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     setLenteCilindrico("");
                     setLenteAdicao("");
                     setLenteDiametro("");
+                    // Auto-select "Padrão" if it's the only tipo
+                    const tipos = getTiposByCategoria(v);
+                    if (tipos.length === 1 && tipos[0].nome === "Padrão") {
+                      setTipoAcessorio("Padrão");
+                    } else {
+                      setTipoAcessorio("");
+                    }
                   }}
                 >
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
@@ -806,8 +812,8 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 </Select>
               </div>
 
-              {/* Tipo */}
-              {categoriaAcessorio && tiposAcessorio.length > 0 && (
+              {/* Tipo — hidden when only "Padrão" exists */}
+              {categoriaAcessorio && tiposAcessorio.length > 0 && !(tiposAcessorio.length === 1 && tiposAcessorio[0].nome === "Padrão") && (
                 <div>
                   <Label>Tipo *</Label>
                   <Select
