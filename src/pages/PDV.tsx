@@ -470,7 +470,7 @@ export default function PDV() {
                     <button onClick={() => addToCart(product)} className="w-full text-left mt-2">
                       <h3 className="text-ui font-medium truncate">{product.model || product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
-                        <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
+                        <Badge variant="secondary" className="text-caption tabular-nums">{product.displayStock} un.</Badge>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price).toFixed(0)}</span>
                       </div>
                     </button>
