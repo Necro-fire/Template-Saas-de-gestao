@@ -198,6 +198,7 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
     const keys: (keyof ProductFilterValues)[] = [
       "tipoItem", "categoriaIdade", "genero", "estilo", "corArmacao",
       "materialAro", "materialHaste", "tipoLente", "polarizado", "tipoHaste", "ponteArmacao",
+      "tamanhoArmacao",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
     ];
