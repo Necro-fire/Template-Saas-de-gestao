@@ -256,7 +256,7 @@ export default function PDV() {
       const items = Array.from(grouped.values()).map(({ product, count, totalPrice }) => ({
         produto_id: product.id,
         product_code: product.referencia,
-        product_model: product.referencia,
+        product_model: product.model || product.referencia,
         quantity: count,
         unit_price: Math.round((totalPrice / count) * 100) / 100,
         custo_unitario: (product as any).custo ?? 0,
