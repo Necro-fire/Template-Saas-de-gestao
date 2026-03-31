@@ -256,7 +256,7 @@ export default function PDV() {
       const items = Array.from(grouped.values()).map(({ product, count, totalPrice }) => ({
         produto_id: product.id,
         product_code: product.referencia,
-        product_model: product.referencia,
+        product_model: product.model || product.referencia,
         quantity: count,
         unit_price: Math.round((totalPrice / count) * 100) / 100,
         custo_unitario: (product as any).custo ?? 0,
@@ -429,11 +429,11 @@ export default function PDV() {
                     >
                       {product.image_url ? (
                         <>
-                          <img src={product.image_url} alt={product.referencia} className="w-full h-full object-cover" />
+                          <img src={product.image_url} alt={product.model || product.referencia} className="w-full h-full object-cover" />
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setZoomImage({ url: product.image_url, name: product.referencia });
+                              setZoomImage({ url: product.image_url, name: product.model || product.referencia });
                             }}
                             className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
                             title="Ver imagem"
@@ -442,11 +442,11 @@ export default function PDV() {
                           </button>
                         </>
                       ) : (
-                        <span className="text-muted-foreground/20 text-subhead font-bold">{product.referencia}</span>
+                        <span className="text-muted-foreground/20 text-subhead font-bold">{product.model || product.referencia}</span>
                       )}
                     </div>
                     <button onClick={() => addToCart(product)} className="w-full text-left mt-2">
-                      <h3 className="text-ui font-medium truncate">{product.referencia}</h3>
+                      <h3 className="text-ui font-medium truncate">{product.model || product.referencia}</h3>
                       <div className="flex justify-between items-center mt-1">
                         <Badge variant="secondary" className="text-caption tabular-nums">{product.stock} un.</Badge>
                         <span className="text-ui font-medium tabular-nums text-primary">R$ {Number(product.retail_price).toFixed(0)}</span>
@@ -495,7 +495,7 @@ export default function PDV() {
                 return (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
-                    <p className="text-ui font-medium truncate">{item.product.referencia}</p>
+                    <p className="text-ui font-medium truncate">{item.product.model || item.product.referencia}</p>
                     <p className="text-caption text-muted-foreground">{item.product.color}</p>
                     {disc && <p className="text-[10px] text-success">{disc.ruleLabel}</p>}
                   </div>
