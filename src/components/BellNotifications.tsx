@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, FileText, Check, Clock, ChevronDown, ChevronUp, AlertTriangle, CalendarClock } from "lucide-react";
+import { Bell, FileText, Check, Clock, ChevronDown, ChevronUp, AlertTriangle, CalendarClock, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 function classifyBoleto(alerta: { status: string; data_vencimento: string; parcela_numero?: number }) {
+  if (alerta.status === "cancelado") return "cancelado";
   if (alerta.status === "gerado") return "gerado";
   // 1ª parcela NUNCA é classificada como futuro
   if (alerta.parcela_numero === 1) return "pendente";
@@ -24,10 +25,12 @@ export function BellNotifications() {
   const [open, setOpen] = useState(false);
   const [showGerados, setShowGerados] = useState(false);
   const [showFuturos, setShowFuturos] = useState(false);
+  const [showCancelados, setShowCancelados] = useState(false);
 
   const pendentes = alertas.filter((a) => classifyBoleto(a) === "pendente");
   const gerados = alertas.filter((a) => classifyBoleto(a) === "gerado");
   const futuros = alertas.filter((a) => classifyBoleto(a) === "futuro");
+  const cancelados = alertas.filter((a) => classifyBoleto(a) === "cancelado");
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -59,7 +62,7 @@ export function BellNotifications() {
             Central de Boletos
           </h4>
           <p className="text-xs text-muted-foreground">
-            {pendentes.length} pendente{pendentes.length !== 1 ? "s" : ""} · {gerados.length} gerado{gerados.length !== 1 ? "s" : ""} · {futuros.length} futuro{futuros.length !== 1 ? "s" : ""}
+            {pendentes.length} pendente{pendentes.length !== 1 ? "s" : ""} · {gerados.length} gerado{gerados.length !== 1 ? "s" : ""} · {futuros.length} futuro{futuros.length !== 1 ? "s" : ""}{cancelados.length > 0 ? ` · ${cancelados.length} cancelado${cancelados.length !== 1 ? "s" : ""}` : ""}
           </p>
         </div>
 
@@ -125,7 +128,30 @@ export function BellNotifications() {
             </div>
           )}
 
-          {pendentes.length === 0 && gerados.length === 0 && futuros.length === 0 && (
+          {/* Cancelados - collapsible */}
+          {cancelados.length > 0 && (
+            <div className="border-t">
+              <button
+                onClick={() => setShowCancelados(!showCancelados)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Ban className="h-3.5 w-3.5 text-muted-foreground" />
+                  Cancelados ({cancelados.length})
+                </span>
+                {showCancelados ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </button>
+              {showCancelados && (
+                <div className="p-2 pt-0">
+                  {cancelados.map((a) => (
+                    <BoletoItem key={a.id} alerta={a} variant="cancelado" onStatusChange={handleStatusChange} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {pendentes.length === 0 && gerados.length === 0 && futuros.length === 0 && cancelados.length === 0 && (
             <div className="p-8 text-center text-muted-foreground text-sm">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
               Nenhum boleto registrado
@@ -143,17 +169,20 @@ function BoletoItem({
   onStatusChange,
 }: {
   alerta: any;
-  variant: "pendente" | "gerado" | "futuro";
+  variant: "pendente" | "gerado" | "futuro" | "cancelado";
   onStatusChange: (id: string, status: string) => void;
 }) {
   const venc = new Date(alerta.data_vencimento);
   const isOverdue = isPast(venc) && !isToday(venc);
+  const isCancelado = variant === "cancelado";
 
   const bgClass =
     variant === "pendente"
       ? "bg-destructive/10 border border-destructive/20"
       : variant === "gerado"
       ? "bg-primary/5 border border-primary/20"
+      : variant === "cancelado"
+      ? "bg-muted/50 border border-border/50 opacity-70"
       : "hover:bg-secondary/50";
 
   const iconBg =
@@ -161,6 +190,8 @@ function BoletoItem({
       ? "bg-destructive/20"
       : variant === "gerado"
       ? "bg-primary/20"
+      : variant === "cancelado"
+      ? "bg-muted"
       : "bg-muted";
 
   const iconColor =
@@ -173,48 +204,55 @@ function BoletoItem({
   return (
     <div className={`flex items-start gap-2 p-2 rounded-md mb-1.5 transition-colors ${bgClass}`}>
       <div className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${iconBg}`}>
-        <FileText className={`h-4 w-4 ${iconColor}`} />
+        {isCancelado ? <Ban className={`h-4 w-4 ${iconColor}`} /> : <FileText className={`h-4 w-4 ${iconColor}`} />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold truncate">
+        <p className={`text-xs font-semibold truncate ${isCancelado ? "line-through text-muted-foreground" : ""}`}>
           Venda #{alerta.venda_number} — Parcela {alerta.parcela_numero}/{alerta.total_parcelas}
         </p>
         <p className="text-[11px] text-muted-foreground truncate">{alerta.client_name}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className={`text-[11px] font-medium flex items-center gap-1 ${
+            isCancelado ? "text-muted-foreground" :
             variant === "pendente" && isOverdue ? "text-destructive" : 
             variant === "pendente" ? "text-warning" : "text-muted-foreground"
           }`}>
             <Clock className="h-3 w-3" />
-            {variant === "pendente" && isOverdue ? "Vencido " : "Vence "}
+            {isCancelado ? "" : variant === "pendente" && isOverdue ? "Vencido " : "Vence "}
             {format(venc, "dd/MM/yy", { locale: ptBR })}
           </span>
-          <span className="text-[11px] font-bold text-foreground">
+          <span className={`text-[11px] font-bold ${isCancelado ? "line-through text-muted-foreground" : "text-foreground"}`}>
             R$ {Number(alerta.valor_parcela).toFixed(2)}
           </span>
         </div>
       </div>
       <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-        <Select
-          value={alerta.status}
-          onValueChange={(v) => onStatusChange(alerta.id, v)}
-        >
-          <SelectTrigger className="h-7 text-[10px] px-2 w-auto min-w-[90px] border-border/50">
-            <Badge
-              variant={
-                alerta.status === "gerado" ? "default" :
-                alerta.status === "pendente" ? "destructive" : "secondary"
-              }
-              className="text-[10px] h-4 px-1.5"
-            >
-              {alerta.status === "gerado" ? "Gerado" : alerta.status === "pendente" ? "Pendente" : "Futuro"}
-            </Badge>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="gerado">Gerado</SelectItem>
-          </SelectContent>
-        </Select>
+        {isCancelado ? (
+          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted text-muted-foreground">
+            Cancelado
+          </Badge>
+        ) : (
+          <Select
+            value={alerta.status}
+            onValueChange={(v) => onStatusChange(alerta.id, v)}
+          >
+            <SelectTrigger className="h-7 text-[10px] px-2 w-auto min-w-[90px] border-border/50">
+              <Badge
+                variant={
+                  alerta.status === "gerado" ? "default" :
+                  alerta.status === "pendente" ? "destructive" : "secondary"
+                }
+                className="text-[10px] h-4 px-1.5"
+              >
+                {alerta.status === "gerado" ? "Gerado" : alerta.status === "pendente" ? "Pendente" : "Futuro"}
+              </Badge>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="gerado">Gerado</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );
