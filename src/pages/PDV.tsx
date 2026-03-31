@@ -176,15 +176,26 @@ export default function PDV() {
   const totalSaved = subtotalOriginal - subtotal;
 
 
+  // Count how many of each product are in the cart
+  const cartQtyMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of cart) {
+      map.set(item.product.id, (map.get(item.product.id) || 0) + 1);
+    }
+    return map;
+  }, [cart]);
+
   const filteredProducts = useMemo(() => {
-    const active = products.filter(p => p.status === "active" && p.stock > 0);
+    const active = products
+      .map(p => ({ ...p, displayStock: p.stock - (cartQtyMap.get(p.id) || 0) }))
+      .filter(p => p.status === "active" && p.displayStock > 0);
     if (!search) return active;
     const q = search.toLowerCase();
     return active.filter(p =>
       p.referencia.toLowerCase().includes(q) ||
       (p.barcode && p.barcode.toLowerCase().includes(q))
     );
-  }, [search, products]);
+  }, [search, products, cartQtyMap]);
 
   const addToCart = useCallback((product: DbProduct) => {
     setCart(prev => {
