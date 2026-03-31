@@ -495,7 +495,7 @@ export default function PDV() {
                 return (
                 <motion.div key={item.cartId} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }} transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }} className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-secondary/50">
                   <div className="flex-1 min-w-0">
-                    <p className="text-ui font-medium truncate">{item.product.referencia}</p>
+                    <p className="text-ui font-medium truncate">{item.product.model || item.product.referencia}</p>
                     <p className="text-caption text-muted-foreground">{item.product.color}</p>
                     {disc && <p className="text-[10px] text-success">{disc.ruleLabel}</p>}
                   </div>
