@@ -84,9 +84,10 @@ export function PaymentDonutChart({ sales }: PaymentDonutChartProps) {
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                     fontSize: "12px",
-                    color: "#FFFFFF",
                   }}
-                  formatter={(value: number) => [`R$ ${value.toFixed(2)}`, ""]}
+                  itemStyle={{ color: "hsl(0 0% 100%)" }}
+                  labelStyle={{ color: "hsl(0 0% 100%)" }}
+                  formatter={(value: number) => [<span style={{ color: "hsl(0 0% 100%)" }}>R$ {value.toFixed(2)}</span>, ""]}
                 />
               </PieChart>
             </ResponsiveContainer>
