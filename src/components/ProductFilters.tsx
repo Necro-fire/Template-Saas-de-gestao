@@ -127,6 +127,10 @@ export function applyProductFilters<T extends {
     if (filters.polarizado !== "all" && (p as any).polarizado !== filters.polarizado) return false;
     if (filters.tipoHaste !== "all" && (p as any).tipo_haste !== filters.tipoHaste) return false;
     if (filters.ponteArmacao !== "all" && (p as any).ponte_armacao !== filters.ponteArmacao) return false;
+    if (filters.tamanhoArmacao !== "all" && !p.is_acessorio) {
+      const size = `${(p as any).lens_size || 0}-${(p as any).bridge_size || 0}-${(p as any).temple_size || 0}`;
+      if (size !== filters.tamanhoArmacao) return false;
+    }
 
     // Accessory hierarchical filters
     if (filters.catAcessorio !== "all") {
