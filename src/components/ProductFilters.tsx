@@ -215,6 +215,21 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
   // Cascading types for accessory filter
   const tiposAcFiltro = draft.catAcessorio !== "all" ? getTiposByCategoria(draft.catAcessorio) : [];
 
+  // Available frame sizes from products (only non-accessories with valid sizes)
+  const availableSizes = useMemo(() => {
+    const sizeSet = new Set<string>();
+    products.filter(p => !p.is_acessorio && p.status !== "inativo").forEach(p => {
+      if (p.lens_size > 0 || p.bridge_size > 0 || p.temple_size > 0) {
+        sizeSet.add(`${p.lens_size}-${p.bridge_size}-${p.temple_size}`);
+      }
+    });
+    return Array.from(sizeSet).sort((a, b) => {
+      const [la] = a.split("-").map(Number);
+      const [lb] = b.split("-").map(Number);
+      return la - lb;
+    });
+  }, [products]);
+
   const validatePrice = (d: ProductFilterValues): boolean => {
     if (d.priceMin && d.priceMax && Number(d.priceMin) > Number(d.priceMax)) {
       setPriceError("Valor mínimo não pode ser maior que o máximo");
