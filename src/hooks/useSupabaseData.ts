@@ -212,6 +212,7 @@ export async function upsertEstoque(produtoId: string, filialId: string, quantid
 export interface PaymentSplit {
   method: string;
   amount: number;
+  finalAmount?: number;
 }
 
 export async function createVenda(
@@ -314,7 +315,7 @@ export async function createVenda(
         await (supabase as any).from("caixa_movimentacoes").insert({
           caixa_id: caixaAberto.id,
           tipo: "venda",
-          valor: split.amount,
+          valor: split.finalAmount ?? split.amount,
           forma_pagamento: split.method,
           descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"} (${split.method})`,
           venda_id: venda.id,
@@ -339,7 +340,7 @@ export async function createVenda(
   // Auto-create boleto alerts
   try {
     // Check main payment method
-    const mainIsBoleto = paymentMethod.toLowerCase().includes("boleto");
+    const mainIsBoleto = (!paymentSplits || paymentSplits.length === 0) && paymentMethod.toLowerCase().includes("boleto");
     if (mainIsBoleto) {
       const boletoMatch = paymentMethod.match(/(\d+)x\/(\d+)d/);
       const parcelas = boletoMatch ? parseInt(boletoMatch[1]) : 1;
@@ -350,7 +351,7 @@ export async function createVenda(
     // Check splits for boleto portions
     if (paymentSplits && paymentSplits.length > 0) {
       for (const split of paymentSplits) {
-        if (split.method.toLowerCase().includes("boleto") && !mainIsBoleto) {
+        if (split.method.toLowerCase().includes("boleto")) {
           const boletoMatch = split.method.match(/(\d+)x\/(\d+)d/);
           const parcelas = boletoMatch ? parseInt(boletoMatch[1]) : 1;
           const intervalo = boletoMatch ? parseInt(boletoMatch[2]) : 30;
