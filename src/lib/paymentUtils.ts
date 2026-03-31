@@ -98,18 +98,17 @@ export function parsePaymentDisplay(
 
   if (boletoMeta) {
     const { installments, intervalDays } = boletoMeta;
-    const ratePercent = getBoletoInterest(installments, intervalDays);
+    const { values, finalTotal } = getBoletoInstallmentValues(installments, intervalDays, total);
+    const ratePercent = getBoletoInterestRate(installments, intervalDays);
 
     if (ratePercent > 0) {
-      const finalTotal = total * (1 + ratePercent / 100);
-      const installmentValue = finalTotal / installments;
       return {
         label: `Boleto ${installments}x/${intervalDays}d`,
         originalTotal: total,
         finalTotal,
         hasInterest: true,
         installments,
-        installmentValue,
+        installmentValue: finalTotal / installments,
         rate: ratePercent,
       };
     }
