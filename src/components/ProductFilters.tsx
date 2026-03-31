@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Filter, X, Search, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ export interface ProductFilterValues {
   polarizado: string;
   tipoHaste: string;
   ponteArmacao: string;
+  tamanhoArmacao: string;
   // Accessory hierarchical filters
   catAcessorio: string;
   tipoAcessorio: string;
@@ -56,6 +57,7 @@ const emptyFilters: ProductFilterValues = {
   polarizado: "all",
   tipoHaste: "all",
   ponteArmacao: "all",
+  tamanhoArmacao: "all",
   catAcessorio: "all",
   tipoAcessorio: "all",
   corAcessorio: "all",
@@ -125,6 +127,10 @@ export function applyProductFilters<T extends {
     if (filters.polarizado !== "all" && (p as any).polarizado !== filters.polarizado) return false;
     if (filters.tipoHaste !== "all" && (p as any).tipo_haste !== filters.tipoHaste) return false;
     if (filters.ponteArmacao !== "all" && (p as any).ponte_armacao !== filters.ponteArmacao) return false;
+    if (filters.tamanhoArmacao !== "all" && !p.is_acessorio) {
+      const size = `${(p as any).lens_size || 0}-${(p as any).bridge_size || 0}-${(p as any).temple_size || 0}`;
+      if (size !== filters.tamanhoArmacao) return false;
+    }
 
     // Accessory hierarchical filters
     if (filters.catAcessorio !== "all") {
@@ -181,7 +187,7 @@ function FilterSelect({ label, value, onValueChange, options, allLabel = "Todos"
   );
 }
 
-export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
+export function ProductFilters({ filters, onChange, products = [] }: ProductFiltersProps) {
   const { selectedFilial, filiais } = useFilial();
   const filialLocked = selectedFilial !== "all";
   const [draft, setDraft] = useState<ProductFilterValues>({ ...filters });
@@ -192,6 +198,7 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
     const keys: (keyof ProductFilterValues)[] = [
       "tipoItem", "categoriaIdade", "genero", "estilo", "corArmacao",
       "materialAro", "materialHaste", "tipoLente", "polarizado", "tipoHaste", "ponteArmacao",
+      "tamanhoArmacao",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
     ];
@@ -207,6 +214,21 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
 
   // Cascading types for accessory filter
   const tiposAcFiltro = draft.catAcessorio !== "all" ? getTiposByCategoria(draft.catAcessorio) : [];
+
+  // Available frame sizes from products (only non-accessories with valid sizes)
+  const availableSizes = useMemo(() => {
+    const sizeSet = new Set<string>();
+    products.filter(p => !p.is_acessorio && p.status !== "inativo").forEach(p => {
+      if (p.lens_size > 0 || p.bridge_size > 0 || p.temple_size > 0) {
+        sizeSet.add(`${p.lens_size}-${p.bridge_size}-${p.temple_size}`);
+      }
+    });
+    return Array.from(sizeSet).sort((a, b) => {
+      const [la] = a.split("-").map(Number);
+      const [lb] = b.split("-").map(Number);
+      return la - lb;
+    });
+  }, [products]);
 
   const validatePrice = (d: ProductFilterValues): boolean => {
     if (d.priceMin && d.priceMax && Number(d.priceMin) > Number(d.priceMax)) {
@@ -313,6 +335,18 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
                   </div>
                   <FilterSelect label="Tipo de Haste" value={draft.tipoHaste}
                     onValueChange={(v) => setDraft({ ...draft, tipoHaste: v })} options={["Comum", ...TIPOS_HASTE]} />
+                  {availableSizes.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-caption">Tamanho da Armação</Label>
+                      <Select value={draft.tamanhoArmacao} onValueChange={(v) => setDraft({ ...draft, tamanhoArmacao: v })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          {availableSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -414,4 +448,5 @@ export function ProductFilters({ filters, onChange }: ProductFiltersProps) {
 interface ProductFiltersProps {
   filters: ProductFilterValues;
   onChange: (filters: ProductFilterValues) => void;
+  products?: { lens_size: number; bridge_size: number; temple_size: number; is_acessorio: boolean; status: string }[];
 }
