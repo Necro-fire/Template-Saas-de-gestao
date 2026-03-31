@@ -217,13 +217,9 @@ export function parseSplitPaymentDisplay(
     const ratePercent = getBoletoInterestRate(installments, intervalDays);
 
     if (ratePercent > 0) {
-      // For splits, splitAmount is already the final amount stored. Reverse-calculate original.
-      const { values, finalTotal: computedFinal } = getBoletoInstallmentValues(installments, intervalDays, splitAmount / (computedFinal ? 1 : 1));
-      // Simple reverse: original = splitAmount / (1 + weighted_rate)
-      const originalTotal = splitAmount * installments / values.reduce((s, v, i) => s + (values[i] / (splitAmount / installments)), 0) || splitAmount;
       return {
         label: `Boleto ${installments}x/${intervalDays}d`,
-        originalTotal: splitAmount, // Use splitAmount as-is since PDV already calculated
+        originalTotal: splitAmount,
         finalTotal: splitAmount,
         hasInterest: true,
         installments,
