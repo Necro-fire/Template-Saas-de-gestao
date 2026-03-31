@@ -214,18 +214,20 @@ export function parseSplitPaymentDisplay(
   const boletoMeta = extractBoletoMetaForSplit(vendaPaymentMethod, splitMethod, fallbackBoletoMeta);
   if (boletoMeta) {
     const { installments, intervalDays } = boletoMeta;
-    const ratePercent = getBoletoInterest(installments, intervalDays);
+    const ratePercent = getBoletoInterestRate(installments, intervalDays);
 
     if (ratePercent > 0) {
-      const originalTotal = splitAmount / (1 + ratePercent / 100);
-      const installmentValue = splitAmount / installments;
+      // For splits, splitAmount is already the final amount stored. Reverse-calculate original.
+      const { values, finalTotal: computedFinal } = getBoletoInstallmentValues(installments, intervalDays, splitAmount / (computedFinal ? 1 : 1));
+      // Simple reverse: original = splitAmount / (1 + weighted_rate)
+      const originalTotal = splitAmount * installments / values.reduce((s, v, i) => s + (values[i] / (splitAmount / installments)), 0) || splitAmount;
       return {
         label: `Boleto ${installments}x/${intervalDays}d`,
-        originalTotal,
+        originalTotal: splitAmount, // Use splitAmount as-is since PDV already calculated
         finalTotal: splitAmount,
         hasInterest: true,
         installments,
-        installmentValue,
+        installmentValue: splitAmount / installments,
         rate: ratePercent,
       };
     }
