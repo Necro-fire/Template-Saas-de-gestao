@@ -33,6 +33,7 @@ export interface ProductFilterValues {
   polarizado: string;
   tipoHaste: string;
   ponteArmacao: string;
+  tamanhoArmacao: string;
   // Accessory hierarchical filters
   catAcessorio: string;
   tipoAcessorio: string;
@@ -56,6 +57,7 @@ const emptyFilters: ProductFilterValues = {
   polarizado: "all",
   tipoHaste: "all",
   ponteArmacao: "all",
+  tamanhoArmacao: "all",
   catAcessorio: "all",
   tipoAcessorio: "all",
   corAcessorio: "all",
