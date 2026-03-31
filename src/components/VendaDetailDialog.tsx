@@ -231,6 +231,26 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             <div>
               <p className="text-muted-foreground text-xs">Valor</p>
               {(() => {
+                // Use stored boleto data as source of truth
+                if (boletos.length > 0 && !isCancelled) {
+                  const boletoTotal = boletos.reduce((s, b) => s + Number(b.valor_parcela), 0);
+                  const baseAmount = Number(venda.total);
+                  const hasJuros = Math.abs(boletoTotal - baseAmount) > 0.01;
+                  if (hasJuros) {
+                    return (
+                      <div>
+                        <p className="font-semibold text-base tabular-nums text-primary">
+                          {formatCurrency(boletoTotal)}
+                          <span className="text-xs font-normal text-muted-foreground ml-1">c/ juros</span>
+                        </p>
+                        <p className="text-xs tabular-nums text-muted-foreground line-through">
+                          {formatCurrency(baseAmount)}
+                        </p>
+                      </div>
+                    );
+                  }
+                }
+
                 const info = parsePaymentDisplay(venda.payment_method, Number(venda.total), boletoMeta);
                 if (info.hasInterest && !isCancelled) {
                   return (
