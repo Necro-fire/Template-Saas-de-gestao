@@ -234,13 +234,23 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                 // Use stored boleto data as source of truth
                 if (boletos.length > 0 && !isCancelled) {
                   const boletoTotal = boletos.reduce((s, b) => s + Number(b.valor_parcela), 0);
-                  const baseAmount = Number(venda.total);
-                  const hasJuros = Math.abs(boletoTotal - baseAmount) > 0.01;
+                  // Base = first parcela (no interest) × total parcelas
+                  const firstParcela = boletos.find((b: any) => b.parcela_numero === 1);
+                  const basePerParcela = firstParcela ? Number(firstParcela.valor_parcela) : 0;
+                  const totalParcelas = firstParcela ? Number(firstParcela.total_parcelas) : boletos.length;
+                  const boletoBase = basePerParcela * totalParcelas;
+                  // For split payments, non-boleto portion + boleto base = total without interest
+                  const nonBoletoTotal = paymentSplits.length > 1
+                    ? paymentSplits.filter(s => !s.method.toLowerCase().includes("boleto")).reduce((sum, s) => sum + s.amount, 0)
+                    : 0;
+                  const baseAmount = paymentSplits.length > 1 ? nonBoletoTotal + boletoBase : boletoBase;
+                  const finalAmount = paymentSplits.length > 1 ? nonBoletoTotal + boletoTotal : boletoTotal;
+                  const hasJuros = Math.abs(finalAmount - baseAmount) > 0.01;
                   if (hasJuros) {
                     return (
                       <div>
                         <p className="font-semibold text-base tabular-nums text-primary">
-                          {formatCurrency(boletoTotal)}
+                          {formatCurrency(finalAmount)}
                           <span className="text-xs font-normal text-muted-foreground ml-1">c/ juros</span>
                         </p>
                         <p className="text-xs tabular-nums text-muted-foreground line-through">
