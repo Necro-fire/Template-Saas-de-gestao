@@ -1009,7 +1009,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label className="mb-2 block">Tratamentos</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {LENTES_TRATAMENTOS.map(t => (
+                      {[...LENTES_TRATAMENTOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => (
                         <label key={t} className="flex items-center gap-2 text-sm cursor-pointer">
                           <Checkbox
                             checked={lenteTratamentos.includes(t)}
