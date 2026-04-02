@@ -90,6 +90,7 @@ export default function Vendas() {
       const q = search.trim().toLowerCase();
       result = result.filter(
         (s) =>
+          (s.sale_code || '').toLowerCase().includes(q) ||
           String(s.number).includes(q) ||
           s.client_name.toLowerCase().includes(q)
       );
