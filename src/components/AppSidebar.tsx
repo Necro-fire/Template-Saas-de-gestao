@@ -7,9 +7,7 @@ import {
   BarChart3,
   Warehouse,
   Wallet,
-  Briefcase,
   FileText,
-  Search,
   Receipt,
   FilePlus,
   Settings2,
@@ -52,6 +50,7 @@ const mainNav = [
 const staffNav = [
   { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "funcionarios", action: "view" },
   { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
+  { title: "Permissões", url: "/permissoes", icon: KeyRound, module: "admin", action: "manage_permissions" },
 ];
 
 const managementNav = [
@@ -65,12 +64,11 @@ const managementNav = [
 ];
 
 const fiscalNav = [
-  { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt, module: "fiscal", action: "view" },
-  { title: "Adicionar NF", url: "/adicionar-nf", icon: FilePlus, module: "fiscal", action: "manage" },
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt, module: "fiscal", action: "view_nf" },
+  { title: "Adicionar NF", url: "/adicionar-nf", icon: FilePlus, module: "fiscal", action: "add_nf" },
 ];
 
 const comingSoonNav = [
-  { title: "Malas", url: "/malas", icon: Briefcase, module: "malas", action: "view" },
   { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus, module: "fiscal", action: "manage" },
   { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2, module: "fiscal", action: "manage" },
   { title: "Empresas", url: "/empresas", icon: Building2, module: "fiscal", action: "manage" },

@@ -15,7 +15,7 @@ import Funcionarios from "./pages/Funcionarios";
 import Vendas from "./pages/Vendas";
 import Estoque from "./pages/Estoque";
 import Caixa from "./pages/Caixa";
-import Malas from "./pages/Malas";
+import Permissoes from "./pages/Permissoes";
 import Relatorios from "./pages/Relatorios";
 import NotasFiscais from "./pages/NotasFiscais";
 import EmitirNF from "./pages/EmitirNF";
@@ -54,10 +54,10 @@ const router = createBrowserRouter([
       { path: "/vendas", element: <ProtectedRoute module="vendas" action="view"><Vendas /></ProtectedRoute> },
       { path: "/estoque", element: <ProtectedRoute module="estoque" action="view"><Estoque /></ProtectedRoute> },
       { path: "/caixa", element: <ProtectedRoute module="caixa" action="view"><Caixa /></ProtectedRoute> },
-      { path: "/malas", element: <ProtectedRoute module="malas" action="view"><Malas /></ProtectedRoute> },
+      { path: "/permissoes", element: <ProtectedRoute module="admin" action="manage_permissions"><Permissoes /></ProtectedRoute> },
       { path: "/relatorios", element: <ProtectedRoute module="relatorios" action="view"><Relatorios /></ProtectedRoute> },
-      { path: "/notas-fiscais", element: <ProtectedRoute module="fiscal" action="view"><NotasFiscais /></ProtectedRoute> },
-      { path: "/adicionar-nf", element: <ProtectedRoute module="fiscal" action="manage"><EmitirNF /></ProtectedRoute> },
+      { path: "/notas-fiscais", element: <ProtectedRoute module="fiscal" action="view_nf"><NotasFiscais /></ProtectedRoute> },
+      { path: "/adicionar-nf", element: <ProtectedRoute module="fiscal" action="add_nf"><EmitirNF /></ProtectedRoute> },
       { path: "/emitir-nf", element: <ProtectedRoute module="fiscal" action="manage"><EmitirNF /></ProtectedRoute> },
       { path: "/configuracao-fiscal", element: <ProtectedRoute module="fiscal" action="manage"><ConfiguracaoFiscal /></ProtectedRoute> },
       { path: "/empresas", element: <ProtectedRoute module="fiscal" action="manage"><Empresas /></ProtectedRoute> },
