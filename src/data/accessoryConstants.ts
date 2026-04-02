@@ -590,9 +590,9 @@ export const LENTES_SOLAR_TIPOS = ["Não Polarizado", "Polarizado", "Espelhado",
 export const LENTES_SOLAR_CORES = [
   "Preto", "Marrom", "Verde G15", "Roxo", "Rosa", "Amarelo", "Transitions",
   "Azul", "Laranja", "Prata", "Dourado", "Vermelho", "Verde",
-  "Preto Degradê", "Marrom Degradê", "Verde G15 Degradê", "Roxo Degradê",
-  "Rosa Degradê", "Amarelo Degradê", "Azul Degradê", "Laranja Degradê",
-  "Prata Degradê", "Dourado Degradê", "Vermelho Degradê", "Verde Degradê",
+  "Preto Degradê", "Marrom Degradê", "Verde G15 Degradê", "Roxo Degradê", "Rosa Degradê",
+  "Amarelo Degradê", "Azul Degradê", "Laranja Degradê", "Prata Degradê",
+  "Dourado Degradê", "Vermelho Degradê", "Verde Degradê",
 ];
 
 export const LENTES_BASES = ["Base 2", "Base 4", "Base 6", "Base 8"];
