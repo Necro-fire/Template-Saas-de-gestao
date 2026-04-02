@@ -337,7 +337,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                             </div>
                             <div className="mt-1 text-xs text-muted-foreground space-y-0.5 pl-6">
                               <p>Valor sem juros: {formatCurrency(baseAmount)}</p>
-                              {hasJuros && <p>Juros: 6%</p>}
+                              {hasJuros && <p>Juros: {boletos[0]?.intervalo_dias <= 15 ? '3' : '6'}%</p>}
                               {boletos.map((b) => (
                                 <p key={b.id}>Parcela {b.parcela_numero}: R$ {Number(b.valor_parcela).toFixed(2)}</p>
                               ))}
