@@ -299,7 +299,7 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
             <div className="p-4 pt-2 space-y-3">
               <div className="space-y-1">
                 <Label className="text-caption">Tipo de Item</Label>
-                <Select value={draft.tipoItem} onValueChange={(v) => setDraft({ ...draft, tipoItem: v })}>
+                <Select value={draft.tipoItem} onValueChange={(v) => setDraft({ ...draft, tipoItem: v, classificacaoProduto: "all" })}>
                   <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
@@ -308,6 +308,21 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                   </SelectContent>
                 </Select>
               </div>
+
+              {(draft.tipoItem === "normal" || draft.tipoItem === "all") && (
+                <div className="space-y-1">
+                  <Label className="text-caption">Classificação</Label>
+                  <Select value={draft.classificacaoProduto} onValueChange={(v) => setDraft({ ...draft, classificacaoProduto: v })}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="Receituário">Receituário</SelectItem>
+                      <SelectItem value="Solar">Solar</SelectItem>
+                      <SelectItem value="Clip-on">Clip-on</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )
 
 
               {showFrameFilters && (
