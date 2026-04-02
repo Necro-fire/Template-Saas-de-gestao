@@ -318,7 +318,7 @@ export async function createVenda(
           tipo: "venda",
           valor: split.finalAmount ?? split.amount,
           forma_pagamento: split.method,
-          descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"} (${split.method})`,
+          descricao: `Venda ${venda.sale_code || '#' + venda.number} — ${clientName || "Cliente avulso"} (${split.method})`,
           venda_id: venda.id,
           usuario_id: userId,
           usuario_nome: userName || "",
