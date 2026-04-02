@@ -396,9 +396,11 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                   </div>
                   <FilterSelect label="Tipo de Haste" value={draft.tipoHaste}
                     onValueChange={(v) => setDraft({ ...draft, tipoHaste: v })} options={["Comum", ...TIPOS_HASTE]} />
+                  <Separator />
+                  <p className="text-caption text-muted-foreground font-medium">Medidas (mm)</p>
                   {availableSizes.length > 0 && (
                     <div className="space-y-1">
-                      <Label className="text-caption">Tamanho da Armação</Label>
+                      <Label className="text-caption">Tamanho da Armação (completo)</Label>
                       <Select value={draft.tamanhoArmacao} onValueChange={(v) => setDraft({ ...draft, tamanhoArmacao: v })}>
                         <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                         <SelectContent>
@@ -408,6 +410,24 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                       </Select>
                     </div>
                   )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {availableDimensions.lens.length > 0 && (
+                      <FilterSelect label="Largura da Lente" value={draft.filterLensSize}
+                        onValueChange={(v) => setDraft({ ...draft, filterLensSize: v })} options={availableDimensions.lens} />
+                    )}
+                    {availableDimensions.altura.length > 0 && (
+                      <FilterSelect label="Altura da Lente" value={draft.filterAlturaLente}
+                        onValueChange={(v) => setDraft({ ...draft, filterAlturaLente: v })} options={availableDimensions.altura} />
+                    )}
+                    {availableDimensions.bridge.length > 0 && (
+                      <FilterSelect label="Largura da Ponte" value={draft.filterBridgeSize}
+                        onValueChange={(v) => setDraft({ ...draft, filterBridgeSize: v })} options={availableDimensions.bridge} />
+                    )}
+                    {availableDimensions.temple.length > 0 && (
+                      <FilterSelect label="Comprimento Haste" value={draft.filterTempleSize}
+                        onValueChange={(v) => setDraft({ ...draft, filterTempleSize: v })} options={availableDimensions.temple} />
+                    )}
+                  </div>
                 </>
               )}
 
