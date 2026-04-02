@@ -455,7 +455,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
   // ── BL — SAQUINHO PARA ARMAÇÃO ──
   {
     nome: "Saquinho para Armação",
-    tiposVenda: ["Unidade"],
+    tiposVenda: ["Unidade", "Pacote 10", "Pacote 50", "Pacote 100"],
     tipos: [
       "Tecido Comum", "Tecido Pode Gravar",
     ].map(n => simpleTipoWithCores(n, [...CORES_COMPLETAS_PLUS])),
