@@ -295,7 +295,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas as variações" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todas as variações</SelectItem>
-                        {variacoesAc.map(v => <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>)}
+                        {[...variacoesAc].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(v => <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
