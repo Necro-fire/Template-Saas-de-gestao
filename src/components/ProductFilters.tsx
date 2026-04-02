@@ -48,6 +48,7 @@ export interface ProductFilterValues {
 const emptyFilters: ProductFilterValues = {
   search: "",
   tipoItem: "all",
+  classificacaoProduto: "all",
   categoriaIdade: "all",
   genero: "all",
   estilo: "all",
