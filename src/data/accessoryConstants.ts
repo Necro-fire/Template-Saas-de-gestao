@@ -327,7 +327,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     tiposVenda: ["Unidade"],
     tipos: [{
       nome: "Padrão",
-      variacoes: ["0.6", "0.7", "0.8", "0.9", ...genNumeric(1.1, 2.0)].map(v => ({ nome: v, cores: [...SEM_COR] })),
+      variacoes: ["0.6", "0.7", "0.8", "0.9", "1.0", ...genNumeric(1.1, 2.0)].map(v => ({ nome: v, cores: [...SEM_COR] })),
     }],
   },
 
