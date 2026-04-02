@@ -94,3 +94,29 @@ export function parseCurrency(masked: string): number {
   if (!digits) return 0;
   return parseInt(digits, 10) / 100;
 }
+
+/**
+ * Mask a percentage input as XX,XX (max 100,00).
+ * Strips non-digits, treats last 2 as decimals.
+ */
+export function maskPercent(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 5);
+  if (!digits) return "0,00";
+  let num = parseInt(digits, 10);
+  if (num > 10000) num = 10000;
+  const intPart = Math.floor(num / 100).toString();
+  const decPart = (num % 100).toString().padStart(2, "0");
+  return `${intPart},${decPart}`;
+}
+
+/**
+ * Parse a masked percent string back to a number.
+ * "10,50" → 10.5
+ */
+export function parsePercent(masked: string): number {
+  const digits = masked.replace(/\D/g, "");
+  if (!digits) return 0;
+  let num = parseInt(digits, 10);
+  if (num > 10000) num = 10000;
+  return num / 100;
+}

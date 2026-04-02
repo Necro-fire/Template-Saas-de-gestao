@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useFilial } from "@/contexts/FilialContext";
 import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
 import { ESTILOS } from "@/data/productConstants";
 import { TODAS_CATEGORIAS_ACESSORIO } from "@/data/accessoryConstants";
+import { maskPercent, parsePercent, formatCentsToDisplay } from "@/lib/masks";
 import { toast } from "sonner";
 
 interface AtacadoDialogProps {
@@ -219,13 +220,14 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                       />
                     ) : (
                       <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={form.valor_desconto}
-                        onChange={e => setForm(f => ({ ...f, valor_desconto: parseFloat(e.target.value) || 0 }))}
-                        placeholder="0"
+                        type="text"
+                        inputMode="numeric"
+                        value={maskPercent(String(Math.round(form.valor_desconto * 100)))}
+                        onChange={e => {
+                          const v = parsePercent(e.target.value);
+                          setForm(f => ({ ...f, valor_desconto: v }));
+                        }}
+                        placeholder="0,00"
                       />
                     )}
                   </div>
