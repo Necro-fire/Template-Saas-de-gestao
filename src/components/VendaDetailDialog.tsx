@@ -87,7 +87,13 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         .select("*")
         .eq("venda_id", venda.id)
         .order("parcela_numero", { ascending: true }),
-    ]).then(([itemsRes, splitsRes, boletoRes]) => {
+      (supabase as any)
+        .from("notas_fiscais")
+        .select("*")
+        .eq("venda_id", venda.id)
+        .neq("status", "cancelada")
+        .limit(1),
+    ]).then(([itemsRes, splitsRes, boletoRes, nfRes]) => {
       setItems(itemsRes.data || []);
 
       const splits: PaymentSplitInfo[] = (splitsRes.data || []).map((s: any) => ({
@@ -108,6 +114,8 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
       } else {
         setBoletoMeta(null);
       }
+
+      setNfData(nfRes.data?.[0] || null);
 
       setLoading(false);
     });
