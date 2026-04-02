@@ -23,6 +23,7 @@ export type StockLevel = "normal" | "low" | "critical" | "out_of_stock";
 export interface ProductFilterValues {
   search: string;
   tipoItem: string;
+  classificacaoProduto: string;
   categoriaIdade: string;
   genero: string;
   estilo: string;
