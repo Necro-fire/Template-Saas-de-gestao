@@ -64,7 +64,9 @@ export default function EmitirNF() {
     if (saleSearch.trim()) {
       const q = saleSearch.trim().toLowerCase();
       sales = sales.filter(s =>
-        String(s.number).includes(q) || s.client_name.toLowerCase().includes(q)
+        (s.sale_code || '').toLowerCase().includes(q) ||
+        String(s.number).includes(q) ||
+        s.client_name.toLowerCase().includes(q)
       );
     }
     return sales;
