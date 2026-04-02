@@ -169,7 +169,11 @@ export default function Produtos() {
             <h1 className="text-title font-semibold tracking-tighter">Produtos</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={handleExportAll} disabled={exporting}>
+              <Download className="h-4 w-4" />
+              {exporting ? "Exportando..." : "Exportar Imagens"}
+            </Button>
             {canCreate && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAtacado(true)}>
                 <ShoppingCart className="h-4 w-4" />
