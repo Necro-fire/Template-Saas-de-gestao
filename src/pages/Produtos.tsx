@@ -297,17 +297,15 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
-                    {product.image_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Compartilhar imagem"
-                        onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
-                      >
-                        <Share2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Compartilhar via WhatsApp"
+                      onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
