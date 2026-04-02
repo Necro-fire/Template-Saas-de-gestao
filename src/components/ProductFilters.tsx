@@ -322,8 +322,7 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                     </SelectContent>
                   </Select>
                 </div>
-              )
-
+              )}
 
               {showFrameFilters && (
                 <>
