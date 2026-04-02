@@ -220,13 +220,14 @@ export function AtacadoDialog({ open, onOpenChange }: AtacadoDialogProps) {
                       />
                     ) : (
                       <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={form.valor_desconto}
-                        onChange={e => setForm(f => ({ ...f, valor_desconto: parseFloat(e.target.value) || 0 }))}
-                        placeholder="0"
+                        type="text"
+                        inputMode="numeric"
+                        value={maskPercent(String(Math.round(form.valor_desconto * 100)))}
+                        onChange={e => {
+                          const v = parsePercent(e.target.value);
+                          setForm(f => ({ ...f, valor_desconto: v }));
+                        }}
+                        placeholder="0,00"
                       />
                     )}
                   </div>
