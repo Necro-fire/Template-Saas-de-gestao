@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-react";
+import { FileText, Search, Banknote, CreditCard, QrCode, Ban, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
+import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { parsePaymentDisplay, parseSplitPaymentDisplay, formatCurrency, type BoletoMetaInfo } from "@/lib/paymentUtils";
