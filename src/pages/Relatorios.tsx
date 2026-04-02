@@ -136,7 +136,7 @@ export default function Relatorios() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => generateReport(report)}
-                      disabled={isGenerating}
+                      disabled={isGenerating || !canExport}
                     >
                       {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                     </Button>
