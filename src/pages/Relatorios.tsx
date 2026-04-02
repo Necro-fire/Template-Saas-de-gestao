@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Download, FileText, Users, Wallet, UserCog, Package, Receipt, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ export default function Relatorios() {
   const { filialLabel, selectedFilial } = useFilial();
   const { preset, range, onChange } = useDateRangeFilter();
   const [generating, setGenerating] = useState<string | null>(null);
+  const { hasPermission } = useAuth();
+  const canExport = hasPermission('relatorios', 'export');
 
   const generateReport = async (report: typeof reports[0]) => {
     setGenerating(report.key);
@@ -133,7 +136,7 @@ export default function Relatorios() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => generateReport(report)}
-                      disabled={isGenerating}
+                      disabled={isGenerating || !canExport}
                     >
                       {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                     </Button>

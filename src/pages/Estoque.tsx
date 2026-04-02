@@ -33,7 +33,7 @@ export default function Estoque() {
   const { data: products } = useProducts();
   const { filters, setFilters } = useProductFilters();
   const { hasPermission } = useAuth();
-  const canEdit = hasPermission('estoque', 'edit');
+  const canManageAlerts = hasPermission('estoque', 'manage_alerts');
 
   // Pre-apply filters from URL params
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function Estoque() {
 
         <div className="flex flex-wrap gap-2">
           {products.length > 0 && <ProductFilters filters={filters} onChange={setFilters} />}
-          {canEdit && <StockAlertConfigDialog />}
+          {canManageAlerts && <StockAlertConfigDialog />}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
