@@ -89,19 +89,15 @@ Deno.serve(async (req) => {
       if (cpf.length !== 11) return json({ error: 'CPF deve ter 11 dígitos' }, 400);
 
       // ── Purge all old users before creating fresh admin ──
-      // Delete all funcionarios_auth
-      await supabaseAdmin.from('funcionarios_auth').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      // Delete all user_roles
-      await supabaseAdmin.from('user_roles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      // Delete all profiles
-      await supabaseAdmin.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      // Delete all system_settings
-      await supabaseAdmin.from('system_settings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseAdmin.from('funcionarios_auth').delete().gte('created_at', '1970-01-01');
+      await supabaseAdmin.from('user_roles').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseAdmin.from('profiles').delete().gte('created_at', '1970-01-01');
+      await supabaseAdmin.from('system_settings').delete().gte('created_at', '1970-01-01');
       // Delete all auth users
       const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
       if (allUsers) {
         for (const u of allUsers) {
-          await supabaseAdmin.auth.admin.deleteUser(u.id);
+          try { await supabaseAdmin.auth.admin.deleteUser(u.id); } catch {}
         }
       }
 
