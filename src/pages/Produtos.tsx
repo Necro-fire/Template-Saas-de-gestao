@@ -111,46 +111,32 @@ export default function Produtos() {
     });
   };
 
-  const downloadBlob = (blob: Blob, name: string) => {
-    const url = URL.createObjectURL(blob);
+  const openWhatsApp = (text: string) => {
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     const a = document.createElement("a");
     a.href = url;
-    a.download = name;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
-  const openWhatsApp = (text: string) => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
-
-  const handleExportImage = useCallback(async (product: DbProduct) => {
-    if (!product.image_url) { toast.error("Produto sem imagem"); return; }
-    try {
-      const { blob, ext } = await toShareableBlob(product.image_url);
-      const name = `${sanitizeName(product.model || product.referencia)}.${ext}`;
-      // Download the image first
-      downloadBlob(blob, name);
-      // Then open WhatsApp with product link (user attaches downloaded image)
-      const msg = `📦 *${product.model || product.referencia}*\nImagem: ${product.image_url}`;
-      openWhatsApp(msg);
-      toast.success("Imagem baixada! Cole no WhatsApp ou envie o link.");
-    } catch { toast.error("Erro ao compartilhar imagem"); }
+  const handleExportImage = useCallback((product: DbProduct) => {
+    const msg = product.image_url
+      ? `📦 *${product.model || product.referencia}*\n${product.image_url}`
+      : `📦 *${product.model || product.referencia}*`;
+    openWhatsApp(msg);
   }, []);
 
   const [exporting, setExporting] = useState(false);
 
-  const handleExportAll = useCallback(async () => {
+  const handleExportAll = useCallback(() => {
     const withImages = filtered.filter(p => p.image_url);
     if (withImages.length === 0) { toast.error("Nenhum produto com imagem"); return; }
     setExporting(true);
     try {
-      // Build message with all image links
-      const lines = withImages.map(p =>
-        `📦 *${p.model || p.referencia}*\n${p.image_url}`
-      );
+      const lines = withImages.map(p => `📦 *${p.model || p.referencia}*\n${p.image_url}`);
       const msg = `*Lista de Produtos (${withImages.length})*\n\n` + lines.join("\n\n");
       openWhatsApp(msg);
     } catch { toast.error("Erro ao compartilhar"); }
