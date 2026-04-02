@@ -23,7 +23,9 @@ export default function NotasFiscais() {
   const navigate = useNavigate();
   const { selectedFilial, filiais } = useFilial();
   const { hasPermission } = useAuth();
-  const canManage = hasPermission("fiscal", "manage");
+  const canAddNF = hasPermission("fiscal", "add_nf");
+  const canCancelNF = hasPermission("fiscal", "cancel_nf");
+  const canManage = canAddNF || canCancelNF;
   const { data: notas, updateStatus, deleteNF } = useNotasFiscais();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
