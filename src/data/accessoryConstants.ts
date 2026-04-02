@@ -295,7 +295,10 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     materiais: ["Metal", "Alumínio"],
     tipos: [{
       nome: "Padrão",
-      variacoes: genNumericVariations(1.1, 2.0, 0.1, [...CORES_PARAFUSO]),
+      variacoes: genNumericVariations(1.1, 2.0, 0.1, [
+        ...CORES_PARAFUSO, "Branco", "Azul", "Vermelho", "Verde",
+        "Marrom", "Cinza", "Champanhe", "Transparente",
+      ]),
     }],
   },
 
