@@ -295,7 +295,10 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     materiais: ["Metal", "Alumínio"],
     tipos: [{
       nome: "Padrão",
-      variacoes: genNumericVariations(1.1, 2.0, 0.1, [...CORES_PARAFUSO]),
+      variacoes: genNumericVariations(1.1, 2.0, 0.1, [
+        ...CORES_PARAFUSO, "Branco", "Azul", "Vermelho", "Verde",
+        "Marrom", "Cinza", "Champanhe", "Transparente",
+      ]),
     }],
   },
 
@@ -327,7 +330,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
     tiposVenda: ["Unidade"],
     tipos: [{
       nome: "Padrão",
-      variacoes: ["0.6", "0.7", "0.8", "0.9", ...genNumeric(1.1, 2.0)].map(v => ({ nome: v, cores: [...SEM_COR] })),
+      variacoes: ["0.6", "0.7", "0.8", "0.9", "1.0", ...genNumeric(1.1, 2.0)].map(v => ({ nome: v, cores: [...SEM_COR] })),
     }],
   },
 
@@ -452,7 +455,7 @@ export const ACESSORIOS_CATEGORIAS: AccessoryCategory[] = [
   // ── BL — SAQUINHO PARA ARMAÇÃO ──
   {
     nome: "Saquinho para Armação",
-    tiposVenda: ["Unidade"],
+    tiposVenda: ["Unidade", "Pacote 10", "Pacote 50", "Pacote 100"],
     tipos: [
       "Tecido Comum", "Tecido Pode Gravar",
     ].map(n => simpleTipoWithCores(n, [...CORES_COMPLETAS_PLUS])),
@@ -587,9 +590,9 @@ export const LENTES_SOLAR_TIPOS = ["Não Polarizado", "Polarizado", "Espelhado",
 export const LENTES_SOLAR_CORES = [
   "Preto", "Marrom", "Verde G15", "Roxo", "Rosa", "Amarelo", "Transitions",
   "Azul", "Laranja", "Prata", "Dourado", "Vermelho", "Verde",
-  "Preto Degradê", "Marrom Degradê", "Verde G15 Degradê", "Roxo Degradê",
-  "Rosa Degradê", "Amarelo Degradê", "Azul Degradê", "Laranja Degradê",
-  "Prata Degradê", "Dourado Degradê", "Vermelho Degradê", "Verde Degradê",
+  "Preto Degradê", "Marrom Degradê", "Verde G15 Degradê", "Roxo Degradê", "Rosa Degradê",
+  "Amarelo Degradê", "Azul Degradê", "Laranja Degradê", "Prata Degradê",
+  "Dourado Degradê", "Vermelho Degradê", "Verde Degradê",
 ];
 
 export const LENTES_BASES = ["Base 2", "Base 4", "Base 6", "Base 8"];

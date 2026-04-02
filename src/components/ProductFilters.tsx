@@ -23,6 +23,7 @@ export type StockLevel = "normal" | "low" | "critical" | "out_of_stock";
 export interface ProductFilterValues {
   search: string;
   tipoItem: string;
+  classificacaoProduto: string;
   categoriaIdade: string;
   genero: string;
   estilo: string;
@@ -47,6 +48,7 @@ export interface ProductFilterValues {
 const emptyFilters: ProductFilterValues = {
   search: "",
   tipoItem: "all",
+  classificacaoProduto: "all",
   categoriaIdade: "all",
   genero: "all",
   estilo: "all",
@@ -108,7 +110,10 @@ export function applyProductFilters<T extends {
 
     if (filters.tipoItem === "normal" && p.is_acessorio) return false;
     if (filters.tipoItem === "acessorio" && !p.is_acessorio) return false;
-    
+    if (filters.classificacaoProduto !== "all") {
+      const pCat = (p as any).category || "";
+      if (pCat !== filters.classificacaoProduto) return false;
+    }
 
     if (filters.categoriaIdade !== "all" && p.categoria_idade !== filters.categoriaIdade) return false;
     if (filters.genero !== "all") {
@@ -196,7 +201,7 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
 
   const countActive = (f: ProductFilterValues) => {
     const keys: (keyof ProductFilterValues)[] = [
-      "tipoItem", "categoriaIdade", "genero", "estilo", "corArmacao",
+      "tipoItem", "classificacaoProduto", "categoriaIdade", "genero", "estilo", "corArmacao",
       "materialAro", "materialHaste", "tipoLente", "polarizado", "tipoHaste", "ponteArmacao",
       "tamanhoArmacao",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
@@ -294,7 +299,7 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
             <div className="p-4 pt-2 space-y-3">
               <div className="space-y-1">
                 <Label className="text-caption">Tipo de Item</Label>
-                <Select value={draft.tipoItem} onValueChange={(v) => setDraft({ ...draft, tipoItem: v })}>
+                <Select value={draft.tipoItem} onValueChange={(v) => setDraft({ ...draft, tipoItem: v, classificacaoProduto: "all" })}>
                   <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
@@ -304,6 +309,20 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                 </Select>
               </div>
 
+              {(draft.tipoItem === "normal" || draft.tipoItem === "all") && (
+                <div className="space-y-1">
+                  <Label className="text-caption">Classificação</Label>
+                  <Select value={draft.classificacaoProduto} onValueChange={(v) => setDraft({ ...draft, classificacaoProduto: v })}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="Receituário">Receituário</SelectItem>
+                      <SelectItem value="Solar">Solar</SelectItem>
+                      <SelectItem value="Clip-on">Clip-on</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {showFrameFilters && (
                 <>
