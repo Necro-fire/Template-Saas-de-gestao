@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
 
       if (!userId) return json({ error: 'CPF não encontrado' }, 404);
 
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(func.user_id, {
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
         password: data.new_password,
       });
 
