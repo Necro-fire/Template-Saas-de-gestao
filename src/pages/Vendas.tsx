@@ -233,6 +233,12 @@ export default function Vendas() {
                         <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>#{sale.number}</p>
                         {isCancelled && <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Cancelada</Badge>}
                         {!isCancelled && isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
+                        {!isCancelled && vendasComNF.has(sale.id) && (
+                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/50 text-primary">
+                            <Receipt className="h-2.5 w-2.5 mr-0.5" />
+                            NF-e
+                          </Badge>
+                        )}
                         {isBoleto && !isCancelled && (
                           <Select
                             value={statusBoleto}
