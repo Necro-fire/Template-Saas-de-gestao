@@ -529,5 +529,5 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
 interface ProductFiltersProps {
   filters: ProductFilterValues;
   onChange: (filters: ProductFilterValues) => void;
-  products?: { lens_size: number; bridge_size: number; temple_size: number; is_acessorio: boolean; status: string }[];
+  products?: { lens_size: number; bridge_size: number; temple_size: number; altura_lente?: number; is_acessorio: boolean; status: string }[];
 }
