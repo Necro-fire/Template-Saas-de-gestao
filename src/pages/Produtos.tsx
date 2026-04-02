@@ -111,16 +111,19 @@ export default function Produtos() {
     });
   };
 
-  const shareViaWhatsApp = async (files: File[]) => {
-    if (navigator.canShare && navigator.canShare({ files })) {
-      try {
-        await navigator.share({ files });
-        return;
-      } catch (e: any) {
-        if (e.name === "AbortError") return;
-      }
-    }
-    toast.info("Abra o WhatsApp e envie as imagens manualmente.");
+  const downloadBlob = (blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const openWhatsApp = (text: string) => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const handleExportImage = useCallback(async (product: DbProduct) => {
@@ -128,8 +131,12 @@ export default function Produtos() {
     try {
       const { blob, ext } = await toShareableBlob(product.image_url);
       const name = `${sanitizeName(product.model || product.referencia)}.${ext}`;
-      const file = new File([blob], name, { type: ext === "png" ? "image/png" : "image/jpeg" });
-      await shareViaWhatsApp([file]);
+      // Download the image first
+      downloadBlob(blob, name);
+      // Then open WhatsApp with product link (user attaches downloaded image)
+      const msg = `📦 *${product.model || product.referencia}*\nImagem: ${product.image_url}`;
+      openWhatsApp(msg);
+      toast.success("Imagem baixada! Cole no WhatsApp ou envie o link.");
     } catch { toast.error("Erro ao compartilhar imagem"); }
   }, []);
 
@@ -140,17 +147,13 @@ export default function Produtos() {
     if (withImages.length === 0) { toast.error("Nenhum produto com imagem"); return; }
     setExporting(true);
     try {
-      const files: File[] = [];
-      await Promise.all(withImages.map(async (p) => {
-        try {
-          const { blob, ext } = await toShareableBlob(p.image_url);
-          const name = `${sanitizeName(p.model || p.referencia)}.${ext}`;
-          files.push(new File([blob], name, { type: ext === "png" ? "image/png" : "image/jpeg" }));
-        } catch { /* skip */ }
-      }));
-      if (files.length === 0) { toast.error("Nenhuma imagem processada"); return; }
-      await shareViaWhatsApp(files);
-    } catch { toast.error("Erro ao compartilhar imagens"); }
+      // Build message with all image links
+      const lines = withImages.map(p =>
+        `📦 *${p.model || p.referencia}*\n${p.image_url}`
+      );
+      const msg = `*Lista de Produtos (${withImages.length})*\n\n` + lines.join("\n\n");
+      openWhatsApp(msg);
+    } catch { toast.error("Erro ao compartilhar"); }
     finally { setExporting(false); }
   }, [filtered]);
 
