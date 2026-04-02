@@ -14,6 +14,12 @@ export interface DbNotaFiscal {
   chave_acesso: string;
   data_emissao: string;
   created_at: string;
+  tipo_operacao: string;
+  observacoes: string;
+  xml_url: string;
+  pdf_url: string;
+  fornecedor_nome: string;
+  fornecedor_cnpj: string;
 }
 
 export function useNotasFiscais() {
@@ -58,5 +64,21 @@ export function useNotasFiscais() {
     if (error) throw error;
   };
 
-  return { data, loading, refetch: fetchData, create, updateStatus };
+  const updateNF = async (id: string, updates: Partial<DbNotaFiscal>) => {
+    const { error } = await (supabase as any)
+      .from("notas_fiscais")
+      .update(updates)
+      .eq("id", id);
+    if (error) throw error;
+  };
+
+  const deleteNF = async (id: string) => {
+    const { error } = await (supabase as any)
+      .from("notas_fiscais")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  };
+
+  return { data, loading, refetch: fetchData, create, updateStatus, updateNF, deleteNF };
 }
