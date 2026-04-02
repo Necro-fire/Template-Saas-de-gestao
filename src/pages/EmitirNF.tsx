@@ -15,6 +15,7 @@ import { useVendas, useClients } from "@/hooks/useSupabaseData";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { maskCnpj, maskCpfCnpj, maskCurrency, parseCurrency, maskDate, parseDateToISO, unmask } from "@/lib/masks";
 
 export default function EmitirNF() {
   const navigate = useNavigate();
@@ -80,15 +81,17 @@ export default function EmitirNF() {
     return clients.find(c => c.id === sale.client_id) || null;
   }, [sale, clients]);
 
-  // Auto-fill when sale is selected
   const handleSelectSale = (saleId: string) => {
     setSelectedSaleId(saleId);
     const s = allSales.find(v => v.id === saleId);
     if (s) {
       setClientName(s.client_name);
-      setValorTotal(Number(s.total).toFixed(2));
+      // Format value as masked currency (cents)
+      const cents = Math.round(Number(s.total) * 100);
+      setValorTotal(maskCurrency(cents.toString()));
       const c = clients.find(cl => cl.id === s.client_id);
-      setClientCnpj(c?.cnpj || c?.cpf || "");
+      const doc = c?.cnpj || c?.cpf || "";
+      setClientCnpj(doc ? maskCpfCnpj(doc) : "");
     }
   };
 
@@ -105,10 +108,26 @@ export default function EmitirNF() {
   const handleSave = async () => {
     if (!numero.trim()) { toast.error("Informe o número da NF-e"); return; }
     if (!chaveAcesso.trim()) { toast.error("Informe a chave de acesso"); return; }
+    if (unmask(chaveAcesso).length !== 44) { toast.error("Chave de acesso deve ter 44 dígitos"); return; }
     if (nfExistenteNumero) { toast.error("Já existe uma NF-e com esse número"); return; }
     if (!selectedSaleId) { toast.error("Vincule a NF-e a uma venda"); return; }
     if (vendaJaTemNF) { toast.error("Esta venda já possui uma NF-e vinculada"); return; }
     if (isAllFiliais) { toast.error("Selecione uma filial específica"); return; }
+
+    // Validate date if provided
+    if (dataEmissao) {
+      const iso = parseDateToISO(dataEmissao);
+      if (!iso) { toast.error("Data inválida. Use o formato DD/MM/AAAA"); return; }
+    }
+
+    // Validate CNPJ fields
+    if (tipoOperacao === "entrada" && fornecedorCnpj && unmask(fornecedorCnpj).length !== 14) {
+      toast.error("CNPJ do fornecedor incompleto"); return;
+    }
+    if (tipoOperacao === "saida" && clientCnpj) {
+      const docLen = unmask(clientCnpj).length;
+      if (docLen !== 11 && docLen !== 14) { toast.error("CPF/CNPJ do cliente incompleto"); return; }
+    }
 
     setSaving(true);
     try {
@@ -118,23 +137,25 @@ export default function EmitirNF() {
       if (xmlFile) xmlUrl = await uploadFile(xmlFile, "xml");
       if (pdfFile) pdfUrl = await uploadFile(pdfFile, "pdf");
 
+      const isoDate = dataEmissao ? parseDateToISO(dataEmissao) : "";
+
       await createNF({
         numero: Number(numero),
         filial_id: selectedFilial,
         venda_id: selectedSaleId,
         empresa_id: null,
         client_name: clientName,
-        client_cnpj: clientCnpj,
-        valor_total: Number(valorTotal) || 0,
+        client_cnpj: unmask(clientCnpj),
+        valor_total: parseCurrency(valorTotal) || 0,
         status: "autorizada",
-        chave_acesso: chaveAcesso.trim(),
-        data_emissao: dataEmissao ? new Date(dataEmissao).toISOString() : new Date().toISOString(),
+        chave_acesso: unmask(chaveAcesso),
+        data_emissao: isoDate ? new Date(isoDate).toISOString() : new Date().toISOString(),
         tipo_operacao: tipoOperacao,
         observacoes: observacoes.trim(),
         xml_url: xmlUrl,
         pdf_url: pdfUrl,
         fornecedor_nome: fornecedorNome.trim(),
-        fornecedor_cnpj: fornecedorCnpj.trim(),
+        fornecedor_cnpj: unmask(fornecedorCnpj),
       });
       toast.success("NF-e cadastrada com sucesso!");
       navigate("/notas-fiscais");
@@ -215,11 +236,11 @@ export default function EmitirNF() {
                   <div className="space-y-1">
                     <Label className="text-xs">Número da NF-e *</Label>
                     <Input
-                      type="number"
                       value={numero}
-                      onChange={e => setNumero(e.target.value)}
+                      onChange={e => setNumero(e.target.value.replace(/\D/g, ""))}
                       placeholder="Nº da nota"
                       className="h-9"
+                      inputMode="numeric"
                     />
                     {nfExistenteNumero && (
                       <p className="text-xs text-destructive">NF-e já cadastrada com esse número</p>
@@ -243,32 +264,35 @@ export default function EmitirNF() {
                   <Label className="text-xs">Chave de Acesso *</Label>
                   <Input
                     value={chaveAcesso}
-                    onChange={e => setChaveAcesso(e.target.value)}
+                    onChange={e => setChaveAcesso(e.target.value.replace(/\D/g, "").slice(0, 44))}
                     placeholder="44 dígitos da chave de acesso"
                     className="h-9 font-mono text-xs"
                     maxLength={44}
+                    inputMode="numeric"
                   />
+                  <p className="text-xs text-muted-foreground">{unmask(chaveAcesso).length}/44 dígitos</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">Data da Nota</Label>
                     <Input
-                      type="date"
                       value={dataEmissao}
-                      onChange={e => setDataEmissao(e.target.value)}
+                      onChange={e => setDataEmissao(maskDate(e.target.value))}
+                      placeholder="DD/MM/AAAA"
                       className="h-9"
+                      maxLength={10}
+                      inputMode="numeric"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Valor Total (R$)</Label>
                     <Input
-                      type="number"
-                      step="0.01"
                       value={valorTotal}
-                      onChange={e => setValorTotal(e.target.value)}
+                      onChange={e => setValorTotal(maskCurrency(e.target.value))}
                       placeholder="0,00"
                       className="h-9"
+                      inputMode="numeric"
                     />
                   </div>
                 </div>
@@ -291,7 +315,14 @@ export default function EmitirNF() {
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">CNPJ do Fornecedor</Label>
-                      <Input value={fornecedorCnpj} onChange={e => setFornecedorCnpj(e.target.value)} className="h-9" placeholder="00.000.000/0000-00" />
+                      <Input
+                        value={fornecedorCnpj}
+                        onChange={e => setFornecedorCnpj(maskCnpj(e.target.value))}
+                        className="h-9"
+                        placeholder="00.000.000/0000-00"
+                        maxLength={18}
+                        inputMode="numeric"
+                      />
                     </div>
                   </div>
                 ) : (
@@ -301,8 +332,15 @@ export default function EmitirNF() {
                       <Input value={clientName} onChange={e => setClientName(e.target.value)} className="h-9" placeholder="Nome" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">CNPJ/CPF</Label>
-                      <Input value={clientCnpj} onChange={e => setClientCnpj(e.target.value)} className="h-9" placeholder="Documento" />
+                      <Label className="text-xs">CPF/CNPJ</Label>
+                      <Input
+                        value={clientCnpj}
+                        onChange={e => setClientCnpj(maskCpfCnpj(e.target.value))}
+                        className="h-9"
+                        placeholder="CPF ou CNPJ"
+                        maxLength={18}
+                        inputMode="numeric"
+                      />
                     </div>
                   </div>
                 )}

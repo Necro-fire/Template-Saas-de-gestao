@@ -120,3 +120,42 @@ export function parsePercent(masked: string): number {
   if (num > 10000) num = 10000;
   return num / 100;
 }
+
+/**
+ * Mask Inscrição Estadual: 000.000.000.000
+ */
+export function maskIE(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 12);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}.${d.slice(9)}`;
+}
+
+/**
+ * Mask date input as DD/MM/AAAA
+ */
+export function maskDate(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+/**
+ * Parse DD/MM/YYYY to ISO date string (YYYY-MM-DD)
+ */
+export function parseDateToISO(masked: string): string {
+  const d = masked.replace(/\D/g, "");
+  if (d.length !== 8) return "";
+  return `${d.slice(4, 8)}-${d.slice(2, 4)}-${d.slice(0, 2)}`;
+}
+
+/**
+ * Detect if value is CPF or CNPJ length and apply appropriate mask
+ */
+export function maskCpfCnpj(value: string): string {
+  const d = value.replace(/\D/g, "");
+  if (d.length <= 11) return maskCpf(value);
+  return maskCnpj(value);
+}
