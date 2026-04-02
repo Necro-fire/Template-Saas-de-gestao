@@ -255,6 +255,28 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
     });
   }, [products]);
 
+  // Individual dimension values from products
+  const availableDimensions = useMemo(() => {
+    const active = products.filter(p => !p.is_acessorio && p.status !== "inativo");
+    const lens = new Set<number>();
+    const altura = new Set<number>();
+    const bridge = new Set<number>();
+    const temple = new Set<number>();
+    active.forEach(p => {
+      if ((p as any).lens_size > 0) lens.add((p as any).lens_size);
+      if ((p as any).altura_lente > 0) altura.add((p as any).altura_lente);
+      if ((p as any).bridge_size > 0) bridge.add((p as any).bridge_size);
+      if ((p as any).temple_size > 0) temple.add((p as any).temple_size);
+    });
+    const toSorted = (s: Set<number>) => Array.from(s).sort((a, b) => a - b).map(String);
+    return {
+      lens: toSorted(lens),
+      altura: toSorted(altura),
+      bridge: toSorted(bridge),
+      temple: toSorted(temple),
+    };
+  }, [products]);
+
   const validatePrice = (d: ProductFilterValues): boolean => {
     if (d.priceMin && d.priceMax && Number(d.priceMin) > Number(d.priceMax)) {
       setPriceError("Valor mínimo não pode ser maior que o máximo");
