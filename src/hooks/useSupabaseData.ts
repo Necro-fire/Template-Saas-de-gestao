@@ -330,7 +330,7 @@ export async function createVenda(
         tipo: "venda",
         valor: total,
         forma_pagamento: paymentMethod,
-        descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"}`,
+        descricao: `Venda ${venda.sale_code || '#' + venda.number} — ${clientName || "Cliente avulso"}`,
         venda_id: venda.id,
         usuario_id: userId,
         usuario_nome: userName || "",
