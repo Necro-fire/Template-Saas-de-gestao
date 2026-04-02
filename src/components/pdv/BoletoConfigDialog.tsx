@@ -22,7 +22,7 @@ type BoletoInterval = "15" | "30";
 
 function getInstallmentValues(n: number, interval: BoletoInterval, total: number) {
   const intervalDays = parseInt(interval);
-  const JUROS_RATE = 0.06; // 6%
+  const JUROS_RATE = intervalDays <= 15 ? 0.03 : 0.06; // 3% for 15d, 6% for 30d
   const valorBase = total / n;
 
   // 15d: interest from 3rd installment; 30d: interest from 2nd installment
@@ -43,7 +43,7 @@ function getInstallmentValues(n: number, interval: BoletoInterval, total: number
     }
   }
 
-  const ratePercent = installmentsWithInterest > 0 ? 6 : 0;
+  const ratePercent = installmentsWithInterest > 0 ? (intervalDays <= 15 ? 3 : 6) : 0;
   return { finalTotal, parcelas, ratePercent, installmentsWithInterest };
 }
 
