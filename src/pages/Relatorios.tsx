@@ -23,6 +23,8 @@ export default function Relatorios() {
   const { filialLabel, selectedFilial } = useFilial();
   const { preset, range, onChange } = useDateRangeFilter();
   const [generating, setGenerating] = useState<string | null>(null);
+  const { hasPermission } = useAuth();
+  const canExport = hasPermission('relatorios', 'export');
 
   const generateReport = async (report: typeof reports[0]) => {
     setGenerating(report.key);

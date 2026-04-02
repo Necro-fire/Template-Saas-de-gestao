@@ -84,7 +84,7 @@ export default function NotasFiscais() {
             <h1 className="text-title font-semibold tracking-tighter">Notas Fiscais</h1>
             <p className="text-ui text-muted-foreground">Gestão de NF-e cadastradas</p>
           </div>
-          {canManage && (
+          {canAddNF && (
             <Button onClick={() => navigate("/adicionar-nf")} className="h-9">
               <FilePlus className="h-4 w-4 mr-2" />
               Adicionar NF-e
