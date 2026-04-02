@@ -217,8 +217,8 @@ export default function Produtos() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" className="gap-1.5" onClick={handleExportAll} disabled={exporting}>
-              <Download className="h-4 w-4" />
-              {exporting ? "Exportando..." : "Exportar Imagens"}
+              <Share2 className="h-4 w-4" />
+              {exporting ? "Compartilhando..." : "Compartilhar Imagens"}
             </Button>
             {canCreate && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAtacado(true)}>
