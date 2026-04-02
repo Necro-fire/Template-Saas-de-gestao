@@ -491,11 +491,17 @@ export type Database = {
           data_emissao: string
           empresa_id: string | null
           filial_id: string
+          fornecedor_cnpj: string
+          fornecedor_nome: string
           id: string
           numero: number
+          observacoes: string
+          pdf_url: string
           status: string
+          tipo_operacao: string
           valor_total: number
           venda_id: string | null
+          xml_url: string
         }
         Insert: {
           chave_acesso?: string
@@ -505,11 +511,17 @@ export type Database = {
           data_emissao?: string
           empresa_id?: string | null
           filial_id?: string
+          fornecedor_cnpj?: string
+          fornecedor_nome?: string
           id?: string
           numero?: number
+          observacoes?: string
+          pdf_url?: string
           status?: string
+          tipo_operacao?: string
           valor_total?: number
           venda_id?: string | null
+          xml_url?: string
         }
         Update: {
           chave_acesso?: string
@@ -519,11 +531,17 @@ export type Database = {
           data_emissao?: string
           empresa_id?: string | null
           filial_id?: string
+          fornecedor_cnpj?: string
+          fornecedor_nome?: string
           id?: string
           numero?: number
+          observacoes?: string
+          pdf_url?: string
           status?: string
+          tipo_operacao?: string
           valor_total?: number
           venda_id?: string | null
+          xml_url?: string
         }
         Relationships: [
           {

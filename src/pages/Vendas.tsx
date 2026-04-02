@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Search, Banknote, CreditCard, QrCode, Ban } from "lucide-react";
+import { FileText, Search, Banknote, CreditCard, QrCode, Ban, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { FilialSelector } from "@/components/FilialSelector";
 import { DateRangeFilter, useDateRangeFilter, filterByDateRange } from "@/components/DateRangeFilter";
 import { VendaDetailDialog } from "@/components/VendaDetailDialog";
 import { useVendas, type DbVenda } from "@/hooks/useSupabaseData";
+import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { parsePaymentDisplay, parseSplitPaymentDisplay, formatCurrency, type BoletoMetaInfo } from "@/lib/paymentUtils";
@@ -25,6 +26,17 @@ function getPaymentIcon(method: string) {
 
 export default function Vendas() {
   const { data: sales } = useVendas();
+  const { data: notasFiscais } = useNotasFiscais();
+  
+  // Set of venda IDs that have NF-e linked
+  const vendasComNF = useMemo(() => {
+    return new Set(
+      notasFiscais
+        .filter(nf => nf.venda_id && nf.status !== "cancelada")
+        .map(nf => nf.venda_id)
+    );
+  }, [notasFiscais]);
+
   // Fetch all payment splits (caixa_movimentacoes) keyed by venda_id
   const [splitsByVenda, setSplitsByVenda] = useState<Record<string, { method: string; amount: number }[]>>({});
   const [boletoMetaByVenda, setBoletoMetaByVenda] = useState<Record<string, BoletoMetaInfo>>({});
@@ -221,6 +233,12 @@ export default function Vendas() {
                         <p className={`text-ui font-medium ${isCancelled ? "line-through" : ""}`}>#{sale.number}</p>
                         {isCancelled && <Badge variant="destructive" className="text-[10px] h-4 px-1.5">Cancelada</Badge>}
                         {!isCancelled && isRecent && <Badge className="text-[10px] h-4 px-1.5">Nova</Badge>}
+                        {!isCancelled && vendasComNF.has(sale.id) && (
+                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/50 text-primary">
+                            <Receipt className="h-2.5 w-2.5 mr-0.5" />
+                            NF-e
+                          </Badge>
+                        )}
                         {isBoleto && !isCancelled && (
                           <Select
                             value={statusBoleto}

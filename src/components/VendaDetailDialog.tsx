@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle, Tag, Clock } from "lucide-react";
+import { Banknote, CreditCard, QrCode, FileText, Package, Ban, AlertTriangle, XCircle, Tag, Clock, Receipt, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cancelarVenda } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,6 +56,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   const [paymentSplits, setPaymentSplits] = useState<PaymentSplitInfo[]>([]);
   const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
   const [boletos, setBoletos] = useState<any[]>([]);
+  const [nfData, setNfData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -86,7 +87,13 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         .select("*")
         .eq("venda_id", venda.id)
         .order("parcela_numero", { ascending: true }),
-    ]).then(([itemsRes, splitsRes, boletoRes]) => {
+      (supabase as any)
+        .from("notas_fiscais")
+        .select("*")
+        .eq("venda_id", venda.id)
+        .neq("status", "cancelada")
+        .limit(1),
+    ]).then(([itemsRes, splitsRes, boletoRes, nfRes]) => {
       setItems(itemsRes.data || []);
 
       const splits: PaymentSplitInfo[] = (splitsRes.data || []).map((s: any) => ({
@@ -107,6 +114,8 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
       } else {
         setBoletoMeta(null);
       }
+
+      setNfData(nfRes.data?.[0] || null);
 
       setLoading(false);
     });
@@ -292,6 +301,31 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                 <p className="text-muted-foreground text-xs mt-0.5">
                   Economia: <span className="font-semibold">{formatCurrency(Number(venda.discount))}</span>
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* NF-e Info */}
+          {nfData && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-3">
+              <Receipt className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="text-sm flex-1">
+                <p className="font-medium text-primary">NF-e #{nfData.numero} vinculada</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  Chave: <span className="font-mono">{nfData.chave_acesso?.slice(0, 20)}...</span>
+                </p>
+                <div className="flex gap-2 mt-2">
+                  {nfData.xml_url && (
+                    <a href={nfData.xml_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                      <Download className="h-3 w-3" /> XML
+                    </a>
+                  )}
+                  {nfData.pdf_url && (
+                    <a href={nfData.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                      <Download className="h-3 w-3" /> PDF
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           )}
