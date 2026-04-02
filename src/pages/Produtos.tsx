@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Download, ImageDown } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Share2, ImageDown } from "lucide-react";
 import JsBarcode from "jsbarcode";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -113,13 +113,29 @@ export default function Produtos() {
     });
   };
 
+  const shareFiles = async (files: File[], title: string) => {
+    if (navigator.canShare && navigator.canShare({ files })) {
+      try {
+        await navigator.share({ title, files });
+        return;
+      } catch (e: any) {
+        if (e.name === "AbortError") return; // user cancelled
+      }
+    }
+    // Fallback: download
+    files.forEach(f => saveAs(f, f.name));
+    toast.info("Compartilhamento não suportado neste navegador — arquivo baixado.");
+  };
+
   const handleExportImage = useCallback(async (product: DbProduct) => {
     if (!product.image_url) { toast.error("Produto sem imagem"); return; }
     try {
       const { blob, ext } = await toShareableBlob(product.image_url);
       const name = `produto-${product.id.slice(0, 8)}-${sanitizeName(product.model || product.referencia)}.${ext}`;
-      saveAs(blob, name);
-    } catch { toast.error("Erro ao exportar imagem"); }
+      const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+      const file = new File([blob], name, { type: mimeType });
+      await shareFiles([file], product.model || product.referencia);
+    } catch { toast.error("Erro ao compartilhar imagem"); }
   }, []);
 
   const [exporting, setExporting] = useState(false);
@@ -129,18 +145,33 @@ export default function Produtos() {
     if (withImages.length === 0) { toast.error("Nenhum produto com imagem para exportar"); return; }
     setExporting(true);
     try {
-      const zip = new JSZip();
+      const files: File[] = [];
       await Promise.all(withImages.map(async (p) => {
         try {
           const { blob, ext } = await toShareableBlob(p.image_url);
           const name = `produto-${p.id.slice(0, 8)}-${sanitizeName(p.model || p.referencia)}.${ext}`;
-          zip.file(name, blob);
+          const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+          files.push(new File([blob], name, { type: mimeType }));
         } catch { /* skip failed */ }
       }));
+      if (files.length === 0) { toast.error("Nenhuma imagem processada"); setExporting(false); return; }
+      // Try sharing files directly; if too many or unsupported, fallback to ZIP
+      if (navigator.canShare && navigator.canShare({ files })) {
+        try {
+          await navigator.share({ title: "Imagens de Produtos", files });
+          setExporting(false);
+          return;
+        } catch (e: any) {
+          if (e.name === "AbortError") { setExporting(false); return; }
+        }
+      }
+      // Fallback: ZIP download
+      const zip = new JSZip();
+      files.forEach(f => zip.file(f.name, f));
       const content = await zip.generateAsync({ type: "blob", compression: "STORE" });
       saveAs(content, `produtos-imagens-${new Date().toISOString().slice(0, 10)}.zip`);
-      toast.success(`${withImages.length} imagens exportadas`);
-    } catch { toast.error("Erro ao gerar ZIP"); }
+      toast.success(`${files.length} imagens exportadas`);
+    } catch { toast.error("Erro ao compartilhar imagens"); }
     finally { setExporting(false); }
   }, [filtered]);
 
@@ -186,8 +217,8 @@ export default function Produtos() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" className="gap-1.5" onClick={handleExportAll} disabled={exporting}>
-              <Download className="h-4 w-4" />
-              {exporting ? "Exportando..." : "Exportar Imagens"}
+              <Share2 className="h-4 w-4" />
+              {exporting ? "Compartilhando..." : "Compartilhar Imagens"}
             </Button>
             {canCreate && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAtacado(true)}>
@@ -295,10 +326,10 @@ export default function Produtos() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        title="Exportar imagem"
+                        title="Compartilhar imagem"
                         onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
                       >
-                        <ImageDown className="h-3.5 w-3.5" />
+                        <Share2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
                     <Button
