@@ -69,26 +69,16 @@ Deno.serve(async (req) => {
 
     // ─── SETUP: primeiro admin ───
     if (action === 'setup') {
-      // Check if any admin user has a funcionarios_auth entry with CPF
-      const { data: adminRoleRows } = await supabaseAdmin
-        .from('user_roles')
-        .select('user_id, roles!inner(name)')
-        .eq('roles.name', 'admin');
+      // Check if admin already exists
+      const { data: existingAdmin } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('tipo', 'admin')
+        .limit(1);
 
-      let hasAdminWithCpf = false;
-      if (adminRoleRows && adminRoleRows.length > 0) {
-        for (const row of adminRoleRows) {
-          const { data: fa } = await supabaseAdmin
-            .from('funcionarios_auth')
-            .select('id')
-            .eq('user_id', row.user_id)
-            .neq('cpf', '')
-            .limit(1);
-          if (fa && fa.length > 0) { hasAdminWithCpf = true; break; }
-        }
+      if (existingAdmin && existingAdmin.length > 0) {
+        return json({ error: 'Sistema já configurado' }, 400);
       }
-
-      if (hasAdminWithCpf) return json({ error: 'Sistema já configurado' }, 400);
 
       if (!data.cpf || !data.password || !data.nome) {
         return json({ error: 'CPF, senha e nome são obrigatórios' }, 400);
@@ -97,6 +87,23 @@ Deno.serve(async (req) => {
 
       const cpf = data.cpf.replace(/\D/g, '');
       if (cpf.length !== 11) return json({ error: 'CPF deve ter 11 dígitos' }, 400);
+
+      // ── Purge all old users before creating fresh admin ──
+      // Delete all funcionarios_auth
+      await supabaseAdmin.from('funcionarios_auth').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete all user_roles
+      await supabaseAdmin.from('user_roles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete all profiles
+      await supabaseAdmin.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete all system_settings
+      await supabaseAdmin.from('system_settings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete all auth users
+      const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+      if (allUsers) {
+        for (const u of allUsers) {
+          await supabaseAdmin.auth.admin.deleteUser(u.id);
+        }
+      }
 
       const email = `admin_${cpf}@jots.interno`;
 
@@ -109,21 +116,12 @@ Deno.serve(async (req) => {
 
       if (authError) return json({ error: authError.message }, 400);
 
+      // Profile only — NO funcionarios_auth entry for admin master
       await supabaseAdmin.from('profiles').insert({
         id: authUser.user.id,
         nome: data.nome,
         email,
         tipo: 'admin',
-      });
-
-      // Create funcionarios_auth entry for admin
-      await supabaseAdmin.from('funcionarios_auth').insert({
-        user_id: authUser.user.id,
-        nome: data.nome,
-        cpf,
-        codigo_acesso: cpf,
-        cargo: 'Administrador',
-        filial_id: '1',
       });
 
       const { data: adminRole } = await supabaseAdmin
