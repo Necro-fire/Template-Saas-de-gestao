@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Download, ImageDown } from "lucide-react";
 import JsBarcode from "jsbarcode";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
 import { Button } from "@/components/ui/button";
@@ -84,6 +86,49 @@ export default function Produtos() {
     if (!open) setEditingProduct(null);
   };
 
+  const sanitizeName = (name: string) =>
+    name.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 50);
+
+  const getExtFromUrl = (url: string) => {
+    const match = url.match(/\.(png|jpg|jpeg|webp|gif)(\?|$)/i);
+    return match ? match[1].toLowerCase() : "jpg";
+  };
+
+  const handleExportImage = useCallback(async (product: DbProduct) => {
+    if (!product.image_url) { toast.error("Produto sem imagem"); return; }
+    try {
+      const res = await fetch(product.image_url);
+      const blob = await res.blob();
+      const ext = getExtFromUrl(product.image_url);
+      const name = `produto-${product.id.slice(0, 8)}-${sanitizeName(product.model || product.referencia)}.${ext}`;
+      saveAs(blob, name);
+    } catch { toast.error("Erro ao exportar imagem"); }
+  }, []);
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportAll = useCallback(async () => {
+    const withImages = filtered.filter(p => p.image_url);
+    if (withImages.length === 0) { toast.error("Nenhum produto com imagem para exportar"); return; }
+    setExporting(true);
+    try {
+      const zip = new JSZip();
+      await Promise.all(withImages.map(async (p) => {
+        try {
+          const res = await fetch(p.image_url);
+          const blob = await res.blob();
+          const ext = getExtFromUrl(p.image_url);
+          const name = `produto-${p.id.slice(0, 8)}-${sanitizeName(p.model || p.referencia)}.${ext}`;
+          zip.file(name, blob);
+        } catch { /* skip failed */ }
+      }));
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `produtos-imagens-${new Date().toISOString().slice(0, 10)}.zip`);
+      toast.success(`${withImages.length} imagens exportadas`);
+    } catch { toast.error("Erro ao gerar ZIP"); }
+    finally { setExporting(false); }
+  }, [filtered]);
+
   const handlePrintLabel = useCallback((product: DbProduct) => {
     const canvas = document.createElement("canvas");
     try {
@@ -124,7 +169,11 @@ export default function Produtos() {
             <h1 className="text-title font-semibold tracking-tighter">Produtos</h1>
             <p className="text-ui text-muted-foreground">{filtered.length} produtos</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={handleExportAll} disabled={exporting}>
+              <Download className="h-4 w-4" />
+              {exporting ? "Exportando..." : "Exportar Imagens"}
+            </Button>
             {canCreate && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowAtacado(true)}>
                 <ShoppingCart className="h-4 w-4" />
@@ -226,10 +275,21 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
+                    {product.image_url && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Exportar imagem"
+                        onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
+                      >
+                        <ImageDown className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 ml-1"
+                      className="h-7 w-7"
                       title="Imprimir etiqueta"
                       onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
                     >
