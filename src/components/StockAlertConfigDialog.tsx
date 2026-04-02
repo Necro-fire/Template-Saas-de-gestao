@@ -278,7 +278,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todos os tipos</SelectItem>
-                        {tiposAc.map(t => <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>)}
+                        {[...tiposAc].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -295,7 +295,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas as variações" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todas as variações</SelectItem>
-                        {variacoesAc.map(v => <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>)}
+                        {[...variacoesAc].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(v => <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -309,7 +309,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os materiais" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todos os materiais</SelectItem>
-                        {materiaisAc.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {[...materiaisAc].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -323,7 +323,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todas as cores" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todas as cores</SelectItem>
-                        {coresAc.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {[...coresAc].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

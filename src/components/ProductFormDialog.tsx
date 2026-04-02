@@ -663,7 +663,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={ponteArmacao} onValueChange={setPonteArmacao}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {PONTES_ARMACAO.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        {[...PONTES_ARMACAO].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -835,7 +835,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   >
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
                     <SelectContent>
-                      {tiposAcessorio.map(t => (
+                      {[...tiposAcessorio].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => (
                         <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>
                       ))}
                     </SelectContent>
@@ -856,7 +856,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   >
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a variação" /></SelectTrigger>
                     <SelectContent>
-                      {variacoesAcessorio.map(v => (
+                      {[...variacoesAcessorio].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(v => (
                         <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>
                       ))}
                     </SelectContent>
@@ -899,7 +899,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <Select value={materialAcessorio} onValueChange={setMaterialAcessorio}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o material" /></SelectTrigger>
                     <SelectContent>
-                      {materiaisAcessorio.map(m => (
+                      {[...materiaisAcessorio].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
                       ))}
                     </SelectContent>
@@ -914,7 +914,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <Select value={tipoVenda} onValueChange={setTipoVenda}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o tipo de venda" /></SelectTrigger>
                     <SelectContent>
-                      {tiposVendaAcessorio.map(tv => (
+                      {[...tiposVendaAcessorio].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(tv => (
                         <SelectItem key={tv} value={tv}>{tv}</SelectItem>
                       ))}
                     </SelectContent>
@@ -933,11 +933,11 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label>Cor</Label>
                     <Select value={corAcessorio} onValueChange={setCorAcessorio}>
-                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
-                      <SelectContent>
-                        {cores.filter(c => c !== "Nenhuma").map(c => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                    <SelectContent>
+                      {[...cores].filter(c => c !== "Nenhuma").sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -969,7 +969,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={lenteSolarTipo} onValueChange={setLenteSolarTipo}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {LENTES_SOLAR_TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        {[...LENTES_SOLAR_TIPOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -978,7 +978,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     <Select value={lenteSolarCor} onValueChange={setLenteSolarCor}>
                       <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
                       <SelectContent>
-                        {LENTES_SOLAR_CORES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {[...LENTES_SOLAR_CORES].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1009,7 +1009,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label className="mb-2 block">Tratamentos</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {LENTES_TRATAMENTOS.map(t => (
+                      {[...LENTES_TRATAMENTOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => (
                         <label key={t} className="flex items-center gap-2 text-sm cursor-pointer">
                           <Checkbox
                             checked={lenteTratamentos.includes(t)}
@@ -1093,7 +1093,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label className="mb-2 block">Tratamentos</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {LENTES_TRATAMENTOS.map(t => (
+                      {[...LENTES_TRATAMENTOS].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(t => (
                         <label key={t} className="flex items-center gap-2 text-sm cursor-pointer">
                           <Checkbox
                             checked={lenteTratamentos.includes(t)}
