@@ -1,22 +1,129 @@
-import { BarChart3, Download } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Download, FileText, Users, Wallet, UserCog, Package, Receipt, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { supabase } from "@/integrations/supabase/client";
+import { format, subDays, startOfMonth, startOfYear } from "date-fns";
+import { toast } from "sonner";
+
+type Preset = "today" | "7days" | "month" | "year" | "custom";
+
+function getDateRange(preset: Preset, customFrom: string, customTo: string) {
+  const now = new Date();
+  const to = preset === "custom" && customTo ? new Date(customTo + "T23:59:59") : now;
+  let from: Date;
+  switch (preset) {
+    case "today": from = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
+    case "7days": from = subDays(now, 7); break;
+    case "month": from = startOfMonth(now); break;
+    case "year": from = startOfYear(now); break;
+    case "custom": from = customFrom ? new Date(customFrom) : subDays(now, 30); break;
+    default: from = subDays(now, 30);
+  }
+  return { from, to };
+}
 
 const reports = [
-  { title: "Vendas por Período", desc: "Relatório de vendas com filtro por data" },
-  { title: "Vendas por Vendedor", desc: "Performance de cada vendedor" },
-  { title: "Vendas por Cliente", desc: "Histórico de compras por cliente" },
-  { title: "Produtos Mais Vendidos", desc: "Ranking de produtos por volume" },
-  { title: "Produtos Sem Giro", desc: "Produtos sem movimentação" },
-  { title: "Estoque Atual", desc: "Posição de estoque completa" },
-  { title: "Relatório de Mala", desc: "Controle de mala por vendedor" },
-  { title: "Fluxo de Caixa", desc: "Entradas e saídas por período" },
+  { key: "vendas", title: "Todas as Vendas", desc: "Relatório completo de vendas com detalhes", icon: FileText, table: "vendas", dateCol: "created_at" },
+  { key: "clientes", title: "Todos os Clientes", desc: "Relatório de todos os clientes cadastrados", icon: Users, table: "clientes", dateCol: "created_at" },
+  { key: "caixa", title: "Todo o Caixa", desc: "Movimentações de caixa por período", icon: Wallet, table: "caixa_movimentacoes", dateCol: "created_at" },
+  { key: "funcionarios", title: "Todos os Funcionários", desc: "Relatório de funcionários ativos", icon: UserCog, table: "funcionarios_auth", dateCol: "created_at" },
+  { key: "estoque", title: "Todo o Estoque", desc: "Posição atual do estoque completa", icon: Package, table: "produtos", dateCol: null },
+  { key: "nfe", title: "Todas as NF-e", desc: "Relatório de notas fiscais cadastradas", icon: Receipt, table: "notas_fiscais", dateCol: "data_emissao" },
+  { key: "custo_lucro", title: "Custo e Lucro Geral", desc: "Análise de custo vs lucro das vendas", icon: TrendingUp, table: "vendas", dateCol: "created_at" },
 ];
 
 export default function Relatorios() {
-  const { filialLabel } = useFilial();
+  const { filialLabel, selectedFilial } = useFilial();
+  const [preset, setPreset] = useState<Preset>("month");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [generating, setGenerating] = useState<string | null>(null);
+
+  const dateRange = useMemo(() => getDateRange(preset, customFrom, customTo), [preset, customFrom, customTo]);
+
+  const generateReport = async (report: typeof reports[0]) => {
+    setGenerating(report.key);
+    try {
+      let query = (supabase as any).from(report.table).select("*");
+
+      if (report.dateCol) {
+        query = query
+          .gte(report.dateCol, dateRange.from.toISOString())
+          .lte(report.dateCol, dateRange.to.toISOString());
+      }
+
+      if (selectedFilial !== "all" && report.table !== "funcionarios_auth") {
+        query = query.eq("filial_id", selectedFilial);
+      }
+
+      const { data: rows, error } = await query;
+      if (error) throw error;
+      if (!rows || rows.length === 0) {
+        toast.info("Nenhum dado encontrado para o período selecionado");
+        setGenerating(null);
+        return;
+      }
+
+      // For custo_lucro, enrich with venda_items
+      let csvRows = rows;
+      if (report.key === "custo_lucro") {
+        const vendaIds = rows.map((r: any) => r.id);
+        const { data: items } = await (supabase as any)
+          .from("venda_items")
+          .select("venda_id, quantity, unit_price, custo_unitario")
+          .in("venda_id", vendaIds);
+
+        csvRows = rows.map((venda: any) => {
+          const vendaItems = (items || []).filter((i: any) => i.venda_id === venda.id);
+          const custoTotal = vendaItems.reduce((s: number, i: any) => s + (i.custo_unitario * i.quantity), 0);
+          const receita = Number(venda.total);
+          return {
+            codigo: venda.sale_code || `#${venda.number}`,
+            cliente: venda.client_name,
+            data: format(new Date(venda.created_at), "dd/MM/yyyy HH:mm"),
+            receita: receita.toFixed(2),
+            custo: custoTotal.toFixed(2),
+            lucro: (receita - custoTotal).toFixed(2),
+            margem: receita > 0 ? ((receita - custoTotal) / receita * 100).toFixed(1) + "%" : "0%",
+            status: venda.status,
+          };
+        });
+      }
+
+      // Convert to CSV
+      const headers = Object.keys(csvRows[0]);
+      const csv = [
+        headers.join(";"),
+        ...csvRows.map((row: any) =>
+          headers.map(h => {
+            const val = row[h];
+            if (val === null || val === undefined) return "";
+            if (typeof val === "object") return JSON.stringify(val);
+            return String(val).replace(/;/g, ",");
+          }).join(";")
+        ),
+      ].join("\n");
+
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio_${report.key}_${format(dateRange.from, "ddMMyyyy")}_${format(dateRange.to, "ddMMyyyy")}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Relatório gerado com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao gerar relatório: " + (err.message || ""));
+    }
+    setGenerating(null);
+  };
 
   return (
     <div>
@@ -27,25 +134,73 @@ export default function Relatorios() {
           <p className="text-ui text-muted-foreground">Geração de relatórios — {filialLabel}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {reports.map((report, i) => (
-            <Card key={i} className="shadow-card hover:shadow-md transition-shadow cursor-pointer group">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center mb-3">
-                      <BarChart3 className="h-4 w-4 text-primary" />
-                    </div>
-                    <h3 className="text-ui font-semibold">{report.title}</h3>
-                    <p className="text-caption text-muted-foreground mt-1">{report.desc}</p>
+        {/* Period Filter */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Período</Label>
+                <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
+                  <SelectTrigger className="h-9 w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
+                    <SelectItem value="month">Mês</SelectItem>
+                    <SelectItem value="year">Ano</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {preset === "custom" && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-xs">De</Label>
+                    <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="h-9 w-[150px]" />
                   </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Download className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="space-y-1">
+                    <Label className="text-xs">Até</Label>
+                    <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="h-9 w-[150px]" />
+                  </div>
+                </>
+              )}
+              <p className="text-caption text-muted-foreground">
+                {format(dateRange.from, "dd/MM/yyyy")} — {format(dateRange.to, "dd/MM/yyyy")}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {reports.map((report) => {
+            const Icon = report.icon;
+            const isGenerating = generating === report.key;
+            return (
+              <Card key={report.key} className="shadow-card hover:shadow-md transition-shadow group">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center mb-3">
+                        <Icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <h3 className="text-ui font-semibold">{report.title}</h3>
+                      <p className="text-caption text-muted-foreground mt-1">{report.desc}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => generateReport(report)}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>

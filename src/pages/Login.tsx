@@ -4,69 +4,54 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Shield, UserCog, Lock, Mail, KeyRound, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Shield, Lock, KeyRound, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { maskCpf, unmask } from '@/lib/masks';
 import jotsLogo from '@/assets/jots-logo.png';
 
+type View = 'login' | 'setup' | 'forgot';
+
 export default function Login() {
-  const [tab, setTab] = useState<'admin' | 'funcionario'>('admin');
-  const [email, setEmail] = useState('');
-  const [codigo, setCodigo] = useState('');
+  const [view, setView] = useState<View>('login');
+  const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isSetup, setIsSetup] = useState(false);
   const [setupNome, setSetupNome] = useState('');
   const [checkingSetup, setCheckingSetup] = useState(true);
   const navigate = useNavigate();
 
-  // Auto-detect if system needs first-time setup
   useEffect(() => {
     const checkSetup = async () => {
       try {
         const { data, error } = await supabase.rpc('get_profiles_count');
-        if (error) {
-          setIsSetup(false);
-        } else {
-          setIsSetup(data === 0);
-        }
-      } catch {
-        setIsSetup(false);
-      }
+        if (!error && data === 0) setView('setup');
+      } catch {}
       setCheckingSetup(false);
     };
     checkSetup();
   }, []);
 
-  const handleAdminLogin = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error('E-mail ou senha inválidos');
-    } else {
-      navigate('/');
-    }
-  };
-
-  const handleEmployeeLogin = async () => {
+  const handleLogin = async () => {
+    const rawCpf = unmask(cpf);
+    if (rawCpf.length !== 11) { toast.error('CPF inválido'); return; }
     setLoading(true);
     try {
       const { data, error: lookupError } = await supabase.functions.invoke('auth-api', {
-        body: { action: 'lookup', codigo_acesso: codigo },
+        body: { action: 'lookup', cpf: rawCpf },
       });
-
       if (lookupError || data?.error) {
-        toast.error(data?.error || 'Código de acesso não encontrado');
+        toast.error(data?.error || 'CPF não encontrado');
         setLoading(false);
         return;
       }
-
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password,
       });
-
       if (error) {
         toast.error('Senha inválida');
       } else {
@@ -79,33 +64,63 @@ export default function Login() {
   };
 
   const handleSetup = async () => {
+    const rawCpf = unmask(cpf);
+    if (rawCpf.length !== 11) { toast.error('CPF inválido'); return; }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('auth-api', {
-        body: { action: 'setup', email, password, nome: setupNome },
+        body: { action: 'setup', cpf: rawCpf, password, nome: setupNome },
       });
       if (error || data?.error) {
         toast.error(data?.error || 'Erro ao configurar');
         setLoading(false);
         return;
       }
-      toast.success('Administrador criado! Faça login para continuar.');
-      setIsSetup(false);
-      setEmail('');
+      toast.success('Administrador criado! Anote o código de recuperação: ' + data.recovery_code);
+      setView('login');
+      setCpf('');
       setPassword('');
       setSetupNome('');
-      setTab('admin');
     } catch {
       toast.error('Erro ao configurar');
     }
     setLoading(false);
   };
 
+  const handleResetPassword = async () => {
+    const rawCpf = unmask(cpf);
+    if (rawCpf.length !== 11) { toast.error('CPF inválido'); return; }
+    if (!recoveryCode.trim()) { toast.error('Informe o código de recuperação'); return; }
+    if (newPassword.length < 6) { toast.error('Senha deve ter pelo menos 6 caracteres'); return; }
+    if (newPassword !== confirmPassword) { toast.error('As senhas não coincidem'); return; }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-api', {
+        body: { action: 'reset-password', cpf: rawCpf, recovery_code: recoveryCode.trim(), new_password: newPassword },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || 'Erro ao redefinir senha');
+        setLoading(false);
+        return;
+      }
+      toast.success('Senha redefinida com sucesso!');
+      setView('login');
+      setCpf('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setRecoveryCode('');
+    } catch {
+      toast.error('Erro ao redefinir senha');
+    }
+    setLoading(false);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSetup) return handleSetup();
-    if (tab === 'admin') return handleAdminLogin();
-    return handleEmployeeLogin();
+    if (view === 'setup') return handleSetup();
+    if (view === 'forgot') return handleResetPassword();
+    return handleLogin();
   };
 
   if (checkingSetup) {
@@ -126,86 +141,29 @@ export default function Login() {
             <img src={jotsLogo} alt="Jots" className="h-14 w-14 rounded-xl shadow-lg" />
             <h1 className="text-2xl font-bold text-white tracking-tight">Jots Distribuidora</h1>
             <p className="text-white/50 text-sm">
-              {isSetup ? 'Configure o primeiro administrador' : 'Acesse sua conta para continuar'}
+              {view === 'setup' ? 'Configure o primeiro administrador'
+                : view === 'forgot' ? 'Redefinir senha'
+                : 'Acesse sua conta para continuar'}
             </p>
           </div>
 
-          {/* Tabs */}
-          {!isSetup && (
-            <div className="flex bg-white/10 rounded-xl p-1 gap-1 backdrop-blur-sm">
-              <button
-                type="button"
-                onClick={() => setTab('admin')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  tab === 'admin'
-                    ? 'bg-white text-[hsl(221,83%,28%)] shadow-lg'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Shield className="h-4 w-4" />
-                Administrador
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('funcionario')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  tab === 'funcionario'
-                    ? 'bg-white text-[hsl(221,83%,28%)] shadow-lg'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <UserCog className="h-4 w-4" />
-                Funcionário
-              </button>
-            </div>
-          )}
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {isSetup && (
+            {view === 'forgot' && (
+              <button type="button" onClick={() => setView('login')} className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors">
+                <ArrowLeft className="h-4 w-4" /> Voltar ao login
+              </button>
+            )}
+
+            {view === 'setup' && (
               <div className="space-y-2">
                 <Label className="text-white/70 text-sm">Nome completo</Label>
                 <div className="relative">
-                  <UserCog className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input
                     value={setupNome}
                     onChange={(e) => setSetupNome(e.target.value)}
                     placeholder="Seu nome"
-                    className="pl-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
-                    required
-                  />
-                </div>
-              </div>
-            )}
-
-            {(tab === 'admin' || isSetup) && (
-              <div className="space-y-2">
-                <Label className="text-white/70 text-sm">E-mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-                  <Input
-                    type="email"
-                    preserveCase
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@empresa.com"
-                    className="pl-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
-                    required
-                  />
-                </div>
-              </div>
-            )}
-
-            {tab === 'funcionario' && !isSetup && (
-              <div className="space-y-2">
-                <Label className="text-white/70 text-sm">Código de Acesso</Label>
-                <div className="relative">
-                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-                  <Input
-                    value={codigo}
-                    onChange={(e) => setCodigo(e.target.value.toUpperCase())}
-                    placeholder="EX: FUNC001"
-                    className="pl-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0 uppercase"
+                    className="h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
                     required
                   />
                 </div>
@@ -213,44 +171,116 @@ export default function Login() {
             )}
 
             <div className="space-y-2">
-              <Label className="text-white/70 text-sm">Senha</Label>
+              <Label className="text-white/70 text-sm">CPF</Label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                 <Input
-                  type={showPassword ? 'text' : 'password'}
-                  preserveCase
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCpf(e.target.value))}
+                  placeholder="000.000.000-00"
+                  className="pl-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
+                  maxLength={14}
                   required
-                  minLength={6}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
+
+            {view === 'forgot' && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">Código de Recuperação</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                    <Input
+                      value={recoveryCode}
+                      onChange={(e) => setRecoveryCode(e.target.value.toUpperCase())}
+                      placeholder="Código fixo de alteração"
+                      className="pl-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0 uppercase font-mono"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">Nova Senha</Label>
+                  <Input
+                    type="password"
+                    preserveCase
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mín. 6 caracteres"
+                    className="h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">Confirmar Senha</Label>
+                  <Input
+                    type="password"
+                    preserveCase
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repita a nova senha"
+                    className="h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </>
+            )}
+
+            {view !== 'forgot' && (
+              <div className="space-y-2">
+                <Label className="text-white/70 text-sm">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    preserveCase
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-10 pr-10 h-12 bg-white/10 border-white/15 text-white placeholder:text-white/25 rounded-xl focus-visible:ring-white/30 focus-visible:ring-offset-0"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <Button
               type="submit"
               disabled={loading}
               className="w-full h-12 rounded-xl bg-white text-[hsl(221,83%,28%)] hover:bg-white/90 font-semibold text-base shadow-xl shadow-black/20 transition-all duration-200"
             >
-              {loading ? 'Entrando...' : isSetup ? 'Configurar Sistema' : 'Entrar'}
+              {loading ? 'Processando...'
+                : view === 'setup' ? 'Configurar Sistema'
+                : view === 'forgot' ? 'Redefinir Senha'
+                : 'Entrar'}
             </Button>
-          </form>
 
+            {view === 'login' && (
+              <button
+                type="button"
+                onClick={() => { setView('forgot'); setCpf(''); setPassword(''); }}
+                className="w-full text-center text-white/40 hover:text-white/70 text-sm transition-colors"
+              >
+                Esqueceu a senha?
+              </button>
+            )}
+          </form>
         </div>
       </div>
 
       {/* Right — Visual */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[hsl(221,83%,50%)] via-[hsl(221,70%,42%)] to-[hsl(221,83%,32%)] items-center justify-center relative overflow-hidden">
-        {/* Decorative shapes */}
         <div className="absolute top-16 right-16 w-80 h-80 rounded-full bg-white/[0.04]" />
         <div className="absolute bottom-24 left-12 w-56 h-56 rounded-full bg-white/[0.04]" />
         <div className="absolute top-1/3 left-1/4 w-36 h-36 rounded-3xl bg-white/[0.04] rotate-45" />

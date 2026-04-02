@@ -25,16 +25,19 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, ...data } = body;
 
-    // ─── LOOKUP: código de acesso → email ───
+    // ─── LOOKUP: CPF → email (for login) ───
     if (action === 'lookup') {
+      const cpf = (data.cpf || '').replace(/\D/g, '');
+      if (!cpf) return json({ error: 'CPF é obrigatório' }, 400);
+
       const { data: func, error } = await supabaseAdmin
         .from('funcionarios_auth')
         .select('user_id')
-        .eq('codigo_acesso', data.codigo_acesso)
+        .eq('cpf', cpf)
         .eq('status', 'active')
         .single();
 
-      if (error || !func) return json({ error: 'Código de acesso não encontrado' }, 404);
+      if (error || !func) return json({ error: 'CPF não encontrado' }, 404);
 
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(func.user_id);
       if (!authUser?.user) return json({ error: 'Usuário não encontrado' }, 404);
@@ -50,13 +53,18 @@ Deno.serve(async (req) => {
 
       if (count && count > 0) return json({ error: 'Sistema já configurado' }, 400);
 
-      if (!data.email || !data.password || !data.nome) {
-        return json({ error: 'Email, senha e nome são obrigatórios' }, 400);
+      if (!data.cpf || !data.password || !data.nome) {
+        return json({ error: 'CPF, senha e nome são obrigatórios' }, 400);
       }
       if (data.password.length < 6) return json({ error: 'Senha deve ter pelo menos 6 caracteres' }, 400);
 
+      const cpf = data.cpf.replace(/\D/g, '');
+      if (cpf.length !== 11) return json({ error: 'CPF deve ter 11 dígitos' }, 400);
+
+      const email = `admin_${cpf}@jots.interno`;
+
       const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email: data.email,
+        email,
         password: data.password,
         email_confirm: true,
         user_metadata: { nome: data.nome, tipo: 'admin' },
@@ -67,8 +75,18 @@ Deno.serve(async (req) => {
       await supabaseAdmin.from('profiles').insert({
         id: authUser.user.id,
         nome: data.nome,
-        email: data.email,
+        email,
         tipo: 'admin',
+      });
+
+      // Create funcionarios_auth entry for admin
+      await supabaseAdmin.from('funcionarios_auth').insert({
+        user_id: authUser.user.id,
+        nome: data.nome,
+        cpf,
+        codigo_acesso: cpf,
+        cargo: 'Administrador',
+        filial_id: '1',
       });
 
       const { data: adminRole } = await supabaseAdmin
@@ -84,7 +102,17 @@ Deno.serve(async (req) => {
         });
       }
 
-      return json({ success: true });
+      // Generate and store recovery code
+      const recoveryCode = Array.from({ length: 8 }, () => 
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
+      ).join('');
+
+      await supabaseAdmin.from('system_settings').insert({
+        key: 'recovery_code',
+        value: recoveryCode,
+      });
+
+      return json({ success: true, recovery_code: recoveryCode });
     }
 
     // ─── CREATE EMPLOYEE ───
@@ -106,11 +134,23 @@ Deno.serve(async (req) => {
       const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { _user_id: callerId, _role: 'admin' });
       if (!isAdmin) return json({ error: 'Acesso negado' }, 403);
 
-      if (!data.nome || !data.codigo_acesso || !data.password) {
-        return json({ error: 'Nome, código de acesso e senha são obrigatórios' }, 400);
+      if (!data.nome || !data.cpf || !data.password) {
+        return json({ error: 'Nome, CPF e senha são obrigatórios' }, 400);
       }
 
-      const email = `func_${data.codigo_acesso.toLowerCase().replace(/[^a-z0-9]/g, '')}@jots.interno`;
+      const cpf = data.cpf.replace(/\D/g, '');
+      if (cpf.length !== 11) return json({ error: 'CPF deve ter 11 dígitos' }, 400);
+
+      // Check if CPF already exists
+      const { data: existing } = await supabaseAdmin
+        .from('funcionarios_auth')
+        .select('id')
+        .eq('cpf', cpf)
+        .maybeSingle();
+
+      if (existing) return json({ error: 'CPF já cadastrado no sistema' }, 400);
+
+      const email = `func_${cpf}@jots.interno`;
 
       const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -131,7 +171,8 @@ Deno.serve(async (req) => {
       await supabaseAdmin.from('funcionarios_auth').insert({
         user_id: authUser.user.id,
         nome: data.nome,
-        codigo_acesso: data.codigo_acesso,
+        cpf,
+        codigo_acesso: cpf,
         telefone: data.telefone || '',
         cargo: data.cargo || '',
         filial_id: data.filial_id || '1',
@@ -144,7 +185,85 @@ Deno.serve(async (req) => {
         });
       }
 
-      return json({ success: true, codigo_acesso: data.codigo_acesso });
+      return json({ success: true });
+    }
+
+    // ─── UPDATE EMPLOYEE PASSWORD (admin only) ───
+    if (action === 'update-password') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Não autorizado' }, 401);
+
+      const callerClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) return json({ error: 'Token inválido' }, 401);
+
+      const callerId = claimsData.claims.sub as string;
+      const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { _user_id: callerId, _role: 'admin' });
+      if (!isAdmin) return json({ error: 'Acesso negado' }, 403);
+
+      if (!data.funcionario_id || !data.new_password) {
+        return json({ error: 'ID do funcionário e nova senha são obrigatórios' }, 400);
+      }
+      if (data.new_password.length < 6) return json({ error: 'Senha deve ter pelo menos 6 caracteres' }, 400);
+
+      const { data: func } = await supabaseAdmin
+        .from('funcionarios_auth')
+        .select('user_id')
+        .eq('id', data.funcionario_id)
+        .single();
+
+      if (!func?.user_id) return json({ error: 'Funcionário não encontrado' }, 404);
+
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(func.user_id, {
+        password: data.new_password,
+      });
+
+      if (updateError) return json({ error: updateError.message }, 400);
+
+      return json({ success: true });
+    }
+
+    // ─── RESET PASSWORD (via recovery code) ───
+    if (action === 'reset-password') {
+      const cpf = (data.cpf || '').replace(/\D/g, '');
+      if (!cpf || cpf.length !== 11) return json({ error: 'CPF inválido' }, 400);
+      if (!data.recovery_code) return json({ error: 'Código de recuperação é obrigatório' }, 400);
+      if (!data.new_password || data.new_password.length < 6) return json({ error: 'Senha deve ter pelo menos 6 caracteres' }, 400);
+
+      // Verify recovery code
+      const { data: setting } = await supabaseAdmin
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'recovery_code')
+        .single();
+
+      if (!setting || setting.value !== data.recovery_code) {
+        return json({ error: 'Código de recuperação inválido' }, 403);
+      }
+
+      // Find employee by CPF
+      const { data: func } = await supabaseAdmin
+        .from('funcionarios_auth')
+        .select('user_id')
+        .eq('cpf', cpf)
+        .eq('status', 'active')
+        .single();
+
+      if (!func?.user_id) return json({ error: 'CPF não encontrado' }, 404);
+
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(func.user_id, {
+        password: data.new_password,
+      });
+
+      if (updateError) return json({ error: updateError.message }, 400);
+
+      return json({ success: true });
     }
 
     // ─── DELETE EMPLOYEE ───
@@ -177,6 +296,34 @@ Deno.serve(async (req) => {
       }
 
       return json({ success: true });
+    }
+
+    // ─── GET RECOVERY CODE (admin only) ───
+    if (action === 'get-recovery-code') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Não autorizado' }, 401);
+
+      const callerClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) return json({ error: 'Token inválido' }, 401);
+
+      const callerId = claimsData.claims.sub as string;
+      const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { _user_id: callerId, _role: 'admin' });
+      if (!isAdmin) return json({ error: 'Acesso negado' }, 403);
+
+      const { data: setting } = await supabaseAdmin
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'recovery_code')
+        .single();
+
+      return json({ recovery_code: setting?.value || '' });
     }
 
     return json({ error: 'Ação inválida' }, 400);
