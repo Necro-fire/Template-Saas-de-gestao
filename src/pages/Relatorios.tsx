@@ -31,8 +31,8 @@ export default function Relatorios() {
 
       if (report.dateCol) {
         query = query
-          .gte(report.dateCol, dateRange.from.toISOString())
-          .lte(report.dateCol, dateRange.to.toISOString());
+          .gte(report.dateCol, range.from.toISOString())
+          .lte(report.dateCol, range.to.toISOString());
       }
 
       if (selectedFilial !== "all" && report.table !== "funcionarios_auth") {
