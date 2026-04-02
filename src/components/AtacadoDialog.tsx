@@ -12,6 +12,7 @@ import { useFilial } from "@/contexts/FilialContext";
 import { useDescontosAtacado, type DescontoAtacado } from "@/hooks/useDescontosAtacado";
 import { ESTILOS } from "@/data/productConstants";
 import { TODAS_CATEGORIAS_ACESSORIO } from "@/data/accessoryConstants";
+import { maskPercent, parsePercent, formatCentsToDisplay } from "@/lib/masks";
 import { toast } from "sonner";
 
 interface AtacadoDialogProps {
