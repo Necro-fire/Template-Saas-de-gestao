@@ -275,10 +275,21 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
+                    {product.image_url && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Exportar imagem"
+                        onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
+                      >
+                        <ImageDown className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 ml-1"
+                      className="h-7 w-7"
                       title="Imprimir etiqueta"
                       onClick={(e) => { e.stopPropagation(); handlePrintLabel(product); }}
                     >
