@@ -92,7 +92,7 @@ export default function Relatorios() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `relatorio_${report.key}_${format(dateRange.from, "ddMMyyyy")}_${format(dateRange.to, "ddMMyyyy")}.csv`;
+      a.download = `relatorio_${report.key}_${format(range.from, "ddMMyyyy")}_${format(range.to, "ddMMyyyy")}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Relatório gerado com sucesso!");
