@@ -101,12 +101,12 @@ export function parseCurrency(masked: string): number {
  */
 export function maskPercent(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 5);
-  if (!digits) return "0,00";
+  if (!digits) return "0.00";
   let num = parseInt(digits, 10);
   if (num > 10000) num = 10000;
   const intPart = Math.floor(num / 100).toString();
   const decPart = (num % 100).toString().padStart(2, "0");
-  return `${intPart},${decPart}`;
+  return `${intPart}.${decPart}`;
 }
 
 /**
