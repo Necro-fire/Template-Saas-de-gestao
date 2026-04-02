@@ -305,6 +305,31 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
             </div>
           )}
 
+          {/* NF-e Info */}
+          {nfData && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-3">
+              <Receipt className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="text-sm flex-1">
+                <p className="font-medium text-primary">NF-e #{nfData.numero} vinculada</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  Chave: <span className="font-mono">{nfData.chave_acesso?.slice(0, 20)}...</span>
+                </p>
+                <div className="flex gap-2 mt-2">
+                  {nfData.xml_url && (
+                    <a href={nfData.xml_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                      <Download className="h-3 w-3" /> XML
+                    </a>
+                  )}
+                  {nfData.pdf_url && (
+                    <a href={nfData.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                      <Download className="h-3 w-3" /> PDF
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <Separator />
 
           {/* Payment */}
