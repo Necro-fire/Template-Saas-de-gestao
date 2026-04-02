@@ -1,8 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Share2, ImageDown } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Share2 } from "lucide-react";
 import JsBarcode from "jsbarcode";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
 import { Button } from "@/components/ui/button";
@@ -113,65 +111,43 @@ export default function Produtos() {
     });
   };
 
-  const shareFiles = async (files: File[], title: string) => {
-    if (navigator.canShare && navigator.canShare({ files })) {
-      try {
-        await navigator.share({ title, files });
-        return;
-      } catch (e: any) {
-        if (e.name === "AbortError") return; // user cancelled
-      }
+  const buildProductMessage = (product: DbProduct) => {
+    const lines: string[] = [];
+    lines.push(`*${product.model || product.referencia}*`);
+    if (product.referencia) lines.push(`Ref: ${product.referencia}`);
+    if (product.code) lines.push(`Código: ${product.code}`);
+    if (product.barcode) lines.push(`EAN: ${product.barcode}`);
+    if (!(product as any).is_acessorio && (product.cor_armacao || product.color)) {
+      lines.push(`Cor: ${product.cor_armacao || product.color}`);
     }
-    // Fallback: download
-    files.forEach(f => saveAs(f, f.name));
-    toast.info("Compartilhamento não suportado neste navegador — arquivo baixado.");
+    if (!(product as any).is_acessorio && product.lens_size) {
+      lines.push(`Medidas: ${product.lens_size}□${product.bridge_size}-${product.temple_size}`);
+    }
+    lines.push(`Preço: R$ ${Number(product.retail_price).toFixed(2).replace('.', ',')}`);
+    if (product.image_url) lines.push(`\n${product.image_url}`);
+    return lines.join('\n');
   };
 
-  const handleExportImage = useCallback(async (product: DbProduct) => {
-    if (!product.image_url) { toast.error("Produto sem imagem"); return; }
-    try {
-      const { blob, ext } = await toShareableBlob(product.image_url);
-      const name = `produto-${product.id.slice(0, 8)}-${sanitizeName(product.model || product.referencia)}.${ext}`;
-      const mimeType = ext === "png" ? "image/png" : "image/jpeg";
-      const file = new File([blob], name, { type: mimeType });
-      await shareFiles([file], product.model || product.referencia);
-    } catch { toast.error("Erro ao compartilhar imagem"); }
+  const openWhatsApp = (message: string) => {
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  };
+
+  const handleExportImage = useCallback((product: DbProduct) => {
+    const message = buildProductMessage(product);
+    openWhatsApp(message);
   }, []);
 
   const [exporting, setExporting] = useState(false);
 
-  const handleExportAll = useCallback(async () => {
-    const withImages = filtered.filter(p => p.image_url);
-    if (withImages.length === 0) { toast.error("Nenhum produto com imagem para exportar"); return; }
+  const handleExportAll = useCallback(() => {
+    if (filtered.length === 0) { toast.error("Nenhum produto para compartilhar"); return; }
     setExporting(true);
     try {
-      const files: File[] = [];
-      await Promise.all(withImages.map(async (p) => {
-        try {
-          const { blob, ext } = await toShareableBlob(p.image_url);
-          const name = `produto-${p.id.slice(0, 8)}-${sanitizeName(p.model || p.referencia)}.${ext}`;
-          const mimeType = ext === "png" ? "image/png" : "image/jpeg";
-          files.push(new File([blob], name, { type: mimeType }));
-        } catch { /* skip failed */ }
-      }));
-      if (files.length === 0) { toast.error("Nenhuma imagem processada"); setExporting(false); return; }
-      // Try sharing files directly; if too many or unsupported, fallback to ZIP
-      if (navigator.canShare && navigator.canShare({ files })) {
-        try {
-          await navigator.share({ title: "Imagens de Produtos", files });
-          setExporting(false);
-          return;
-        } catch (e: any) {
-          if (e.name === "AbortError") { setExporting(false); return; }
-        }
-      }
-      // Fallback: ZIP download
-      const zip = new JSZip();
-      files.forEach(f => zip.file(f.name, f));
-      const content = await zip.generateAsync({ type: "blob", compression: "STORE" });
-      saveAs(content, `produtos-imagens-${new Date().toISOString().slice(0, 10)}.zip`);
-      toast.success(`${files.length} imagens exportadas`);
-    } catch { toast.error("Erro ao compartilhar imagens"); }
+      const messages = filtered.map(p => buildProductMessage(p));
+      const fullMessage = `*📦 Lista de Produtos (${filtered.length})*\n\n` + messages.join('\n\n---\n\n');
+      openWhatsApp(fullMessage);
+    } catch { toast.error("Erro ao compartilhar produtos"); }
     finally { setExporting(false); }
   }, [filtered]);
 
@@ -321,17 +297,15 @@ export default function Produtos() {
                         </Badge>
                       );
                     })()}
-                    {product.image_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Compartilhar imagem"
-                        onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
-                      >
-                        <Share2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Compartilhar via WhatsApp"
+                      onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
