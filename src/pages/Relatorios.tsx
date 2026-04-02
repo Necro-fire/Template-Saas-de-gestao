@@ -1,32 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Download, FileText, Users, Wallet, UserCog, Package, Receipt, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useFilial } from "@/contexts/FilialContext";
 import { FilialSelector } from "@/components/FilialSelector";
+import { DateRangeFilter, useDateRangeFilter } from "@/components/DateRangeFilter";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, startOfMonth, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { toast } from "sonner";
-
-type Preset = "today" | "7days" | "month" | "year" | "custom";
-
-function getDateRange(preset: Preset, customFrom: string, customTo: string) {
-  const now = new Date();
-  const to = preset === "custom" && customTo ? new Date(customTo + "T23:59:59") : now;
-  let from: Date;
-  switch (preset) {
-    case "today": from = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
-    case "7days": from = subDays(now, 7); break;
-    case "month": from = startOfMonth(now); break;
-    case "year": from = startOfYear(now); break;
-    case "custom": from = customFrom ? new Date(customFrom) : subDays(now, 30); break;
-    default: from = subDays(now, 30);
-  }
-  return { from, to };
-}
 
 const reports = [
   { key: "vendas", title: "Todas as Vendas", desc: "Relatório completo de vendas com detalhes", icon: FileText, table: "vendas", dateCol: "created_at" },
@@ -40,12 +21,8 @@ const reports = [
 
 export default function Relatorios() {
   const { filialLabel, selectedFilial } = useFilial();
-  const [preset, setPreset] = useState<Preset>("month");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const { preset, range, onChange } = useDateRangeFilter();
   const [generating, setGenerating] = useState<string | null>(null);
-
-  const dateRange = useMemo(() => getDateRange(preset, customFrom, customTo), [preset, customFrom, customTo]);
 
   const generateReport = async (report: typeof reports[0]) => {
     setGenerating(report.key);
@@ -54,8 +31,8 @@ export default function Relatorios() {
 
       if (report.dateCol) {
         query = query
-          .gte(report.dateCol, dateRange.from.toISOString())
-          .lte(report.dateCol, dateRange.to.toISOString());
+          .gte(report.dateCol, range.from.toISOString())
+          .lte(report.dateCol, range.to.toISOString());
       }
 
       if (selectedFilial !== "all" && report.table !== "funcionarios_auth") {
@@ -115,7 +92,7 @@ export default function Relatorios() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `relatorio_${report.key}_${format(dateRange.from, "ddMMyyyy")}_${format(dateRange.to, "ddMMyyyy")}.csv`;
+      a.download = `relatorio_${report.key}_${format(range.from, "ddMMyyyy")}_${format(range.to, "ddMMyyyy")}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Relatório gerado com sucesso!");
@@ -134,43 +111,7 @@ export default function Relatorios() {
           <p className="text-ui text-muted-foreground">Geração de relatórios — {filialLabel}</p>
         </div>
 
-        {/* Period Filter */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Período</Label>
-                <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
-                  <SelectTrigger className="h-9 w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">Hoje</SelectItem>
-                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                    <SelectItem value="month">Mês</SelectItem>
-                    <SelectItem value="year">Ano</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {preset === "custom" && (
-                <>
-                  <div className="space-y-1">
-                    <Label className="text-xs">De</Label>
-                    <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="h-9 w-[150px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Até</Label>
-                    <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="h-9 w-[150px]" />
-                  </div>
-                </>
-              )}
-              <p className="text-caption text-muted-foreground">
-                {format(dateRange.from, "dd/MM/yyyy")} — {format(dateRange.to, "dd/MM/yyyy")}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <DateRangeFilter preset={preset} range={range} onChange={onChange} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {reports.map((report) => {
