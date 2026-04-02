@@ -282,15 +282,31 @@ Deno.serve(async (req) => {
         return json({ error: 'Código de recuperação inválido' }, 403);
       }
 
-      // Find employee by CPF
+      // Find user by CPF — check funcionarios_auth first, then admin profile
+      let userId: string | null = null;
+
       const { data: func } = await supabaseAdmin
         .from('funcionarios_auth')
         .select('user_id')
         .eq('cpf', cpf)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
-      if (!func?.user_id) return json({ error: 'CPF não encontrado' }, 404);
+      if (func?.user_id) {
+        userId = func.user_id;
+      } else {
+        // Check admin by email pattern
+        const adminEmail = `admin_${cpf}@jots.interno`;
+        const { data: prof } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .eq('email', adminEmail)
+          .eq('tipo', 'admin')
+          .maybeSingle();
+        if (prof) userId = prof.id;
+      }
+
+      if (!userId) return json({ error: 'CPF não encontrado' }, 404);
 
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(func.user_id, {
         password: data.new_password,
