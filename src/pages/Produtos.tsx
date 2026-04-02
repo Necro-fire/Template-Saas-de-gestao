@@ -87,19 +87,36 @@ export default function Produtos() {
   };
 
   const sanitizeName = (name: string) =>
-    name.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 50);
+    name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "").substring(0, 50);
 
-  const getExtFromUrl = (url: string) => {
-    const match = url.match(/\.(png|jpg|jpeg|webp|gif)(\?|$)/i);
-    return match ? match[1].toLowerCase() : "jpg";
+  const toShareableBlob = async (url: string): Promise<{ blob: Blob; ext: string }> => {
+    const res = await fetch(url);
+    const original = await res.blob();
+    const type = original.type || "";
+    // PNG and JPG are universally compatible — keep as-is
+    if (type === "image/png") return { blob: original, ext: "png" };
+    if (type === "image/jpeg") return { blob: original, ext: "jpg" };
+    // Convert WebP, GIF, etc. to JPG for maximum compatibility
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((b) => resolve({ blob: b || original, ext: "jpg" }), "image/jpeg", 0.92);
+      };
+      img.onerror = () => resolve({ blob: original, ext: "jpg" });
+      img.src = URL.createObjectURL(original);
+    });
   };
 
   const handleExportImage = useCallback(async (product: DbProduct) => {
     if (!product.image_url) { toast.error("Produto sem imagem"); return; }
     try {
-      const res = await fetch(product.image_url);
-      const blob = await res.blob();
-      const ext = getExtFromUrl(product.image_url);
+      const { blob, ext } = await toShareableBlob(product.image_url);
       const name = `produto-${product.id.slice(0, 8)}-${sanitizeName(product.model || product.referencia)}.${ext}`;
       saveAs(blob, name);
     } catch { toast.error("Erro ao exportar imagem"); }
@@ -115,14 +132,12 @@ export default function Produtos() {
       const zip = new JSZip();
       await Promise.all(withImages.map(async (p) => {
         try {
-          const res = await fetch(p.image_url);
-          const blob = await res.blob();
-          const ext = getExtFromUrl(p.image_url);
+          const { blob, ext } = await toShareableBlob(p.image_url);
           const name = `produto-${p.id.slice(0, 8)}-${sanitizeName(p.model || p.referencia)}.${ext}`;
           zip.file(name, blob);
         } catch { /* skip failed */ }
       }));
-      const content = await zip.generateAsync({ type: "blob" });
+      const content = await zip.generateAsync({ type: "blob", compression: "STORE" });
       saveAs(content, `produtos-imagens-${new Date().toISOString().slice(0, 10)}.zip`);
       toast.success(`${withImages.length} imagens exportadas`);
     } catch { toast.error("Erro ao gerar ZIP"); }
