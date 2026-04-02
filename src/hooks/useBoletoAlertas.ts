@@ -89,8 +89,7 @@ export async function createBoletoAlertas(
 ) {
   const alertas = [];
   const now = new Date();
-  const valorBase = valorBoleto / totalParcelas;
-  const JUROS_RATE = 0.06; // 6%
+  const JUROS_RATE = intervaloDias <= 15 ? 0.03 : 0.06; // 3% for 15d, 6% for 30d
 
   // 15d: interest from 3rd installment (1st & 2nd no interest)
   // 30d: interest from 2nd installment (1st no interest)
