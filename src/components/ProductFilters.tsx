@@ -35,6 +35,10 @@ export interface ProductFilterValues {
   tipoHaste: string;
   ponteArmacao: string;
   tamanhoArmacao: string;
+  filterLensSize: string;
+  filterAlturaLente: string;
+  filterBridgeSize: string;
+  filterTempleSize: string;
   // Accessory hierarchical filters
   catAcessorio: string;
   tipoAcessorio: string;
@@ -60,6 +64,10 @@ const emptyFilters: ProductFilterValues = {
   tipoHaste: "all",
   ponteArmacao: "all",
   tamanhoArmacao: "all",
+  filterLensSize: "all",
+  filterAlturaLente: "all",
+  filterBridgeSize: "all",
+  filterTempleSize: "all",
   catAcessorio: "all",
   tipoAcessorio: "all",
   corAcessorio: "all",
