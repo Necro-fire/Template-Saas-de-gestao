@@ -65,6 +65,7 @@ export interface DbClient {
 export interface DbVenda {
   id: string;
   number: number;
+  sale_code: string;
   client_id: string | null;
   client_name: string;
   seller_name: string;

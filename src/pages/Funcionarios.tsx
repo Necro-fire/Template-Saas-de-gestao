@@ -9,13 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, Plus, UserCog, Eye, EyeOff, Pencil, Trash2, Phone } from 'lucide-react';
+import { Search, Plus, UserCog, Eye, EyeOff, Pencil, Trash2, Phone, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { applyPhoneMask, isValidPhone } from '@/lib/phoneMask';
+import { maskCpf, unmask, isValidCpf } from '@/lib/masks';
 
 interface Funcionario {
   id: string;
   nome: string;
+  cpf: string;
   codigo_acesso: string;
   telefone: string;
   cargo: string;
@@ -44,10 +46,12 @@ export default function Funcionarios() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingFunc, setEditingFunc] = useState<Funcionario | null>(null);
   const [viewingFunc, setViewingFunc] = useState<Funcionario | null>(null);
   const [deletingFunc, setDeletingFunc] = useState<Funcionario | null>(null);
+  const [passwordFunc, setPasswordFunc] = useState<Funcionario | null>(null);
   const { selectedFilial } = useFilial();
   const { isAdmin, hasPermission } = useAuth();
   const canCreate = hasPermission('funcionarios', 'create');
@@ -55,13 +59,15 @@ export default function Funcionarios() {
 
   // Form state
   const [nome, setNome] = useState('');
-  const [codigoAcesso, setCodigoAcesso] = useState('');
+  const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [telefone, setTelefone] = useState('');
   const [cargo, setCargo] = useState('');
   const [filialId, setFilialId] = useState('1');
   const [roleId, setRoleId] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const loadData = async () => {
     const [funcRes, rolesRes, urRes] = await Promise.all([
@@ -80,34 +86,27 @@ export default function Funcionarios() {
     if (selectedFilial !== 'all' && f.filial_id !== selectedFilial) return false;
     if (!search) return true;
     const s = search.toLowerCase();
-    return f.nome.toLowerCase().includes(s) || f.codigo_acesso.toLowerCase().includes(s) || (f.cargo || '').toLowerCase().includes(s);
+    return f.nome.toLowerCase().includes(s) || (f.cpf || '').includes(unmask(s)) || (f.cargo || '').toLowerCase().includes(s);
   });
 
-  const generateCode = () => {
-    const num = Math.floor(1000 + Math.random() * 9000);
-    setCodigoAcesso(`FUNC${num}`);
-  };
-
   const resetForm = () => {
-    setNome(''); setCodigoAcesso(''); setSenha(''); setTelefone('');
+    setNome(''); setCpf(''); setSenha(''); setTelefone('');
     setCargo(''); setFilialId('1'); setRoleId(''); setEditingFunc(null);
   };
 
   const openCreate = () => {
     resetForm();
-    generateCode();
     setDialogOpen(true);
   };
 
   const openEdit = (func: Funcionario) => {
     setEditingFunc(func);
     setNome(func.nome);
-    setCodigoAcesso(func.codigo_acesso);
+    setCpf(maskCpf(func.cpf || ''));
     setSenha('');
     setTelefone(func.telefone || '');
     setCargo(func.cargo || '');
     setFilialId(func.filial_id || '1');
-    // Find role for this user
     const ur = func.user_id ? userRoles.find(u => u.user_id === func.user_id) : null;
     setRoleId(ur?.role_id || '');
     setDialogOpen(true);
@@ -119,23 +118,16 @@ export default function Funcionarios() {
   };
 
   const handleSave = async () => {
-    if (!nome.trim() || !codigoAcesso.trim()) {
-      return toast.error('Nome e código de acesso são obrigatórios');
-    }
-    if (!editingFunc && !senha.trim()) {
-      return toast.error('Senha é obrigatória para novos funcionários');
-    }
-    if (!editingFunc && senha.length < 6) {
-      return toast.error('Senha deve ter pelo menos 6 caracteres');
-    }
-    if (telefone && !isValidPhone(telefone)) {
-      return toast.error('Telefone deve estar no formato (XX) X XXXX-XXXX');
-    }
+    if (!nome.trim()) { return toast.error('Nome é obrigatório'); }
+    const rawCpf = unmask(cpf);
+    if (!rawCpf || rawCpf.length !== 11) { return toast.error('CPF inválido (11 dígitos)'); }
+    if (!editingFunc && !senha.trim()) { return toast.error('Senha é obrigatória para novos funcionários'); }
+    if (!editingFunc && senha.length < 6) { return toast.error('Senha deve ter pelo menos 6 caracteres'); }
+    if (telefone && !isValidPhone(telefone)) { return toast.error('Telefone inválido'); }
 
     setLoading(true);
     try {
       if (editingFunc) {
-        // Update funcionario
         await supabase.from('funcionarios_auth').update({
           nome,
           telefone,
@@ -143,22 +135,19 @@ export default function Funcionarios() {
           filial_id: filialId,
         }).eq('id', editingFunc.id);
 
-        // Update role if user_id exists
         if (editingFunc.user_id) {
           await supabase.from('user_roles').delete().eq('user_id', editingFunc.user_id);
           if (roleId) {
             await supabase.from('user_roles').insert({ user_id: editingFunc.user_id, role_id: roleId });
           }
         }
-
         toast.success('Funcionário atualizado');
       } else {
-        // Create via edge function
         const { data, error } = await supabase.functions.invoke('auth-api', {
           body: {
             action: 'create-employee',
             nome,
-            codigo_acesso: codigoAcesso,
+            cpf: rawCpf,
             password: senha,
             telefone,
             cargo,
@@ -166,20 +155,40 @@ export default function Funcionarios() {
             role_id: roleId || undefined,
           },
         });
-
         if (error || data?.error) {
           toast.error(data?.error || 'Erro ao criar funcionário');
           setLoading(false);
           return;
         }
-        toast.success(`Funcionário criado! Código: ${codigoAcesso}`);
+        toast.success('Funcionário criado com sucesso!');
       }
-
       setDialogOpen(false);
       resetForm();
       loadData();
     } catch {
       toast.error('Erro ao salvar funcionário');
+    }
+    setLoading(false);
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordFunc) return;
+    if (newPassword.length < 6) { toast.error('Senha deve ter pelo menos 6 caracteres'); return; }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('auth-api', {
+        body: { action: 'update-password', funcionario_id: passwordFunc.id, new_password: newPassword },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || 'Erro ao alterar senha');
+      } else {
+        toast.success('Senha alterada com sucesso');
+        setPasswordDialogOpen(false);
+        setPasswordFunc(null);
+        setNewPassword('');
+      }
+    } catch {
+      toast.error('Erro ao alterar senha');
     }
     setLoading(false);
   };
@@ -234,7 +243,7 @@ export default function Funcionarios() {
         {funcionarios.length > 0 && (
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome, código ou cargo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
+            <Input placeholder="Buscar por nome, CPF ou cargo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
           </div>
         )}
 
@@ -251,7 +260,7 @@ export default function Funcionarios() {
                     <div>
                       <p className="text-ui font-medium">{func.nome}</p>
                       <p className="text-caption text-muted-foreground">
-                        {func.cargo || 'Sem cargo'} · Código: {func.codigo_acesso}
+                        {func.cargo || 'Sem cargo'} · CPF: {maskCpf(func.cpf || '')}
                         {func.telefone && ` · ${func.telefone}`}
                       </p>
                     </div>
@@ -267,14 +276,17 @@ export default function Funcionarios() {
                       {func.status === 'active' ? 'Ativo' : 'Inativo'}
                     </Badge>
                     {canEdit && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    {canEdit && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(func)} title="Editar">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setPasswordFunc(func); setPasswordDialogOpen(true); setNewPassword(''); }} title="Alterar senha">
+                          <KeyRound className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeletingFunc(func); setDeleteDialogOpen(true); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -304,15 +316,14 @@ export default function Funcionarios() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Código de Acesso *</Label>
-                <div className="flex gap-2">
-                  <Input value={codigoAcesso} onChange={e => setCodigoAcesso(e.target.value.toUpperCase())} placeholder="FUNC001" className="uppercase" disabled={!!editingFunc} />
-                  {!editingFunc && (
-                    <Button type="button" variant="outline" size="sm" onClick={generateCode} className="shrink-0 text-xs">
-                      Gerar
-                    </Button>
-                  )}
-                </div>
+                <Label>CPF *</Label>
+                <Input
+                  value={cpf}
+                  onChange={e => setCpf(maskCpf(e.target.value))}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  disabled={!!editingFunc}
+                />
               </div>
               {!editingFunc && (
                 <div className="space-y-2">
@@ -349,7 +360,7 @@ export default function Funcionarios() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Cargo/Função</Label>
+                <Label>Função</Label>
                 <Input value={cargo} onChange={e => setCargo(e.target.value)} placeholder="Ex: Vendedor" />
               </div>
             </div>
@@ -411,11 +422,11 @@ export default function Funcionarios() {
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Código de Acesso</p>
-                  <p className="font-medium">{viewingFunc.codigo_acesso}</p>
+                  <p className="text-muted-foreground">CPF</p>
+                  <p className="font-medium">{maskCpf(viewingFunc.cpf || '')}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Cargo</p>
+                  <p className="text-muted-foreground">Função</p>
                   <p className="font-medium">{viewingFunc.cargo || '—'}</p>
                 </div>
                 <div>
@@ -439,6 +450,42 @@ export default function Funcionarios() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewDialogOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Change Dialog (admin only) */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Alterar Senha</DialogTitle>
+          </DialogHeader>
+          {passwordFunc && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Alterar a senha de <strong>{passwordFunc.nome}</strong></p>
+              <div className="space-y-2">
+                <Label>Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    preserveCase
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Mín. 6 caracteres"
+                    className="pr-9"
+                  />
+                  <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleChangePassword} disabled={loading}>
+              {loading ? 'Salvando...' : 'Alterar Senha'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
