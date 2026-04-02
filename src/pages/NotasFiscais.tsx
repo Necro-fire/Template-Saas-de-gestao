@@ -150,8 +150,8 @@ export default function NotasFiscais() {
                       <Badge variant="outline" className="text-[10px] h-4 px-1.5">
                         {isEntrada ? "Entrada" : "Saída"}
                       </Badge>
-                      {nf.xml_url && <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-blue-500 border-blue-500/30">XML</Badge>}
-                      {nf.pdf_url && <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-red-500 border-red-500/30">PDF</Badge>}
+                      {nf.xml_url && <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-primary border-primary/30">XML</Badge>}
+                      {nf.pdf_url && <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-destructive border-destructive/30">PDF</Badge>}
                     </div>
                     <p className="text-caption text-muted-foreground">
                       {isEntrada ? nf.fornecedor_nome || "Fornecedor" : nf.client_name} · {new Date(nf.data_emissao).toLocaleDateString("pt-BR")} · {getFilialName(nf.filial_id)}
