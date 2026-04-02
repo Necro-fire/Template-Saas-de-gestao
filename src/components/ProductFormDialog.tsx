@@ -933,11 +933,11 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <div>
                     <Label>Cor</Label>
                     <Select value={corAcessorio} onValueChange={setCorAcessorio}>
-                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
-                      <SelectContent>
-                        {cores.filter(c => c !== "Nenhuma").map(c => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+                    <SelectContent>
+                      {[...cores].filter(c => c !== "Nenhuma").sort((a, b) => a.localeCompare(b, 'pt-BR')).map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
                       </SelectContent>
                     </Select>
                   </div>
