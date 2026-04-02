@@ -326,10 +326,10 @@ export default function Produtos() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        title="Exportar imagem"
+                        title="Compartilhar imagem"
                         onClick={(e) => { e.stopPropagation(); handleExportImage(product); }}
                       >
-                        <ImageDown className="h-3.5 w-3.5" />
+                        <Share2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
                     <Button
