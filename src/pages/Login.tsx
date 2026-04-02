@@ -27,8 +27,13 @@ export default function Login() {
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        const { data, error } = await supabase.rpc('get_profiles_count');
-        if (!error && data === 0) setView('setup');
+        // Check if any funcionarios_auth entry has a non-empty CPF
+        const { data, error } = await supabase
+          .from('funcionarios_auth')
+          .select('id')
+          .neq('cpf', '')
+          .limit(1);
+        if (!error && (!data || data.length === 0)) setView('setup');
       } catch {}
       setCheckingSetup(false);
     };
