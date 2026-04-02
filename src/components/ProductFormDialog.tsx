@@ -899,7 +899,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   <Select value={materialAcessorio} onValueChange={setMaterialAcessorio}>
                     <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecione o material" /></SelectTrigger>
                     <SelectContent>
-                      {materiaisAcessorio.map(m => (
+                      {[...materiaisAcessorio].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
                       ))}
                     </SelectContent>
