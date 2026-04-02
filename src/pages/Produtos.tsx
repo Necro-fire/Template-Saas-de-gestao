@@ -86,6 +86,49 @@ export default function Produtos() {
     if (!open) setEditingProduct(null);
   };
 
+  const sanitizeName = (name: string) =>
+    name.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 50);
+
+  const getExtFromUrl = (url: string) => {
+    const match = url.match(/\.(png|jpg|jpeg|webp|gif)(\?|$)/i);
+    return match ? match[1].toLowerCase() : "jpg";
+  };
+
+  const handleExportImage = useCallback(async (product: DbProduct) => {
+    if (!product.image_url) { toast.error("Produto sem imagem"); return; }
+    try {
+      const res = await fetch(product.image_url);
+      const blob = await res.blob();
+      const ext = getExtFromUrl(product.image_url);
+      const name = `produto-${product.id.slice(0, 8)}-${sanitizeName(product.model || product.referencia)}.${ext}`;
+      saveAs(blob, name);
+    } catch { toast.error("Erro ao exportar imagem"); }
+  }, []);
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportAll = useCallback(async () => {
+    const withImages = filtered.filter(p => p.image_url);
+    if (withImages.length === 0) { toast.error("Nenhum produto com imagem para exportar"); return; }
+    setExporting(true);
+    try {
+      const zip = new JSZip();
+      await Promise.all(withImages.map(async (p) => {
+        try {
+          const res = await fetch(p.image_url);
+          const blob = await res.blob();
+          const ext = getExtFromUrl(p.image_url);
+          const name = `produto-${p.id.slice(0, 8)}-${sanitizeName(p.model || p.referencia)}.${ext}`;
+          zip.file(name, blob);
+        } catch { /* skip failed */ }
+      }));
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `produtos-imagens-${new Date().toISOString().slice(0, 10)}.zip`);
+      toast.success(`${withImages.length} imagens exportadas`);
+    } catch { toast.error("Erro ao gerar ZIP"); }
+    finally { setExporting(false); }
+  }, [filtered]);
+
   const handlePrintLabel = useCallback((product: DbProduct) => {
     const canvas = document.createElement("canvas");
     try {
