@@ -40,19 +40,31 @@ Deno.serve(async (req) => {
       const cpf = (data.cpf || '').replace(/\D/g, '');
       if (!cpf) return json({ error: 'CPF é obrigatório' }, 400);
 
-      const { data: func, error } = await supabaseAdmin
+      // First check funcionarios_auth
+      const { data: func } = await supabaseAdmin
         .from('funcionarios_auth')
         .select('user_id')
         .eq('cpf', cpf)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
-      if (error || !func) return json({ error: 'CPF não encontrado' }, 404);
+      if (func?.user_id) {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(func.user_id);
+        if (authUser?.user) return json({ email: authUser.user.email });
+      }
 
-      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(func.user_id);
-      if (!authUser?.user) return json({ error: 'Usuário não encontrado' }, 404);
+      // Then check admin by internal email pattern
+      const adminEmail = `admin_${cpf}@jots.interno`;
+      const { data: profileMatch } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email')
+        .eq('email', adminEmail)
+        .eq('tipo', 'admin')
+        .maybeSingle();
 
-      return json({ email: authUser.user.email });
+      if (profileMatch) return json({ email: profileMatch.email });
+
+      return json({ error: 'CPF não encontrado' }, 404);
     }
 
     // ─── SETUP: primeiro admin ───
