@@ -111,43 +111,7 @@ export default function Relatorios() {
           <p className="text-ui text-muted-foreground">Geração de relatórios — {filialLabel}</p>
         </div>
 
-        {/* Period Filter */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Período</Label>
-                <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
-                  <SelectTrigger className="h-9 w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">Hoje</SelectItem>
-                    <SelectItem value="7days">Últimos 7 dias</SelectItem>
-                    <SelectItem value="month">Mês</SelectItem>
-                    <SelectItem value="year">Ano</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {preset === "custom" && (
-                <>
-                  <div className="space-y-1">
-                    <Label className="text-xs">De</Label>
-                    <Input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="h-9 w-[150px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Até</Label>
-                    <Input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} className="h-9 w-[150px]" />
-                  </div>
-                </>
-              )}
-              <p className="text-caption text-muted-foreground">
-                {format(dateRange.from, "dd/MM/yyyy")} — {format(dateRange.to, "dd/MM/yyyy")}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <DateRangeFilter preset={preset} range={range} onChange={onChange} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {reports.map((report) => {
