@@ -309,7 +309,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os materiais" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todos os materiais</SelectItem>
-                        {materiaisAc.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        {[...materiaisAc].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
