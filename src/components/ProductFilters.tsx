@@ -35,6 +35,10 @@ export interface ProductFilterValues {
   tipoHaste: string;
   ponteArmacao: string;
   tamanhoArmacao: string;
+  filterLensSize: string;
+  filterAlturaLente: string;
+  filterBridgeSize: string;
+  filterTempleSize: string;
   // Accessory hierarchical filters
   catAcessorio: string;
   tipoAcessorio: string;
@@ -60,6 +64,10 @@ const emptyFilters: ProductFilterValues = {
   tipoHaste: "all",
   ponteArmacao: "all",
   tamanhoArmacao: "all",
+  filterLensSize: "all",
+  filterAlturaLente: "all",
+  filterBridgeSize: "all",
+  filterTempleSize: "all",
   catAcessorio: "all",
   tipoAcessorio: "all",
   corAcessorio: "all",
@@ -136,6 +144,18 @@ export function applyProductFilters<T extends {
       const size = `${(p as any).lens_size || 0}-${(p as any).bridge_size || 0}-${(p as any).temple_size || 0}`;
       if (size !== filters.tamanhoArmacao) return false;
     }
+    if (filters.filterLensSize !== "all" && !p.is_acessorio) {
+      if (String((p as any).lens_size || 0) !== filters.filterLensSize) return false;
+    }
+    if (filters.filterAlturaLente !== "all" && !p.is_acessorio) {
+      if (String((p as any).altura_lente || 0) !== filters.filterAlturaLente) return false;
+    }
+    if (filters.filterBridgeSize !== "all" && !p.is_acessorio) {
+      if (String((p as any).bridge_size || 0) !== filters.filterBridgeSize) return false;
+    }
+    if (filters.filterTempleSize !== "all" && !p.is_acessorio) {
+      if (String((p as any).temple_size || 0) !== filters.filterTempleSize) return false;
+    }
 
     // Accessory hierarchical filters
     if (filters.catAcessorio !== "all") {
@@ -203,7 +223,7 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
     const keys: (keyof ProductFilterValues)[] = [
       "tipoItem", "classificacaoProduto", "categoriaIdade", "genero", "estilo", "corArmacao",
       "materialAro", "materialHaste", "tipoLente", "polarizado", "tipoHaste", "ponteArmacao",
-      "tamanhoArmacao",
+      "tamanhoArmacao", "filterLensSize", "filterAlturaLente", "filterBridgeSize", "filterTempleSize",
       "catAcessorio", "tipoAcessorio", "corAcessorio",
       "filial", "stockStatus",
     ];
@@ -233,6 +253,28 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
       const [lb] = b.split("-").map(Number);
       return la - lb;
     });
+  }, [products]);
+
+  // Individual dimension values from products
+  const availableDimensions = useMemo(() => {
+    const active = products.filter(p => !p.is_acessorio && p.status !== "inativo");
+    const lens = new Set<number>();
+    const altura = new Set<number>();
+    const bridge = new Set<number>();
+    const temple = new Set<number>();
+    active.forEach(p => {
+      if ((p as any).lens_size > 0) lens.add((p as any).lens_size);
+      if ((p as any).altura_lente > 0) altura.add((p as any).altura_lente);
+      if ((p as any).bridge_size > 0) bridge.add((p as any).bridge_size);
+      if ((p as any).temple_size > 0) temple.add((p as any).temple_size);
+    });
+    const toSorted = (s: Set<number>) => Array.from(s).sort((a, b) => a - b).map(String);
+    return {
+      lens: toSorted(lens),
+      altura: toSorted(altura),
+      bridge: toSorted(bridge),
+      temple: toSorted(temple),
+    };
   }, [products]);
 
   const validatePrice = (d: ProductFilterValues): boolean => {
@@ -354,9 +396,11 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                   </div>
                   <FilterSelect label="Tipo de Haste" value={draft.tipoHaste}
                     onValueChange={(v) => setDraft({ ...draft, tipoHaste: v })} options={["Comum", ...TIPOS_HASTE]} />
+                  <Separator />
+                  <p className="text-caption text-muted-foreground font-medium">Medidas (mm)</p>
                   {availableSizes.length > 0 && (
                     <div className="space-y-1">
-                      <Label className="text-caption">Tamanho da Armação</Label>
+                      <Label className="text-caption">Tamanho da Armação (completo)</Label>
                       <Select value={draft.tamanhoArmacao} onValueChange={(v) => setDraft({ ...draft, tamanhoArmacao: v })}>
                         <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
                         <SelectContent>
@@ -366,6 +410,24 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
                       </Select>
                     </div>
                   )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {availableDimensions.lens.length > 0 && (
+                      <FilterSelect label="Largura da Lente" value={draft.filterLensSize}
+                        onValueChange={(v) => setDraft({ ...draft, filterLensSize: v })} options={availableDimensions.lens} />
+                    )}
+                    {availableDimensions.altura.length > 0 && (
+                      <FilterSelect label="Altura da Lente" value={draft.filterAlturaLente}
+                        onValueChange={(v) => setDraft({ ...draft, filterAlturaLente: v })} options={availableDimensions.altura} />
+                    )}
+                    {availableDimensions.bridge.length > 0 && (
+                      <FilterSelect label="Largura da Ponte" value={draft.filterBridgeSize}
+                        onValueChange={(v) => setDraft({ ...draft, filterBridgeSize: v })} options={availableDimensions.bridge} />
+                    )}
+                    {availableDimensions.temple.length > 0 && (
+                      <FilterSelect label="Comprimento Haste" value={draft.filterTempleSize}
+                        onValueChange={(v) => setDraft({ ...draft, filterTempleSize: v })} options={availableDimensions.temple} />
+                    )}
+                  </div>
                 </>
               )}
 
@@ -467,5 +529,5 @@ export function ProductFilters({ filters, onChange, products = [] }: ProductFilt
 interface ProductFiltersProps {
   filters: ProductFilterValues;
   onChange: (filters: ProductFilterValues) => void;
-  products?: { lens_size: number; bridge_size: number; temple_size: number; is_acessorio: boolean; status: string }[];
+  products?: { lens_size: number; bridge_size: number; temple_size: number; altura_lente?: number; is_acessorio: boolean; status: string }[];
 }
