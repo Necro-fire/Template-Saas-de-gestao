@@ -15,7 +15,7 @@ import Funcionarios from "./pages/Funcionarios";
 import Vendas from "./pages/Vendas";
 import Estoque from "./pages/Estoque";
 import Caixa from "./pages/Caixa";
-import Malas from "./pages/Malas";
+import Permissoes from "./pages/Permissoes";
 import Relatorios from "./pages/Relatorios";
 import NotasFiscais from "./pages/NotasFiscais";
 import EmitirNF from "./pages/EmitirNF";
