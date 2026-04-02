@@ -278,7 +278,7 @@ export function StockAlertConfigDialog() {
                       <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Todos os tipos" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__all__">Todos os tipos</SelectItem>
-                        {tiposAc.map(t => <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>)}
+                        {[...tiposAc].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(t => <SelectItem key={t.nome} value={t.nome}>{t.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
