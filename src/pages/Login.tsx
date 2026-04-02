@@ -27,25 +27,10 @@ export default function Login() {
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        // Try calling setup with empty data - if it returns "Sistema já configurado" then skip setup
-        // Otherwise, check via a simpler heuristic: admin role + funcionarios_auth with CPF
-        const { data: adminCheck } = await supabase.rpc('has_role', { _user_id: '00000000-0000-0000-0000-000000000000', _role: 'admin' });
-        
-        // Check if any funcionarios_auth has CPF for admin users
-        const { data: funcData } = await supabase
-          .from('funcionarios_auth')
-          .select('id, cpf, user_id')
-          .neq('cpf', '');
-        
-        const { data: adminRoles } = await supabase
-          .from('user_roles')
-          .select('user_id, roles!inner(name)')
-          .eq('roles.name', 'admin');
-
-        const adminUserIds = new Set((adminRoles || []).map((r: any) => r.user_id));
-        const hasAdminWithCpf = (funcData || []).some((f: any) => adminUserIds.has(f.user_id));
-        
-        if (!hasAdminWithCpf) setView('setup');
+        const { data } = await supabase.functions.invoke('auth-api', {
+          body: { action: 'check-setup' },
+        });
+        if (data?.needs_setup) setView('setup');
       } catch {}
       setCheckingSetup(false);
     };
