@@ -47,14 +47,26 @@ Deno.serve(async (req) => {
 
     // ─── SETUP: primeiro admin ───
     if (action === 'setup') {
-      // Check if any funcionarios_auth entry has a non-empty CPF (meaning system was properly set up with CPF login)
-      const { data: existingWithCpf } = await supabaseAdmin
-        .from('funcionarios_auth')
-        .select('id')
-        .neq('cpf', '')
-        .limit(1);
+      // Check if any admin user has a funcionarios_auth entry with CPF
+      const { data: adminRoleRows } = await supabaseAdmin
+        .from('user_roles')
+        .select('user_id, roles!inner(name)')
+        .eq('roles.name', 'admin');
 
-      if (existingWithCpf && existingWithCpf.length > 0) return json({ error: 'Sistema já configurado' }, 400);
+      let hasAdminWithCpf = false;
+      if (adminRoleRows && adminRoleRows.length > 0) {
+        for (const row of adminRoleRows) {
+          const { data: fa } = await supabaseAdmin
+            .from('funcionarios_auth')
+            .select('id')
+            .eq('user_id', row.user_id)
+            .neq('cpf', '')
+            .limit(1);
+          if (fa && fa.length > 0) { hasAdminWithCpf = true; break; }
+        }
+      }
+
+      if (hasAdminWithCpf) return json({ error: 'Sistema já configurado' }, 400);
 
       if (!data.cpf || !data.password || !data.nome) {
         return json({ error: 'CPF, senha e nome são obrigatórios' }, 400);
