@@ -26,6 +26,17 @@ function getPaymentIcon(method: string) {
 
 export default function Vendas() {
   const { data: sales } = useVendas();
+  const { data: notasFiscais } = useNotasFiscais();
+  
+  // Set of venda IDs that have NF-e linked
+  const vendasComNF = useMemo(() => {
+    return new Set(
+      notasFiscais
+        .filter(nf => nf.venda_id && nf.status !== "cancelada")
+        .map(nf => nf.venda_id)
+    );
+  }, [notasFiscais]);
+
   // Fetch all payment splits (caixa_movimentacoes) keyed by venda_id
   const [splitsByVenda, setSplitsByVenda] = useState<Record<string, { method: string; amount: number }[]>>({});
   const [boletoMetaByVenda, setBoletoMetaByVenda] = useState<Record<string, BoletoMetaInfo>>({});
