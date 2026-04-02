@@ -65,6 +65,7 @@ export interface DbClient {
 export interface DbVenda {
   id: string;
   number: number;
+  sale_code: string;
   client_id: string | null;
   client_name: string;
   seller_name: string;
@@ -317,7 +318,7 @@ export async function createVenda(
           tipo: "venda",
           valor: split.finalAmount ?? split.amount,
           forma_pagamento: split.method,
-          descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"} (${split.method})`,
+          descricao: `Venda ${venda.sale_code || '#' + venda.number} — ${clientName || "Cliente avulso"} (${split.method})`,
           venda_id: venda.id,
           usuario_id: userId,
           usuario_nome: userName || "",
@@ -329,7 +330,7 @@ export async function createVenda(
         tipo: "venda",
         valor: total,
         forma_pagamento: paymentMethod,
-        descricao: `Venda #${venda.number} — ${clientName || "Cliente avulso"}`,
+        descricao: `Venda ${venda.sale_code || '#' + venda.number} — ${clientName || "Cliente avulso"}`,
         venda_id: venda.id,
         usuario_id: userId,
         usuario_nome: userName || "",

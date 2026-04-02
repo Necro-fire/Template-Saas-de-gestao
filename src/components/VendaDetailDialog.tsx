@@ -192,7 +192,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                 {isCancelled ? <Ban className="h-5 w-5 text-destructive" /> : <FileText className="h-5 w-5 text-primary" />}
               </div>
               <div>
-                <span className="text-lg">{items[0]?.product_code || `Venda #${venda.number}`}</span>
+                <span className="text-lg">{(venda as any).sale_code || `#${venda.number}`}</span>
                 <span className="ml-2 text-xs text-muted-foreground font-mono">({venda.id.slice(0, 8).toUpperCase()})</span>
                 {isCancelled && (
                   <Badge className="ml-2 text-[10px]" variant="destructive">Cancelada</Badge>
@@ -707,7 +707,7 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Cancelar Venda {items[0]?.product_code || `#${venda.number}`}?
+              Cancelar Venda {(venda as any).sale_code || `#${venda.number}`}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação irá reverter automaticamente o estoque e o financeiro.

@@ -450,6 +450,7 @@ export type Database = {
         Row: {
           cargo: string | null
           codigo_acesso: string
+          cpf: string
           created_at: string | null
           filial_id: string | null
           id: string
@@ -461,6 +462,7 @@ export type Database = {
         Insert: {
           cargo?: string | null
           codigo_acesso: string
+          cpf?: string
           created_at?: string | null
           filial_id?: string | null
           id?: string
@@ -472,6 +474,7 @@ export type Database = {
         Update: {
           cargo?: string | null
           codigo_acesso?: string
+          cpf?: string
           created_at?: string | null
           filial_id?: string | null
           id?: string
@@ -817,6 +820,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          value?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       tipos_produto: {
         Row: {
           created_at: string
@@ -987,6 +1011,7 @@ export type Database = {
           number: number
           origin: string
           payment_method: string
+          sale_code: string
           seller_name: string
           status: string
           status_boleto: string
@@ -1006,6 +1031,7 @@ export type Database = {
           number?: number
           origin?: string
           payment_method?: string
+          sale_code?: string
           seller_name?: string
           status?: string
           status_boleto?: string
@@ -1025,6 +1051,7 @@ export type Database = {
           number?: number
           origin?: string
           payment_method?: string
+          sale_code?: string
           seller_name?: string
           status?: string
           status_boleto?: string

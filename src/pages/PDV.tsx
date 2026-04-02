@@ -333,9 +333,9 @@ export default function PDV() {
           })
         : undefined;
 
-      await createVenda(items, selectedClient, client?.store_name || "", finalMethod, saleOrigin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
+      const result = await createVenda(items, selectedClient, client?.store_name || "", finalMethod, saleOrigin, filialId, saleDiscount, user?.id, profile?.nome || user?.email || "", splits);
 
-      toast.success(`Venda finalizada! Total: R$ ${saleTotal.toFixed(2)}`);
+      toast.success(`Venda finalizada! ${result.sale_code || '#' + result.number} — Total: R$ ${saleTotal.toFixed(2)}`);
       setCart([]);
       setSelectedClient("");
       setPaymentMethod("");

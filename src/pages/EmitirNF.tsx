@@ -64,7 +64,9 @@ export default function EmitirNF() {
     if (saleSearch.trim()) {
       const q = saleSearch.trim().toLowerCase();
       sales = sales.filter(s =>
-        String(s.number).includes(q) || s.client_name.toLowerCase().includes(q)
+        (s.sale_code || '').toLowerCase().includes(q) ||
+        String(s.number).includes(q) ||
+        s.client_name.toLowerCase().includes(q)
       );
     }
     return sales;
@@ -185,7 +187,7 @@ export default function EmitirNF() {
                   <SelectContent>
                     {availableSales.map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        #{s.number} — {s.client_name} — R$ {Number(s.total).toFixed(2)}
+                        {s.sale_code || `#${s.number}`} — {s.client_name} — R$ {Number(s.total).toFixed(2)}
                         {vendasComNF.has(s.id) ? " ⚠️ Já possui NF-e" : ""}
                       </SelectItem>
                     ))}

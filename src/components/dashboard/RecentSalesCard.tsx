@@ -26,7 +26,7 @@ export function RecentSalesCard({ sales }: RecentSalesCardProps) {
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div>
-                <p className="text-ui font-medium">#{sale.number}</p>
+                <p className="text-ui font-medium">{(sale as any).sale_code || `#${sale.number}`}</p>
                 <p className="text-caption text-muted-foreground">{sale.client_name}</p>
               </div>
               <div className="text-right">
