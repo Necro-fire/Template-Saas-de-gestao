@@ -110,7 +110,10 @@ export function applyProductFilters<T extends {
 
     if (filters.tipoItem === "normal" && p.is_acessorio) return false;
     if (filters.tipoItem === "acessorio" && !p.is_acessorio) return false;
-    
+    if (filters.classificacaoProduto !== "all") {
+      const pCat = (p as any).category || "";
+      if (pCat !== filters.classificacaoProduto) return false;
+    }
 
     if (filters.categoriaIdade !== "all" && p.categoria_idade !== filters.categoriaIdade) return false;
     if (filters.genero !== "all") {
