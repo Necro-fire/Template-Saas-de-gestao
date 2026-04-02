@@ -27,24 +27,12 @@ Deno.serve(async (req) => {
 
     // ─── CHECK-SETUP: is first admin needed? ───
     if (action === 'check-setup') {
-      const { data: adminRoleRows } = await supabaseAdmin
-        .from('user_roles')
-        .select('user_id, roles!inner(name)')
-        .eq('roles.name', 'admin');
-
-      let hasAdminWithCpf = false;
-      if (adminRoleRows && adminRoleRows.length > 0) {
-        for (const row of adminRoleRows) {
-          const { data: fa } = await supabaseAdmin
-            .from('funcionarios_auth')
-            .select('id')
-            .eq('user_id', (row as any).user_id)
-            .neq('cpf', '')
-            .limit(1);
-          if (fa && fa.length > 0) { hasAdminWithCpf = true; break; }
-        }
-      }
-      return json({ needs_setup: !hasAdminWithCpf });
+      const { data: adminProfiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('tipo', 'admin')
+        .limit(1);
+      return json({ needs_setup: !adminProfiles || adminProfiles.length === 0 });
     }
 
     // ─── LOOKUP: CPF → email (for login) ───
