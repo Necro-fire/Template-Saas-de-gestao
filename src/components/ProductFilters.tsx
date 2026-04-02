@@ -144,6 +144,18 @@ export function applyProductFilters<T extends {
       const size = `${(p as any).lens_size || 0}-${(p as any).bridge_size || 0}-${(p as any).temple_size || 0}`;
       if (size !== filters.tamanhoArmacao) return false;
     }
+    if (filters.filterLensSize !== "all" && !p.is_acessorio) {
+      if (String((p as any).lens_size || 0) !== filters.filterLensSize) return false;
+    }
+    if (filters.filterAlturaLente !== "all" && !p.is_acessorio) {
+      if (String((p as any).altura_lente || 0) !== filters.filterAlturaLente) return false;
+    }
+    if (filters.filterBridgeSize !== "all" && !p.is_acessorio) {
+      if (String((p as any).bridge_size || 0) !== filters.filterBridgeSize) return false;
+    }
+    if (filters.filterTempleSize !== "all" && !p.is_acessorio) {
+      if (String((p as any).temple_size || 0) !== filters.filterTempleSize) return false;
+    }
 
     // Accessory hierarchical filters
     if (filters.catAcessorio !== "all") {
