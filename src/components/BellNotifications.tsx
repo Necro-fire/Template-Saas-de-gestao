@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Bell, FileText, Check, Clock, ChevronDown, ChevronUp, AlertTriangle, CalendarClock, Ban } from "lucide-react";
+import { Bell, FileText, Check, Clock, ChevronDown, ChevronUp, AlertTriangle, CalendarClock, Ban, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBoletoAlertas } from "@/hooks/useBoletoAlertas";
+import { useSecurityAlerts } from "@/hooks/useSecurityAlerts";
+import { useAuth } from "@/contexts/AuthContext";
 import { format, isPast, isToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
