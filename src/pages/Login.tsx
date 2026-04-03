@@ -50,13 +50,21 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password,
       });
       if (error) {
+        // Record failed password attempt
+        await supabase.functions.invoke('auth-api', {
+          body: { action: 'login-failed', cpf: rawCpf },
+        }).catch(() => {});
         toast.error('Senha inválida');
       } else {
+        // Record successful login
+        await supabase.functions.invoke('auth-api', {
+          body: { action: 'login-success', cpf: rawCpf, user_id: authData.user?.id, user_name: authData.user?.user_metadata?.nome || '' },
+        }).catch(() => {});
         navigate('/');
       }
     } catch {
