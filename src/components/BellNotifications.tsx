@@ -24,10 +24,13 @@ function classifyBoleto(alerta: { status: string; data_vencimento: string; parce
 
 export function BellNotifications() {
   const { alertas, updateStatus } = useBoletoAlertas();
+  const { isAdmin } = useAuth();
+  const { alerts: securityAlerts, resolveAlert } = useSecurityAlerts();
   const [open, setOpen] = useState(false);
   const [showGerados, setShowGerados] = useState(false);
   const [showFuturos, setShowFuturos] = useState(false);
   const [showCancelados, setShowCancelados] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(true);
 
   const pendentes = alertas.filter((a) => classifyBoleto(a) === "pendente");
   const gerados = alertas.filter((a) => classifyBoleto(a) === "gerado");
@@ -43,7 +46,16 @@ export function BellNotifications() {
     }
   };
 
-  const urgentCount = pendentes.length;
+  const handleResolveAlert = async (id: string) => {
+    try {
+      await resolveAlert(id);
+      toast.success("Alerta resolvido");
+    } catch {
+      toast.error("Erro ao resolver alerta");
+    }
+  };
+
+  const urgentCount = pendentes.length + (isAdmin ? securityAlerts.filter(a => a.severity === 'high').length : 0);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
