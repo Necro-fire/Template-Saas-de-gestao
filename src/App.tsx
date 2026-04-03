@@ -67,6 +67,7 @@ const router = createBrowserRouter([
       { path: "/cargos", element: <ProtectedRoute module="admin" action="manage_roles"><Cargos /></ProtectedRoute> },
       { path: "/trafego-filiais", element: <ProtectedRoute module="estoque" action="view"><TrafegoFiliais /></ProtectedRoute> },
       { path: "/produtos-consignados", element: <ProtectedRoute module="vendas" action="view"><ProdutosConsignados /></ProtectedRoute> },
+      { path: "/auditoria", element: <ProtectedRoute module="admin" action="manage_permissions"><Auditoria /></ProtectedRoute> },
       
       { path: "*", element: <NotFound /> },
     ],
