@@ -50,7 +50,7 @@ const mainNav = [
 const staffNav = [
   { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "funcionarios", action: "view" },
   { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
-  { title: "Auditoria", url: "/auditoria", icon: KeyRound, module: "admin", action: "manage_permissions" },
+  
 ];
 
 const managementNav = [
