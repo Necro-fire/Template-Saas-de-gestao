@@ -102,6 +102,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isAdmin, roles]);
 
   const signOut = async () => {
+    if (user) {
+      try {
+        await supabase.functions.invoke('auth-api', {
+          body: { action: 'logout', user_id: user.id, user_name: profile?.nome || '' },
+        });
+      } catch {}
+    }
     await supabase.auth.signOut();
     setProfile(null);
     setPermissions([]);
