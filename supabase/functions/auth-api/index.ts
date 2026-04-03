@@ -11,6 +11,62 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
+const BLOCK_MINUTES = 15;
+const MAX_ATTEMPTS = 3;
+
+async function logAudit(supabaseAdmin: any, userId: string, userName: string, action: string, module: string, details: any = {}, ip = '') {
+  try {
+    await supabaseAdmin.from('audit_logs').insert({
+      user_id: userId,
+      user_name: userName,
+      action,
+      module,
+      details,
+      ip_address: ip,
+    });
+  } catch {}
+}
+
+async function createAlert(supabaseAdmin: any, alertType: string, severity: string, message: string, details: any = {}, userId?: string) {
+  try {
+    await supabaseAdmin.from('security_alerts').insert({
+      alert_type: alertType,
+      severity,
+      message,
+      details,
+      user_id: userId || null,
+    });
+  } catch {}
+}
+
+async function checkLoginBlocked(supabaseAdmin: any, cpf: string): Promise<{ blocked: boolean; remaining: number }> {
+  const since = new Date(Date.now() - BLOCK_MINUTES * 60 * 1000).toISOString();
+  const { data: attempts } = await supabaseAdmin
+    .from('login_attempts')
+    .select('id, success')
+    .eq('cpf', cpf)
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(MAX_ATTEMPTS);
+
+  if (!attempts || attempts.length < MAX_ATTEMPTS) return { blocked: false, remaining: MAX_ATTEMPTS - (attempts?.length || 0) };
+
+  const allFailed = attempts.every((a: any) => !a.success);
+  if (allFailed) {
+    return { blocked: true, remaining: 0 };
+  }
+  return { blocked: false, remaining: MAX_ATTEMPTS };
+}
+
+async function recordLoginAttempt(supabaseAdmin: any, cpf: string, success: boolean, ip = '') {
+  await supabaseAdmin.from('login_attempts').insert({ cpf, success, ip_address: ip });
+}
+
+function getClientIp(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+         req.headers.get('x-real-ip') || '';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,11 +77,13 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
+  const clientIp = getClientIp(req);
+
   try {
     const body = await req.json();
     const { action, ...data } = body;
 
-    // ─── CHECK-SETUP: is first admin needed? ───
+    // ─── CHECK-SETUP ───
     if (action === 'check-setup') {
       const { data: adminProfiles } = await supabaseAdmin
         .from('profiles')
@@ -39,6 +97,15 @@ Deno.serve(async (req) => {
     if (action === 'lookup') {
       const cpf = (data.cpf || '').replace(/\D/g, '');
       if (!cpf) return json({ error: 'CPF é obrigatório' }, 400);
+
+      // Check if blocked
+      const { blocked } = await checkLoginBlocked(supabaseAdmin, cpf);
+      if (blocked) {
+        await createAlert(supabaseAdmin, 'login_blocked', 'high',
+          `CPF ${cpf.substring(0, 3)}.***.*** bloqueado após ${MAX_ATTEMPTS} tentativas falhas`,
+          { cpf_partial: cpf.substring(0, 3) + '***' + cpf.substring(8), ip: clientIp });
+        return json({ error: `Conta bloqueada temporariamente. Tente novamente em ${BLOCK_MINUTES} minutos.` }, 429);
+      }
 
       // First check funcionarios_auth
       const { data: func } = await supabaseAdmin
@@ -64,12 +131,61 @@ Deno.serve(async (req) => {
 
       if (profileMatch) return json({ email: profileMatch.email });
 
+      // Record failed attempt
+      await recordLoginAttempt(supabaseAdmin, cpf, false, clientIp);
+
       return json({ error: 'CPF não encontrado' }, 404);
+    }
+
+    // ─── LOGIN-SUCCESS: record successful login ───
+    if (action === 'login-success') {
+      const cpf = (data.cpf || '').replace(/\D/g, '');
+      if (cpf) {
+        await recordLoginAttempt(supabaseAdmin, cpf, true, clientIp);
+      }
+      if (data.user_id && data.user_name) {
+        await logAudit(supabaseAdmin, data.user_id, data.user_name, 'login', 'auth', { cpf_partial: cpf.substring(0, 3) + '***' }, clientIp);
+      }
+      return json({ success: true });
+    }
+
+    // ─── LOGIN-FAILED: record failed password attempt ───
+    if (action === 'login-failed') {
+      const cpf = (data.cpf || '').replace(/\D/g, '');
+      if (cpf) {
+        await recordLoginAttempt(supabaseAdmin, cpf, false, clientIp);
+        const { blocked } = await checkLoginBlocked(supabaseAdmin, cpf);
+        if (blocked) {
+          await createAlert(supabaseAdmin, 'login_blocked', 'high',
+            `CPF ${cpf.substring(0, 3)}.***.*** bloqueado após ${MAX_ATTEMPTS} tentativas falhas`,
+            { cpf_partial: cpf.substring(0, 3) + '***' + cpf.substring(8), ip: clientIp });
+          return json({ error: `Conta bloqueada temporariamente. Tente novamente em ${BLOCK_MINUTES} minutos.`, blocked: true }, 429);
+        }
+      }
+      return json({ success: true });
+    }
+
+    // ─── LOGOUT ───
+    if (action === 'logout') {
+      if (data.user_id && data.user_name) {
+        await logAudit(supabaseAdmin, data.user_id, data.user_name, 'logout', 'auth', {}, clientIp);
+      }
+      return json({ success: true });
+    }
+
+    // ─── AUDIT-LOG: generic audit entry ───
+    if (action === 'audit-log') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Não autorizado' }, 401);
+
+      if (data.user_id && data.action_name && data.module) {
+        await logAudit(supabaseAdmin, data.user_id, data.user_name || '', data.action_name, data.module, data.details || {}, clientIp);
+      }
+      return json({ success: true });
     }
 
     // ─── SETUP: primeiro admin ───
     if (action === 'setup') {
-      // Check if admin already exists
       const { data: existingAdmin } = await supabaseAdmin
         .from('profiles')
         .select('id')
@@ -88,12 +204,11 @@ Deno.serve(async (req) => {
       const cpf = data.cpf.replace(/\D/g, '');
       if (cpf.length !== 11) return json({ error: 'CPF deve ter 11 dígitos' }, 400);
 
-      // ── Purge all old users before creating fresh admin ──
+      // Purge
       await supabaseAdmin.from('funcionarios_auth').delete().gte('created_at', '1970-01-01');
       await supabaseAdmin.from('user_roles').delete().gte('id', '00000000-0000-0000-0000-000000000000');
       await supabaseAdmin.from('profiles').delete().gte('created_at', '1970-01-01');
       await supabaseAdmin.from('system_settings').delete().gte('created_at', '1970-01-01');
-      // Delete all auth users
       const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
       if (allUsers) {
         for (const u of allUsers) {
@@ -112,7 +227,6 @@ Deno.serve(async (req) => {
 
       if (authError) return json({ error: authError.message }, 400);
 
-      // Profile only — NO funcionarios_auth entry for admin master
       await supabaseAdmin.from('profiles').insert({
         id: authUser.user.id,
         nome: data.nome,
@@ -133,7 +247,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Generate and store recovery code
       const recoveryCode = Array.from({ length: 8 }, () => 
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
       ).join('');
@@ -142,6 +255,8 @@ Deno.serve(async (req) => {
         key: 'recovery_code',
         value: recoveryCode,
       });
+
+      await logAudit(supabaseAdmin, authUser.user.id, data.nome, 'setup_admin', 'auth', { first_admin: true }, clientIp);
 
       return json({ success: true, recovery_code: recoveryCode });
     }
@@ -172,7 +287,6 @@ Deno.serve(async (req) => {
       const cpf = data.cpf.replace(/\D/g, '');
       if (cpf.length !== 11) return json({ error: 'CPF deve ter 11 dígitos' }, 400);
 
-      // Check if CPF already exists
       const { data: existing } = await supabaseAdmin
         .from('funcionarios_auth')
         .select('id')
@@ -216,6 +330,10 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Get caller name for audit
+      const { data: callerProfile } = await supabaseAdmin.from('profiles').select('nome').eq('id', callerId).single();
+      await logAudit(supabaseAdmin, callerId, callerProfile?.nome || '', 'create_employee', 'funcionarios', { employee_name: data.nome, cpf_partial: cpf.substring(0, 3) + '***' }, clientIp);
+
       return json({ success: true });
     }
 
@@ -245,7 +363,7 @@ Deno.serve(async (req) => {
 
       const { data: func } = await supabaseAdmin
         .from('funcionarios_auth')
-        .select('user_id')
+        .select('user_id, nome')
         .eq('id', data.funcionario_id)
         .single();
 
@@ -257,6 +375,10 @@ Deno.serve(async (req) => {
 
       if (updateError) return json({ error: updateError.message }, 400);
 
+      const { data: callerProfile } = await supabaseAdmin.from('profiles').select('nome').eq('id', callerId).single();
+      await logAudit(supabaseAdmin, callerId, callerProfile?.nome || '', 'update_password', 'funcionarios', { target_employee: func.nome }, clientIp);
+      await createAlert(supabaseAdmin, 'password_changed', 'medium', `Senha do funcionário ${func.nome} alterada`, { changed_by: callerProfile?.nome }, callerId);
+
       return json({ success: true });
     }
 
@@ -267,7 +389,6 @@ Deno.serve(async (req) => {
       if (!data.recovery_code) return json({ error: 'Código de recuperação é obrigatório' }, 400);
       if (!data.new_password || data.new_password.length < 6) return json({ error: 'Senha deve ter pelo menos 6 caracteres' }, 400);
 
-      // Verify recovery code
       const { data: setting } = await supabaseAdmin
         .from('system_settings')
         .select('value')
@@ -275,31 +396,34 @@ Deno.serve(async (req) => {
         .single();
 
       if (!setting || setting.value !== data.recovery_code) {
+        await createAlert(supabaseAdmin, 'invalid_recovery_code', 'high',
+          `Tentativa de recuperação com código inválido para CPF ${cpf.substring(0, 3)}***`,
+          { cpf_partial: cpf.substring(0, 3) + '***', ip: clientIp });
         return json({ error: 'Código de recuperação inválido' }, 403);
       }
 
-      // Find user by CPF — check funcionarios_auth first, then admin profile
       let userId: string | null = null;
+      let userName = '';
 
       const { data: func } = await supabaseAdmin
         .from('funcionarios_auth')
-        .select('user_id')
+        .select('user_id, nome')
         .eq('cpf', cpf)
         .eq('status', 'active')
         .maybeSingle();
 
       if (func?.user_id) {
         userId = func.user_id;
+        userName = func.nome;
       } else {
-        // Check admin by email pattern
         const adminEmail = `admin_${cpf}@jots.interno`;
         const { data: prof } = await supabaseAdmin
           .from('profiles')
-          .select('id')
+          .select('id, nome')
           .eq('email', adminEmail)
           .eq('tipo', 'admin')
           .maybeSingle();
-        if (prof) userId = prof.id;
+        if (prof) { userId = prof.id; userName = prof.nome; }
       }
 
       if (!userId) return json({ error: 'CPF não encontrado' }, 404);
@@ -309,6 +433,9 @@ Deno.serve(async (req) => {
       });
 
       if (updateError) return json({ error: updateError.message }, 400);
+
+      await logAudit(supabaseAdmin, userId, userName, 'reset_password', 'auth', { via: 'recovery_code' }, clientIp);
+      await createAlert(supabaseAdmin, 'password_reset', 'medium', `Senha redefinida via código de recuperação para ${userName}`, {}, userId);
 
       return json({ success: true });
     }
@@ -334,9 +461,12 @@ Deno.serve(async (req) => {
 
       const { data: func } = await supabaseAdmin
         .from('funcionarios_auth')
-        .select('user_id')
+        .select('user_id, nome')
         .eq('id', data.funcionario_id)
         .single();
+
+      const { data: callerProfile } = await supabaseAdmin.from('profiles').select('nome').eq('id', callerId).single();
+      await logAudit(supabaseAdmin, callerId, callerProfile?.nome || '', 'delete_employee', 'funcionarios', { target_employee: func?.nome }, clientIp);
 
       if (func?.user_id) {
         await supabaseAdmin.auth.admin.deleteUser(func.user_id);
@@ -369,6 +499,9 @@ Deno.serve(async (req) => {
         .select('value')
         .eq('key', 'recovery_code')
         .single();
+
+      const { data: callerProfile } = await supabaseAdmin.from('profiles').select('nome').eq('id', callerId).single();
+      await logAudit(supabaseAdmin, callerId, callerProfile?.nome || '', 'view_recovery_code', 'admin', {}, clientIp);
 
       return json({ recovery_code: setting?.value || '' });
     }

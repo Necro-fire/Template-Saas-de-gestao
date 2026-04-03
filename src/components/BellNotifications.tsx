@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Bell, FileText, Check, Clock, ChevronDown, ChevronUp, AlertTriangle, CalendarClock, Ban } from "lucide-react";
+import { Bell, FileText, Check, Clock, ChevronDown, ChevronUp, AlertTriangle, CalendarClock, Ban, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBoletoAlertas } from "@/hooks/useBoletoAlertas";
+import { useSecurityAlerts } from "@/hooks/useSecurityAlerts";
+import { useAuth } from "@/contexts/AuthContext";
 import { format, isPast, isToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -22,10 +24,13 @@ function classifyBoleto(alerta: { status: string; data_vencimento: string; parce
 
 export function BellNotifications() {
   const { alertas, updateStatus } = useBoletoAlertas();
+  const { isAdmin } = useAuth();
+  const { alerts: securityAlerts, resolveAlert } = useSecurityAlerts();
   const [open, setOpen] = useState(false);
   const [showGerados, setShowGerados] = useState(false);
   const [showFuturos, setShowFuturos] = useState(false);
   const [showCancelados, setShowCancelados] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(true);
 
   const pendentes = alertas.filter((a) => classifyBoleto(a) === "pendente");
   const gerados = alertas.filter((a) => classifyBoleto(a) === "gerado");
@@ -41,7 +46,16 @@ export function BellNotifications() {
     }
   };
 
-  const urgentCount = pendentes.length;
+  const handleResolveAlert = async (id: string) => {
+    try {
+      await resolveAlert(id);
+      toast.success("Alerta resolvido");
+    } catch {
+      toast.error("Erro ao resolver alerta");
+    }
+  };
+
+  const urgentCount = pendentes.length + (isAdmin ? securityAlerts.filter(a => a.severity === 'high').length : 0);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -59,14 +73,60 @@ export function BellNotifications() {
         <div className="p-3 border-b">
           <h4 className="text-sm font-semibold flex items-center gap-1.5">
             <Bell className="h-4 w-4" />
-            Central de Boletos
+            Central de Notificações
           </h4>
           <p className="text-xs text-muted-foreground">
+            {isAdmin && securityAlerts.length > 0 ? `${securityAlerts.length} alerta${securityAlerts.length !== 1 ? "s" : ""} de segurança · ` : ""}
             {pendentes.length} pendente{pendentes.length !== 1 ? "s" : ""} · {gerados.length} gerado{gerados.length !== 1 ? "s" : ""} · {futuros.length} futuro{futuros.length !== 1 ? "s" : ""}{cancelados.length > 0 ? ` · ${cancelados.length} cancelado${cancelados.length !== 1 ? "s" : ""}` : ""}
           </p>
         </div>
 
         <div className="max-h-[450px] overflow-y-auto overscroll-contain" onWheel={(e) => e.stopPropagation()}>
+          {/* Security Alerts */}
+          {isAdmin && securityAlerts.length > 0 && (
+            <div className="border-b">
+              <button
+                onClick={() => setShowSecurity(!showSecurity)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-destructive hover:bg-destructive/5 transition-colors"
+              >
+                <span className="flex items-center gap-1.5">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  Segurança ({securityAlerts.length})
+                </span>
+                {showSecurity ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </button>
+              {showSecurity && (
+                <div className="p-2 pt-0 space-y-1.5">
+                  {securityAlerts.map((alert) => (
+                    <div key={alert.id} className={`flex items-start gap-2 p-2 rounded-md transition-colors ${
+                      alert.severity === 'high' ? 'bg-destructive/10 border border-destructive/20' : 'bg-warning/10 border border-warning/20'
+                    }`}>
+                      <div className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${
+                        alert.severity === 'high' ? 'bg-destructive/20' : 'bg-warning/20'
+                      }`}>
+                        <ShieldAlert className={`h-4 w-4 ${alert.severity === 'high' ? 'text-destructive' : 'text-warning'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate">{alert.message}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {format(new Date(alert.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => handleResolveAlert(alert.id)}
+                        title="Resolver"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {/* Pendentes */}
           {pendentes.length > 0 && (
             <div className="p-2">
