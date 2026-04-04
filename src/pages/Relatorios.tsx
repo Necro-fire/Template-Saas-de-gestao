@@ -9,6 +9,7 @@ import { DateRangeFilter, useDateRangeFilter } from "@/components/DateRangeFilte
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { exportToExcel } from "@/lib/excelExport";
 
 const reports = [
   { key: "vendas", title: "Todas as Vendas", desc: "Relatório completo de vendas com detalhes", icon: FileText, table: "vendas", dateCol: "created_at" },
@@ -50,8 +51,9 @@ export default function Relatorios() {
         return;
       }
 
+      let exportRows = rows;
+
       // For custo_lucro, enrich with venda_items
-      let csvRows = rows;
       if (report.key === "custo_lucro") {
         const vendaIds = rows.map((r: any) => r.id);
         const { data: items } = await (supabase as any)
@@ -59,45 +61,27 @@ export default function Relatorios() {
           .select("venda_id, quantity, unit_price, custo_unitario")
           .in("venda_id", vendaIds);
 
-        csvRows = rows.map((venda: any) => {
+        exportRows = rows.map((venda: any) => {
           const vendaItems = (items || []).filter((i: any) => i.venda_id === venda.id);
           const custoTotal = vendaItems.reduce((s: number, i: any) => s + (i.custo_unitario * i.quantity), 0);
           const receita = Number(venda.total);
           return {
             codigo: venda.sale_code || `#${venda.number}`,
             cliente: venda.client_name,
-            data: format(new Date(venda.created_at), "dd/MM/yyyy HH:mm"),
-            receita: receita.toFixed(2),
-            custo: custoTotal.toFixed(2),
-            lucro: (receita - custoTotal).toFixed(2),
+            data: venda.created_at,
+            receita,
+            custo: custoTotal,
+            lucro: receita - custoTotal,
             margem: receita > 0 ? ((receita - custoTotal) / receita * 100).toFixed(1) + "%" : "0%",
             status: venda.status,
           };
         });
       }
 
-      // Convert to CSV
-      const headers = Object.keys(csvRows[0]);
-      const csv = [
-        headers.join(";"),
-        ...csvRows.map((row: any) =>
-          headers.map(h => {
-            const val = row[h];
-            if (val === null || val === undefined) return "";
-            if (typeof val === "object") return JSON.stringify(val);
-            return String(val).replace(/;/g, ",");
-          }).join(";")
-        ),
-      ].join("\n");
+      const fileName = `relatorio_${report.key}_${format(range.from, "ddMMyyyy")}_${format(range.to, "ddMMyyyy")}.xlsx`;
+      const sheetName = report.title;
 
-      const BOM = "\uFEFF";
-      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `relatorio_${report.key}_${format(range.from, "ddMMyyyy")}_${format(range.to, "ddMMyyyy")}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await exportToExcel(exportRows, fileName, sheetName);
       toast.success("Relatório gerado com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao gerar relatório: " + (err.message || ""));
