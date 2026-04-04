@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Share2, ImageDown } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, ShoppingCart, Printer, Share2, ImageDown, ZoomIn } from "lucide-react";
 import JsBarcode from "jsbarcode";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { useAuth } from "@/contexts/AuthContext";
 import { AtacadoDialog } from "@/components/AtacadoDialog";
+import { ProductImageDialog } from "@/components/pdv/ProductImageDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFilial } from "@/contexts/FilialContext";
@@ -27,6 +28,8 @@ export default function Produtos() {
   const canCreate = hasPermission('produtos', 'create');
   const canEdit = hasPermission('produtos', 'edit');
   const canDelete = hasPermission('produtos', 'delete');
+  const canViewImages = hasPermission('produtos', 'view_images');
+  const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
 
   const { data: products } = useProducts();
 
@@ -257,11 +260,23 @@ export default function Produtos() {
                     </div>
                   )}
 
-                  <div className="aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden">
+                  <div
+                    className={`aspect-[3/2] rounded-md bg-secondary flex items-center justify-center overflow-hidden ${canViewImages && product.image_url ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (canViewImages && product.image_url) {
+                        setZoomImage({ url: product.image_url, name: product.model || product.referencia });
+                      }
+                    }}
+                  >
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.model || product.referencia} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-muted-foreground/30 text-title font-bold">{product.model || product.referencia}</span>
+                    )}
+                    {canViewImages && product.image_url && (
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-70 transition-opacity" />
+                      </div>
                     )}
                   </div>
                   <div className="mt-3 flex justify-between items-start gap-2">
@@ -356,6 +371,14 @@ export default function Produtos() {
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
         <AtacadoDialog open={showAtacado} onOpenChange={setShowAtacado} />
+        {zoomImage && (
+          <ProductImageDialog
+            open={!!zoomImage}
+            onOpenChange={(o) => { if (!o) setZoomImage(null); }}
+            imageUrl={zoomImage.url}
+            productName={zoomImage.name}
+          />
+        )}
         
 
         <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>
