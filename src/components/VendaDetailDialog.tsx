@@ -118,7 +118,10 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         setBoletoMeta(null);
       }
 
-      setNfData(nfRes.data?.[0] || null);
+      const nf = nfRes.data?.[0] || null;
+      setNfData(nf);
+      if (nf?.xml_url) getSignedUrl(nf.xml_url, 'nfe-files').then(setSignedNfXml); else setSignedNfXml(null);
+      if (nf?.pdf_url) getSignedUrl(nf.pdf_url, 'nfe-files').then(setSignedNfPdf); else setSignedNfPdf(null);
 
       setLoading(false);
     });
