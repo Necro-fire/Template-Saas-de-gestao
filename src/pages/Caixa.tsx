@@ -549,7 +549,7 @@ export default function Caixa() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleFecharCaixa} disabled={submitting || valorFechamento <= 0}>{submitting ? "Fechando..." : "Confirmar Fechamento"}</Button>
+            <Button variant="destructive" onClick={handleFecharCaixa} disabled={submitting || valorFechamento < 0}>{submitting ? "Fechando..." : "Confirmar Fechamento"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
