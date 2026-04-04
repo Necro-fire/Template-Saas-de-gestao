@@ -119,10 +119,6 @@ export default function Caixa() {
 
   async function handleFecharCaixa() {
     if (!user || !caixaAberto) return;
-    if (valorFechamento <= 0) {
-      toast.error("Informe o valor de fechamento do caixa.");
-      return;
-    }
     setSubmitting(true);
     try {
       const valorInf = valorFechamento;
