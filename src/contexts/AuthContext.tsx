@@ -22,6 +22,7 @@ interface AuthContextType {
   roles: string[];
   isAdmin: boolean;
   loading: boolean;
+  employeeFilialId: string | null;
   hasPermission: (module: string, action: string) => boolean;
   hasRole: (role: string) => boolean;
   signOut: () => Promise<void>;
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [employeeFilialId, setEmployeeFilialId] = useState<string | null>(null);
 
   const loadUserData = useCallback(async (userId: string) => {
     try {
@@ -49,10 +51,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
 
       if (profileRes.data) setProfile(profileRes.data as unknown as Profile);
-      setIsAdmin(!!adminRes.data);
+      const userIsAdmin = !!adminRes.data;
+      setIsAdmin(userIsAdmin);
       if (permsRes.data) setPermissions(permsRes.data as unknown as Permission[]);
       if (rolesRes.data) {
         setRoles(rolesRes.data.map((r: any) => r.roles?.name).filter(Boolean));
+      }
+
+      // Load employee filial_id from funcionarios_auth
+      if (!userIsAdmin) {
+        const { data: funcData } = await (supabase as any)
+          .from('funcionarios_auth')
+          .select('filial_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        setEmployeeFilialId(funcData?.filial_id || null);
+      } else {
+        setEmployeeFilialId(null); // Admin sees all
       }
     } catch (e) {
       console.error('Error loading user data:', e);
@@ -75,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissions([]);
         setRoles([]);
         setIsAdmin(false);
+        setEmployeeFilialId(null);
       }
       setLoading(false);
     });
@@ -114,11 +130,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPermissions([]);
     setRoles([]);
     setIsAdmin(false);
+    setEmployeeFilialId(null);
   };
 
   return (
     <AuthContext.Provider value={{
       session, user, profile, permissions, roles, isAdmin, loading,
+      employeeFilialId,
       hasPermission, hasRole, signOut, refreshPermissions,
     }}>
       {children}
