@@ -149,7 +149,7 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {hasPermission('sistema', 'view_em_breve') && (
+        {hasPermission('Sistema', 'view_em_breve') && (
         <Collapsible>
           <SidebarGroup>
             <CollapsibleTrigger asChild>

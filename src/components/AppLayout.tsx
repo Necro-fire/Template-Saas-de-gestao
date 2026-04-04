@@ -13,7 +13,7 @@ export function AppLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 flex items-center justify-between border-b px-4 shrink-0">
             <SidebarTrigger />
-            {hasPermission('notificacoes', 'view') && <BellNotifications />}
+            {hasPermission('Notificações', 'view') && <BellNotifications />}
           </header>
           <main className="flex-1 overflow-auto">
             <Outlet />
