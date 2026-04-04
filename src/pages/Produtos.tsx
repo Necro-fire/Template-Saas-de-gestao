@@ -25,10 +25,10 @@ export default function Produtos() {
   const { selectedFilial, filiais } = useFilial();
   const { filters, setFilters } = useProductFilters();
   const { hasPermission } = useAuth();
-  const canCreate = hasPermission('produtos', 'create');
-  const canEdit = hasPermission('produtos', 'edit');
-  const canDelete = hasPermission('produtos', 'delete');
-  const canViewImages = hasPermission('produtos', 'view_images');
+  const canCreate = hasPermission('Produtos', 'create');
+  const canEdit = hasPermission('Produtos', 'edit');
+  const canDelete = hasPermission('Produtos', 'delete');
+  const canViewImages = hasPermission('Produtos', 'view_images');
   const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
 
   const { data: products } = useProducts();
