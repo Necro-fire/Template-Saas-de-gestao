@@ -148,9 +148,9 @@ export function NFDetailDialog({ nf, open, onOpenChange, onCancel, onDelete, can
           <Separator />
 
           <div className="flex gap-2">
-            {nf.pdf_url && (
+            {signedPdf && (
               <Button variant="outline" className="flex-1 h-9" asChild>
-                <a href={nf.pdf_url} target="_blank" rel="noopener noreferrer">
+                <a href={signedPdf} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3.5 w-3.5 mr-2" /> Abrir DANFE
                 </a>
               </Button>
