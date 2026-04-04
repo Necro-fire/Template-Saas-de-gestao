@@ -1,4 +1,4 @@
-import ExcelJS from "exceljs";
+import * as ExcelJS from "exceljs";
 import { maskCpf, maskCnpj, maskCelular, maskCep, formatCentsToDisplay } from "@/lib/masks";
 import { format } from "date-fns";
 
