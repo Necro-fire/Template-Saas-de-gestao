@@ -371,6 +371,14 @@ export default function Produtos() {
 
         <ProductFormDialog open={showForm} onOpenChange={handleFormClose} product={editingProduct} />
         <AtacadoDialog open={showAtacado} onOpenChange={setShowAtacado} />
+        {zoomImage && (
+          <ProductImageDialog
+            open={!!zoomImage}
+            onOpenChange={(o) => { if (!o) setZoomImage(null); }}
+            imageUrl={zoomImage.url}
+            productName={zoomImage.name}
+          />
+        )}
         
 
         <AlertDialog open={!!deletingProduct} onOpenChange={(o) => { if (!o) { setDeletingProduct(null); setDeleteCheck(null); } }}>
