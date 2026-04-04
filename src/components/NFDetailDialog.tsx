@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Download, ExternalLink, Trash2, X, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useFilial } from "@/contexts/FilialContext";
+import { getSignedUrl } from "@/lib/storageUtils";
 import type { DbNotaFiscal } from "@/hooks/useNotasFiscais";
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "secondary"; className: string }> = {
