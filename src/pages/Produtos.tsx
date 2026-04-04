@@ -28,6 +28,8 @@ export default function Produtos() {
   const canCreate = hasPermission('produtos', 'create');
   const canEdit = hasPermission('produtos', 'edit');
   const canDelete = hasPermission('produtos', 'delete');
+  const canViewImages = hasPermission('produtos', 'view_images');
+  const [zoomImage, setZoomImage] = useState<{ url: string; name: string } | null>(null);
 
   const { data: products } = useProducts();
 
