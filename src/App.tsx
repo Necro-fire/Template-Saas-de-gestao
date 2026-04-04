@@ -40,11 +40,9 @@ const router = createBrowserRouter([
   },
   {
     element: (
-      <FilialProvider>
-        <ProtectedRoute>
-          <AppLayout />
-        </ProtectedRoute>
-      </FilialProvider>
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
     ),
     children: [
       { path: "/", element: <ProtectedRoute module="Dashboard" action="view"><Dashboard /></ProtectedRoute> },
@@ -78,9 +76,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <RouterProvider router={router} />
+        <FilialProvider>
+          <Toaster />
+          <Sonner />
+          <RouterProvider router={router} />
+        </FilialProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
