@@ -1171,6 +1171,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_write: { Args: { _user_id: string }; Returns: boolean }
       cancelar_item_venda: {
         Args: {
           _motivo: string

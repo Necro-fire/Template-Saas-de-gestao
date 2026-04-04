@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { Download, ExternalLink, Trash2, X, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useFilial } from "@/contexts/FilialContext";
+import { getSignedUrl } from "@/lib/storageUtils";
 import type { DbNotaFiscal } from "@/hooks/useNotasFiscais";
 
 const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "secondary"; className: string }> = {
@@ -23,6 +25,15 @@ interface NFDetailDialogProps {
 
 export function NFDetailDialog({ nf, open, onOpenChange, onCancel, onDelete, canManage }: NFDetailDialogProps) {
   const { filiais } = useFilial();
+  const [signedXml, setSignedXml] = useState<string | null>(null);
+  const [signedPdf, setSignedPdf] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !nf) { setSignedXml(null); setSignedPdf(null); return; }
+    if (nf.xml_url) getSignedUrl(nf.xml_url, 'nfe-files').then(setSignedXml);
+    if (nf.pdf_url) getSignedUrl(nf.pdf_url, 'nfe-files').then(setSignedPdf);
+  }, [open, nf?.xml_url, nf?.pdf_url]);
+
   if (!nf) return null;
 
   const st = statusMap[nf.status] || statusMap.pendente;
@@ -109,22 +120,22 @@ export function NFDetailDialog({ nf, open, onOpenChange, onCancel, onDelete, can
           )}
 
           {/* Files */}
-          {(nf.xml_url || nf.pdf_url) && (
+          {(signedXml || signedPdf) && (
             <>
               <Separator />
               <div>
                 <p className="text-caption text-muted-foreground mb-2">Arquivos Anexos</p>
                 <div className="flex gap-2">
-                  {nf.xml_url && (
+                  {signedXml && (
                     <Button variant="outline" size="sm" className="h-8" asChild>
-                      <a href={nf.xml_url} target="_blank" rel="noopener noreferrer">
+                      <a href={signedXml} target="_blank" rel="noopener noreferrer">
                         <Download className="h-3.5 w-3.5 mr-1" /> XML
                       </a>
                     </Button>
                   )}
-                  {nf.pdf_url && (
+                  {signedPdf && (
                     <Button variant="outline" size="sm" className="h-8" asChild>
-                      <a href={nf.pdf_url} target="_blank" rel="noopener noreferrer">
+                      <a href={signedPdf} target="_blank" rel="noopener noreferrer">
                         <Download className="h-3.5 w-3.5 mr-1" /> PDF / DANFE
                       </a>
                     </Button>
@@ -137,9 +148,9 @@ export function NFDetailDialog({ nf, open, onOpenChange, onCancel, onDelete, can
           <Separator />
 
           <div className="flex gap-2">
-            {nf.pdf_url && (
+            {signedPdf && (
               <Button variant="outline" className="flex-1 h-9" asChild>
-                <a href={nf.pdf_url} target="_blank" rel="noopener noreferrer">
+                <a href={signedPdf} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3.5 w-3.5 mr-2" /> Abrir DANFE
                 </a>
               </Button>

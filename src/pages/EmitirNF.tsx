@@ -96,13 +96,8 @@ export default function EmitirNF() {
   };
 
   const uploadFile = async (file: File, folder: string): Promise<string> => {
-    const ext = file.name.split(".").pop() || "bin";
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${folder}/${Date.now()}_${safeName}`;
-    const { error } = await supabase.storage.from("nfe-files").upload(path, file);
-    if (error) throw error;
-    const { data } = supabase.storage.from("nfe-files").getPublicUrl(path);
-    return data.publicUrl;
+    const { uploadToPrivateBucket } = await import('@/lib/storageUtils');
+    return uploadToPrivateBucket(file, 'nfe-files', folder);
   };
 
   const handleSave = async () => {

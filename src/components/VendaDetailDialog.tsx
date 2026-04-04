@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getSignedUrl } from "@/lib/storageUtils";
 import { format, isPast, isToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -57,6 +58,8 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
   const [boletos, setBoletos] = useState<any[]>([]);
   const [nfData, setNfData] = useState<any | null>(null);
+  const [signedNfXml, setSignedNfXml] = useState<string | null>(null);
+  const [signedNfPdf, setSignedNfPdf] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -115,7 +118,10 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
         setBoletoMeta(null);
       }
 
-      setNfData(nfRes.data?.[0] || null);
+      const nf = nfRes.data?.[0] || null;
+      setNfData(nf);
+      if (nf?.xml_url) getSignedUrl(nf.xml_url, 'nfe-files').then(setSignedNfXml); else setSignedNfXml(null);
+      if (nf?.pdf_url) getSignedUrl(nf.pdf_url, 'nfe-files').then(setSignedNfPdf); else setSignedNfPdf(null);
 
       setLoading(false);
     });
@@ -315,13 +321,13 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                   Chave: <span className="font-mono">{nfData.chave_acesso?.slice(0, 20)}...</span>
                 </p>
                 <div className="flex gap-2 mt-2">
-                  {nfData.xml_url && (
-                    <a href={nfData.xml_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  {signedNfXml && (
+                    <a href={signedNfXml} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
                       <Download className="h-3 w-3" /> XML
                     </a>
                   )}
-                  {nfData.pdf_url && (
-                    <a href={nfData.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  {signedNfPdf && (
+                    <a href={signedNfPdf} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
                       <Download className="h-3 w-3" /> PDF
                     </a>
                   )}
