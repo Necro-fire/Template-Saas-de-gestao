@@ -120,22 +120,22 @@ export function NFDetailDialog({ nf, open, onOpenChange, onCancel, onDelete, can
           )}
 
           {/* Files */}
-          {(nf.xml_url || nf.pdf_url) && (
+          {(signedXml || signedPdf) && (
             <>
               <Separator />
               <div>
                 <p className="text-caption text-muted-foreground mb-2">Arquivos Anexos</p>
                 <div className="flex gap-2">
-                  {nf.xml_url && (
+                  {signedXml && (
                     <Button variant="outline" size="sm" className="h-8" asChild>
-                      <a href={nf.xml_url} target="_blank" rel="noopener noreferrer">
+                      <a href={signedXml} target="_blank" rel="noopener noreferrer">
                         <Download className="h-3.5 w-3.5 mr-1" /> XML
                       </a>
                     </Button>
                   )}
-                  {nf.pdf_url && (
+                  {signedPdf && (
                     <Button variant="outline" size="sm" className="h-8" asChild>
-                      <a href={nf.pdf_url} target="_blank" rel="noopener noreferrer">
+                      <a href={signedPdf} target="_blank" rel="noopener noreferrer">
                         <Download className="h-3.5 w-3.5 mr-1" /> PDF / DANFE
                       </a>
                     </Button>
