@@ -25,6 +25,15 @@ interface NFDetailDialogProps {
 
 export function NFDetailDialog({ nf, open, onOpenChange, onCancel, onDelete, canManage }: NFDetailDialogProps) {
   const { filiais } = useFilial();
+  const [signedXml, setSignedXml] = useState<string | null>(null);
+  const [signedPdf, setSignedPdf] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !nf) { setSignedXml(null); setSignedPdf(null); return; }
+    if (nf.xml_url) getSignedUrl(nf.xml_url, 'nfe-files').then(setSignedXml);
+    if (nf.pdf_url) getSignedUrl(nf.pdf_url, 'nfe-files').then(setSignedPdf);
+  }, [open, nf?.xml_url, nf?.pdf_url]);
+
   if (!nf) return null;
 
   const st = statusMap[nf.status] || statusMap.pendente;
