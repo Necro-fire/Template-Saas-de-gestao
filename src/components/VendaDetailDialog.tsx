@@ -57,6 +57,8 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
   const [boletoMeta, setBoletoMeta] = useState<BoletoMetaInfo | null>(null);
   const [boletos, setBoletos] = useState<any[]>([]);
   const [nfData, setNfData] = useState<any | null>(null);
+  const [signedNfXml, setSignedNfXml] = useState<string | null>(null);
+  const [signedNfPdf, setSignedNfPdf] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [motivo, setMotivo] = useState("");
