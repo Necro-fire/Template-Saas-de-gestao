@@ -41,38 +41,38 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainNav = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, module: "dashboard", action: "view" },
-  { title: "PDV", url: "/pdv", icon: ShoppingCart, module: "pdv", action: "view" },
-  { title: "Produtos", url: "/produtos", icon: Package, module: "produtos", action: "view" },
-  { title: "Clientes", url: "/clientes", icon: Users, module: "clientes", action: "view" },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, module: "Dashboard", action: "view" },
+  { title: "PDV", url: "/pdv", icon: ShoppingCart, module: "PDV", action: "view" },
+  { title: "Produtos", url: "/produtos", icon: Package, module: "Produtos", action: "view" },
+  { title: "Clientes", url: "/clientes", icon: Users, module: "Clientes", action: "view" },
 ];
 
 const staffNav = [
-  { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "funcionarios", action: "view" },
-  { title: "Cargos", url: "/cargos", icon: Shield, module: "admin", action: "manage_roles" },
+  { title: "Funcionários", url: "/funcionarios", icon: UserCog, module: "Funcionários", action: "view" },
+  { title: "Cargos", url: "/cargos", icon: Shield, module: "Administração", action: "manage_roles" },
   
 ];
 
 const managementNav = [
-  { title: "Vendas", url: "/vendas", icon: FileText, module: "vendas", action: "view" },
-  { title: "Estoque", url: "/estoque", icon: Warehouse, module: "estoque", action: "view" },
-  { title: "Caixa", url: "/caixa", icon: Wallet, module: "caixa", action: "view" },
-  { title: "Fornecedores", url: "/fornecedores", icon: Truck, module: "estoque", action: "view" },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, module: "relatorios", action: "view" },
-  { title: "Tráfego entre Filiais", url: "/trafego-filiais", icon: ArrowLeftRight, module: "estoque", action: "view" },
-  { title: "Produtos Consignados", url: "/produtos-consignados", icon: PackageCheck, module: "vendas", action: "view" },
+  { title: "Vendas", url: "/vendas", icon: FileText, module: "Vendas", action: "view" },
+  { title: "Estoque", url: "/estoque", icon: Warehouse, module: "Estoque", action: "view" },
+  { title: "Caixa", url: "/caixa", icon: Wallet, module: "Caixa", action: "view" },
+  { title: "Fornecedores", url: "/fornecedores", icon: Truck, module: "Estoque", action: "view" },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, module: "Relatórios", action: "view" },
+  { title: "Tráfego entre Filiais", url: "/trafego-filiais", icon: ArrowLeftRight, module: "Estoque", action: "view" },
+  { title: "Produtos Consignados", url: "/produtos-consignados", icon: PackageCheck, module: "Vendas", action: "view" },
 ];
 
 const fiscalNav = [
-  { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt, module: "fiscal", action: "view_nf" },
-  { title: "Adicionar NF", url: "/adicionar-nf", icon: FilePlus, module: "fiscal", action: "add_nf" },
+  { title: "Notas Fiscais", url: "/notas-fiscais", icon: Receipt, module: "Fiscal", action: "view_nf" },
+  { title: "Adicionar NF", url: "/adicionar-nf", icon: FilePlus, module: "Fiscal", action: "add_nf" },
 ];
 
 const comingSoonNav = [
-  { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus, module: "fiscal", action: "manage" },
-  { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2, module: "fiscal", action: "manage" },
-  { title: "Empresas", url: "/empresas", icon: Building2, module: "fiscal", action: "manage" },
-  { title: "Certificado", url: "/certificado-digital", icon: ShieldCheck, module: "fiscal", action: "manage" },
+  { title: "Emitir NF", url: "/emitir-nf", icon: FilePlus, module: "Fiscal", action: "manage" },
+  { title: "Config. Fiscal", url: "/configuracao-fiscal", icon: Settings2, module: "Fiscal", action: "manage" },
+  { title: "Empresas", url: "/empresas", icon: Building2, module: "Fiscal", action: "manage" },
+  { title: "Certificado", url: "/certificado-digital", icon: ShieldCheck, module: "Fiscal", action: "manage" },
 ];
 
 
