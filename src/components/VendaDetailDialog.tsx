@@ -321,13 +321,13 @@ export function VendaDetailDialog({ venda, open, onOpenChange }: VendaDetailDial
                   Chave: <span className="font-mono">{nfData.chave_acesso?.slice(0, 20)}...</span>
                 </p>
                 <div className="flex gap-2 mt-2">
-                  {nfData.xml_url && (
-                    <a href={nfData.xml_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  {signedNfXml && (
+                    <a href={signedNfXml} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
                       <Download className="h-3 w-3" /> XML
                     </a>
                   )}
-                  {nfData.pdf_url && (
-                    <a href={nfData.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  {signedNfPdf && (
+                    <a href={signedNfPdf} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
                       <Download className="h-3 w-3" /> PDF
                     </a>
                   )}
