@@ -40,11 +40,9 @@ const router = createBrowserRouter([
   },
   {
     element: (
-      <FilialProvider>
-        <ProtectedRoute>
-          <AppLayout />
-        </ProtectedRoute>
-      </FilialProvider>
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
     ),
     children: [
       { path: "/", element: <ProtectedRoute module="Dashboard" action="view"><Dashboard /></ProtectedRoute> },
