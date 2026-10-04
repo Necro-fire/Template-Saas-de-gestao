@@ -46,7 +46,12 @@ export default function Login() {
         body: { action: 'lookup', cpf: rawCpf },
       });
       if (lookupError || data?.error) {
-        toast.error(data?.error || 'CPF não encontrado');
+        let msg = data?.error || 'CPF não encontrado';
+        try {
+          const body = await (lookupError as any)?.context?.json?.();
+          if (body?.error) msg = body.error;
+        } catch {}
+        toast.error(msg);
         setLoading(false);
         return;
       }

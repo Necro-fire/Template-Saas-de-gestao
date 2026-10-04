@@ -1,0 +1,1 @@
+DELETE FROM public.login_attempts WHERE success = false AND created_at > now() - interval '1 hour';
