@@ -281,6 +281,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     if (!classificacaoProduto) { toast.error("Selecione a classificação do produto"); return; }
     if (!isAcessorio && !referencia.trim()) { toast.error("Informe o código da peça"); return; }
     if (!isAcessorio && !classificacao) { toast.error("Selecione a classificação (C1-C10)"); return; }
+    if (isAcessorio && !name.trim()) { toast.error("Informe o nome do acessório"); return; }
     if (!price || price <= 0) { toast.error("Informe um preço válido"); return; }
     if (!filial) { toast.error("Selecione uma filial"); return; }
     if (!/^\d{8}$/.test(ncm)) { toast.error("Informe um NCM válido com 8 dígitos numéricos"); return; }
@@ -360,7 +361,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
       const buildBaseData = (codes?: { code: string; barcode: string }, fId?: string) => ({
         ...(codes ? { code: codes.code, barcode: codes.barcode } : {}),
         referencia: effectiveReferencia,
-        model: effectiveReferencia,
+        model: isAcessorio ? name.trim() : effectiveReferencia,
         classificacao: effectiveClassificacao,
         category: classificacaoProduto,
         retail_price: price,
@@ -516,6 +517,18 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            )}
+            {isAcessorio && (
+              <div>
+                <Label htmlFor="nome-acessorio">Nome do acessório *</Label>
+                <Input
+                  id="nome-acessorio"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: BROCA 2.0"
+                  className="mt-1.5"
+                />
               </div>
             )}
             <div>
