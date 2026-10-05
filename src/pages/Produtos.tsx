@@ -244,7 +244,7 @@ export default function Produtos() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filtered.map(product => {
               const productTitle = product.is_acessorio
-                ? ((product as any).categoria_acessorio || product.model || product.referencia)
+                ? (product.model || (product as any).categoria_acessorio || product.referencia)
                 : (product.model || product.referencia);
               return (
                 <div key={product.id} className="rounded-lg shadow-card bg-card p-3 group hover:shadow-md transition-shadow relative">
